@@ -157,6 +157,11 @@ fn read_file(path: &str) -> Result<String, String> {
     fs::read_to_string(path).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn write_file(path: &str, content: &str) -> Result<(), String> {
+    fs::write(path, content).map_err(|e| e.to_string())
+}
+
 #[derive(serde::Serialize)]
 struct FileInfo {
     size: u64,
@@ -270,6 +275,7 @@ pub fn run() {
             get_config,
             save_config,
             read_file,
+            write_file,
             get_file_info,
             add_to_history,
             remove_from_history,

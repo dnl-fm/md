@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test": "bun test",
+    "test:watch": "bun test --watch"
   },
   "license": "MIT",
   "dependencies": {
