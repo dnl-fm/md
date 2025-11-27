@@ -34,8 +34,9 @@ const [showRawMarkdown, setShowRawMarkdown] = createSignal(false);
 const isDirty = () => showRawMarkdown() && content() !== originalContent();
 
 // Apply theme colors to CSS variables
-function applyThemeColors() {
-  const colors = config().theme === "dark" ? darkColors() : lightColors();
+function applyThemeColors(theme?: "dark" | "light") {
+  const currentTheme = theme ?? config().theme;
+  const colors = currentTheme === "dark" ? darkColors() : lightColors();
   const root = document.documentElement;
   root.style.setProperty("--bg-primary", colors.bg_primary);
   root.style.setProperty("--bg-secondary", colors.bg_secondary);
@@ -63,7 +64,7 @@ async function toggleTheme() {
   setConfig(newConfig);
   document.documentElement.setAttribute("data-theme", newTheme);
   localStorage.setItem("theme", newTheme);
-  applyThemeColors();
+  applyThemeColors(newTheme);
   await invoke("save_config", { config: newConfig });
 }
 
