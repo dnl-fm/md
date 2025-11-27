@@ -5,7 +5,6 @@ import {
   isDirty,
   showRawMarkdown,
   setShowRawMarkdown,
-  content,
   setContent,
   originalContent,
 } from "../stores/app-store";
