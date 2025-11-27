@@ -3,14 +3,55 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::VecDeque,
-    fs,
+    fs::{self, OpenOptions},
+    io::Write,
     path::PathBuf,
     time::Duration,
 };
 use tauri::{AppHandle, Emitter};
+use chrono::Local;
 
 const MAX_HISTORY: usize = 20;
-const CONFIG_FILE: &str = "md-preview-v2.json";
+const CONFIG_FILE: &str = "config.json";
+const LOG_FILE: &str = "md.log";
+
+// ============================================================================
+// Logging
+// ============================================================================
+
+fn get_md_dir() -> Option<PathBuf> {
+    dirs::home_dir().map(|p| p.join(".md"))
+}
+
+fn get_log_path() -> Option<PathBuf> {
+    get_md_dir().map(|p| p.join(LOG_FILE))
+}
+
+fn write_log(level: &str, message: &str) {
+    if let Some(log_path) = get_log_path() {
+        if let Some(parent) = log_path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        if let Ok(mut file) = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&log_path)
+        {
+            let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
+            let _ = writeln!(file, "[{}] [{}] {}", timestamp, level, message);
+        }
+    }
+}
+
+#[tauri::command]
+fn log_message(level: String, message: String) {
+    write_log(&level, &message);
+}
+
+#[tauri::command]
+fn get_log_path_cmd() -> Option<String> {
+    get_log_path().and_then(|p| p.to_str().map(|s| s.to_string()))
+}
 
 // ============================================================================
 // Config
@@ -61,6 +102,8 @@ pub struct AppConfig {
     pub dark_colors: Option<ThemeColors>,
     #[serde(default)]
     pub light_colors: Option<ThemeColors>,
+    #[serde(default)]
+    pub onboarding_complete: bool,
 }
 
 fn default_sidebar_width() -> u32 {
@@ -73,7 +116,7 @@ fn default_font_size() -> u32 {
 
 impl AppConfig {
     fn config_path() -> Option<PathBuf> {
-        dirs::config_dir().map(|p| p.join("md-preview").join(CONFIG_FILE))
+        dirs::home_dir().map(|p| p.join(".md").join(CONFIG_FILE))
     }
 
     pub fn load() -> Self {
@@ -83,7 +126,7 @@ impl AppConfig {
             .unwrap_or_else(|| AppConfig {
                 theme: "dark".to_string(),
                 history: VecDeque::new(),
-                sidebar_collapsed: false,
+                sidebar_collapsed: true,
                 sidebar_width: 220,
                 ui_font_size: 14,
                 markdown_font_size: 14,
@@ -91,6 +134,7 @@ impl AppConfig {
                 markdown_font_family: None,
                 dark_colors: None,
                 light_colors: None,
+                onboarding_complete: false,
             })
     }
 
@@ -287,6 +331,8 @@ pub fn run() {
             watch_file,
             stop_watching,
             get_initial_file,
+            log_message,
+            get_log_path_cmd,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
