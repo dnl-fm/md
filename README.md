@@ -1,18 +1,26 @@
-# Marky
+<p align="center">
+  <img src="src-tauri/icons/128x128@2x.png" alt="MD Logo" width="128" height="128">
+</p>
 
-A fast, lightweight Markdown preview application built with Tauri 2, SolidJS, and Shiki.
+<h1 align="center">MD</h1>
 
-![Marky Screenshot](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
+<p align="center">
+  A fast, lightweight Markdown preview application built with Tauri 2, SolidJS, and Shiki.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue" alt="Platform">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
+</p>
 
 ## Features
 
 - **Live Preview** - Real-time markdown rendering with GitHub-flavored markdown support
 - **Syntax Highlighting** - Code blocks with beautiful syntax highlighting powered by Shiki
+- **Edit Mode** - Edit markdown directly in the app with save/cancel support
 - **Themes** - Dark and light themes with fully customizable colors
 - **File Watching** - Automatic reload when the file changes externally
 - **Recent Files** - Quick access to recently opened files
-- **Raw Mode** - Toggle between rendered preview and raw markdown
 - **Customizable Fonts** - Choose font family and size for both UI and markdown content
 - **Resizable Sidebar** - Drag to resize or double-click to auto-fit content
 - **Lightweight** - Native performance with minimal resource usage
@@ -22,19 +30,21 @@ A fast, lightweight Markdown preview application built with Tauri 2, SolidJS, an
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+O` | Open file |
+| `Ctrl+S` | Save changes (in edit mode) |
 | `Ctrl+T` | Toggle theme (dark/light) |
 | `Ctrl+B` | Toggle sidebar |
 | `Ctrl+,` | Open settings |
 | `Ctrl++` | Increase font size |
 | `Ctrl+-` | Decrease font size |
 | `Ctrl+0` | Reset font size |
-| `Ctrl+Space` | Toggle raw markdown |
+| `Ctrl+Space` | Toggle edit mode |
+| `Esc` | Cancel edit / discard changes |
 
 ## Installation
 
 ### Pre-built Binaries
 
-Download the latest release for your platform from the [Releases](https://github.com/dnl-fm/marky/releases) page.
+Download the latest release for your platform from the [Releases](https://github.com/dnl-fm/md/releases) page.
 
 - **Linux**: `.deb`, `.rpm`, or `.AppImage`
 - **macOS**: `.dmg`
@@ -52,17 +62,17 @@ Download the latest release for your platform from the [Releases](https://github
 
 ```bash
 # Clone the repository
-git clone https://github.com/dnl-fm/marky.git
-cd marky
+git clone https://github.com/dnl-fm/md.git
+cd md
 
 # Install dependencies
 bun install
 
 # Development mode
-bun run tauri dev
+bun run dev
 
 # Build for production
-bun run tauri build
+bun run build
 ```
 
 The built application will be in `src-tauri/target/release/bundle/`.
@@ -72,31 +82,40 @@ The built application will be in `src-tauri/target/release/bundle/`.
 ### Open a file
 
 ```bash
-# Open Marky with a file
-./marky /path/to/file.md
+# Open MD with a file
+md-preview-tauri /path/to/file.md
 
-# Or just open Marky and use Ctrl+O to select a file
-./marky
+# Or just open MD and use Ctrl+O to select a file
+md-preview-tauri
 ```
+
+### File Associations
+
+MD registers itself for `.md` and `.markdown` files. Right-click any markdown file and select "Open with MD".
 
 ### Settings
 
 Click the ⚙ Settings button or press `Ctrl+,` to customize:
 
-- **UI Font Family** - Font for the application interface
-- **UI Font Size** - Size of UI elements (10-20px)
-- **Markdown Font Family** - Font for markdown content
-- **Markdown Font Size** - Size of markdown text (10-24px)
-- **Theme Colors** - Customize all colors for both dark and light themes
+**Fonts Tab**
+- UI Font Family and Size
+- Markdown Font Family and Size
+
+**Dark/Light Theme Tabs**
+- Background colors
+- Text colors  
+- Accent colors
+- Table colors
+- Button colors
 
 Settings are automatically saved and persisted.
 
 ## Configuration
 
 Configuration is stored in:
-- **Linux**: `~/.config/md-preview/md-preview-v2.json`
-- **macOS**: `~/Library/Application Support/md-preview/md-preview-v2.json`
-- **Windows**: `%APPDATA%\md-preview\md-preview-v2.json`
+- **Linux**: `~/.config/com.fightbulc.md-preview/config.json`
+- **macOS**: `~/Library/Application Support/com.fightbulc.md-preview/config.json`
+- **Windows**: `%APPDATA%\com.fightbulc.md-preview\config.json`
 
 ## Tech Stack
 
