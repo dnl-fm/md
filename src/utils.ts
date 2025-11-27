@@ -18,6 +18,8 @@ export const DEFAULT_DARK_COLORS: ThemeColors = {
   table_row_odd: "#1e1e1e",
   table_row_even: "#252528",
   table_row_hover: "#2a2a2d",
+  btn_edit_active: "#a96dd6",
+  btn_save: "#3b82f6",
 };
 
 export const DEFAULT_LIGHT_COLORS: ThemeColors = {
@@ -38,6 +40,8 @@ export const DEFAULT_LIGHT_COLORS: ThemeColors = {
   table_row_odd: "#ffffff",
   table_row_even: "#f8f8fa",
   table_row_hover: "#eef1f5",
+  btn_edit_active: "#9333ea",
+  btn_save: "#2563eb",
 };
 
 export const FONT_OPTIONS = [

@@ -16,6 +16,8 @@ export interface ThemeColors {
   table_row_odd: string;
   table_row_even: string;
   table_row_hover: string;
+  btn_edit_active: string;
+  btn_save: string;
 }
 
 export interface AppConfig {

@@ -103,8 +103,8 @@ function App() {
     setMarkdownFontSize(cfg.markdown_font_size || 14);
     setUiFontFamily(cfg.ui_font_family || "system");
     setMarkdownFontFamily(cfg.markdown_font_family || "JetBrains Mono");
-    setDarkColors(cfg.dark_colors || { ...DEFAULT_DARK_COLORS });
-    setLightColors(cfg.light_colors || { ...DEFAULT_LIGHT_COLORS });
+    setDarkColors({ ...DEFAULT_DARK_COLORS, ...cfg.dark_colors });
+    setLightColors({ ...DEFAULT_LIGHT_COLORS, ...cfg.light_colors });
     document.documentElement.setAttribute("data-theme", cfg.theme);
     localStorage.setItem("theme", cfg.theme);
     applyThemeColors();

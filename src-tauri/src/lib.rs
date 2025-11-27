@@ -36,6 +36,10 @@ pub struct ThemeColors {
     pub table_row_odd: String,
     pub table_row_even: String,
     pub table_row_hover: String,
+    #[serde(default)]
+    pub btn_edit_active: String,
+    #[serde(default)]
+    pub btn_save: String,
 }
 
 #[derive(Clone, Serialize, Deserialize, Default)]

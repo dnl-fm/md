@@ -36,25 +36,32 @@ const isDirty = () => showRawMarkdown() && content() !== originalContent();
 // Apply theme colors to CSS variables
 function applyThemeColors(theme?: "dark" | "light") {
   const currentTheme = theme ?? config().theme;
+  const defaults = currentTheme === "dark" ? DEFAULT_DARK_COLORS : DEFAULT_LIGHT_COLORS;
   const colors = currentTheme === "dark" ? darkColors() : lightColors();
   const root = document.documentElement;
-  root.style.setProperty("--bg-primary", colors.bg_primary);
-  root.style.setProperty("--bg-secondary", colors.bg_secondary);
-  root.style.setProperty("--bg-elevated", colors.bg_elevated);
-  root.style.setProperty("--bg-code", colors.bg_code);
-  root.style.setProperty("--bg-inline-code", colors.bg_inline_code);
-  root.style.setProperty("--bg-icon", colors.bg_icon);
-  root.style.setProperty("--text-primary", colors.text_primary);
-  root.style.setProperty("--text-secondary", colors.text_secondary);
-  root.style.setProperty("--text-heading", colors.text_heading);
-  root.style.setProperty("--text-link", colors.text_link);
-  root.style.setProperty("--border-color", colors.border_color);
-  root.style.setProperty("--code-border", colors.code_border);
-  root.style.setProperty("--accent-color", colors.accent_color);
-  root.style.setProperty("--table-header-bg", colors.table_header_bg);
-  root.style.setProperty("--table-row-odd", colors.table_row_odd);
-  root.style.setProperty("--table-row-even", colors.table_row_even);
-  root.style.setProperty("--table-row-hover", colors.table_row_hover);
+  
+  // Helper to use saved color or fall back to default
+  const getColor = (key: keyof ThemeColors) => colors[key] || defaults[key];
+  
+  root.style.setProperty("--bg-primary", getColor("bg_primary"));
+  root.style.setProperty("--bg-secondary", getColor("bg_secondary"));
+  root.style.setProperty("--bg-elevated", getColor("bg_elevated"));
+  root.style.setProperty("--bg-code", getColor("bg_code"));
+  root.style.setProperty("--bg-inline-code", getColor("bg_inline_code"));
+  root.style.setProperty("--bg-icon", getColor("bg_icon"));
+  root.style.setProperty("--text-primary", getColor("text_primary"));
+  root.style.setProperty("--text-secondary", getColor("text_secondary"));
+  root.style.setProperty("--text-heading", getColor("text_heading"));
+  root.style.setProperty("--text-link", getColor("text_link"));
+  root.style.setProperty("--border-color", getColor("border_color"));
+  root.style.setProperty("--code-border", getColor("code_border"));
+  root.style.setProperty("--accent-color", getColor("accent_color"));
+  root.style.setProperty("--table-header-bg", getColor("table_header_bg"));
+  root.style.setProperty("--table-row-odd", getColor("table_row_odd"));
+  root.style.setProperty("--table-row-even", getColor("table_row_even"));
+  root.style.setProperty("--table-row-hover", getColor("table_row_hover"));
+  root.style.setProperty("--btn-edit-active", getColor("btn_edit_active"));
+  root.style.setProperty("--btn-save", getColor("btn_save"));
 }
 
 // Toggle theme
