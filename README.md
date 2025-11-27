@@ -38,6 +38,7 @@
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+O` | Open file |
+| `Ctrl+W` | Close file |
 | `Ctrl+S` | Save changes (in edit mode) |
 | `Ctrl+T` | Toggle theme (dark/light) |
 | `Ctrl+B` | Toggle sidebar |
