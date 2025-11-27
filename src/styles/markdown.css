@@ -212,6 +212,28 @@
   margin-top: 12px;
 }
 
+/* Headers after tables or code blocks need extra spacing */
+.markdown-body table + h1,
+.markdown-body table + h2,
+.markdown-body table + h3,
+.markdown-body table + h4,
+.markdown-body table + h5,
+.markdown-body table + h6,
+.markdown-body pre + h1,
+.markdown-body pre + h2,
+.markdown-body pre + h3,
+.markdown-body pre + h4,
+.markdown-body pre + h5,
+.markdown-body pre + h6,
+.markdown-body .code-block-wrapper + h1,
+.markdown-body .code-block-wrapper + h2,
+.markdown-body .code-block-wrapper + h3,
+.markdown-body .code-block-wrapper + h4,
+.markdown-body .code-block-wrapper + h5,
+.markdown-body .code-block-wrapper + h6 {
+  margin-top: 32px;
+}
+
 /* Tables */
 .markdown-body table {
   width: 100%;
