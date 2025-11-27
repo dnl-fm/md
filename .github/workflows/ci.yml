@@ -37,7 +37,7 @@ jobs:
           bun-version: latest
 
       - name: Install Rust stable
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies (Ubuntu)
         run: |
@@ -48,7 +48,7 @@ jobs:
         run: bun install
 
       - name: Build frontend
-        run: bun run build
+        run: bunx vite build
 
       - name: Check Rust
         run: cd src-tauri && cargo check

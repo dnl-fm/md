@@ -4,9 +4,9 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "start": "vite",
-    "dev": "vite",
-    "build": "vite build",
+    "start": "tauri dev",
+    "dev": "tauri dev",
+    "build": "tauri build",
     "serve": "vite preview",
     "tauri": "tauri",
     "test": "bun test",

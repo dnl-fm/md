@@ -1,23 +1,4 @@
-// Types
-export interface ThemeColors {
-  bg_primary: string;
-  bg_secondary: string;
-  bg_elevated: string;
-  bg_code: string;
-  bg_inline_code: string;
-  bg_icon: string;
-  text_primary: string;
-  text_secondary: string;
-  text_heading: string;
-  text_link: string;
-  border_color: string;
-  code_border: string;
-  accent_color: string;
-  table_header_bg: string;
-  table_row_odd: string;
-  table_row_even: string;
-  table_row_hover: string;
-}
+import type { ThemeColors } from "./types";
 
 export const DEFAULT_DARK_COLORS: ThemeColors = {
   bg_primary: "#1e1e1e",
