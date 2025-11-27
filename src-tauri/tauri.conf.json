@@ -45,6 +45,7 @@
         "bundleMediaFramework": false
       },
       "deb": {
+        "desktopTemplate": "md.desktop",
         "section": "utils",
         "depends": []
       }
