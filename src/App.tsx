@@ -1,5 +1,6 @@
-import { createEffect, onMount } from "solid-js";
+import { createEffect, createSignal, onMount } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
+import { logger } from "./logger";
 import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Marked } from "marked";
@@ -54,6 +55,7 @@ import { Sidebar } from "./components/sidebar";
 import { FileHeader } from "./components/file-header";
 import { MarkdownViewer } from "./components/markdown-viewer";
 import { SettingsModal } from "./components/settings-modal";
+import { WelcomeModal } from "./components/welcome-modal";
 
 // Initialize marked
 const marked = new Marked();
@@ -62,78 +64,93 @@ const marked = new Marked();
 let highlighter: Highlighter | null = null;
 
 function App() {
+  const [showWelcome, setShowWelcome] = createSignal(false);
+
   // Initialize highlighter and config
   onMount(async () => {
-    highlighter = await createHighlighter({
-      themes: ["github-dark", "github-light"],
-      langs: [
-        "javascript",
-        "typescript",
-        "python",
-        "rust",
-        "go",
-        "java",
-        "c",
-        "cpp",
-        "csharp",
-        "php",
-        "ruby",
-        "swift",
-        "kotlin",
-        "sql",
-        "html",
-        "css",
-        "json",
-        "yaml",
-        "toml",
-        "markdown",
-        "bash",
-        "shell",
-        "dockerfile",
-        "plaintext",
-      ],
-    });
+    try {
+      logger.info("App initializing...");
+      highlighter = await createHighlighter({
+        themes: ["github-dark", "github-light"],
+        langs: [
+          "javascript",
+          "typescript",
+          "python",
+          "rust",
+          "go",
+          "java",
+          "c",
+          "cpp",
+          "csharp",
+          "php",
+          "ruby",
+          "swift",
+          "kotlin",
+          "sql",
+          "html",
+          "css",
+          "json",
+          "yaml",
+          "toml",
+          "markdown",
+          "bash",
+          "shell",
+          "dockerfile",
+          "plaintext",
+        ],
+      });
 
-    // Load config
-    const cfg = await invoke<AppConfig>("get_config");
-    setConfig(cfg);
-    setSidebarCollapsed(cfg.sidebar_collapsed);
-    setSidebarWidth(cfg.sidebar_width || 220);
-    setUiFontSize(cfg.ui_font_size || 14);
-    setMarkdownFontSize(cfg.markdown_font_size || 14);
-    setUiFontFamily(cfg.ui_font_family || "system");
-    setMarkdownFontFamily(cfg.markdown_font_family || "JetBrains Mono");
-    setDarkColors({ ...DEFAULT_DARK_COLORS, ...cfg.dark_colors });
-    setLightColors({ ...DEFAULT_LIGHT_COLORS, ...cfg.light_colors });
-    document.documentElement.setAttribute("data-theme", cfg.theme);
-    // Sync light class with theme for index.html styles
-    if (cfg.theme === "light") {
-      document.documentElement.classList.add("light");
-    } else {
-      document.documentElement.classList.remove("light");
+      // Load config
+      const cfg = await invoke<AppConfig>("get_config");
+      setConfig(cfg);
+      setSidebarCollapsed(cfg.sidebar_collapsed);
+      setSidebarWidth(cfg.sidebar_width || 220);
+      setUiFontSize(cfg.ui_font_size || 14);
+      setMarkdownFontSize(cfg.markdown_font_size || 14);
+      setUiFontFamily(cfg.ui_font_family || "system");
+      setMarkdownFontFamily(cfg.markdown_font_family || "JetBrains Mono");
+      setDarkColors({ ...DEFAULT_DARK_COLORS, ...cfg.dark_colors });
+      setLightColors({ ...DEFAULT_LIGHT_COLORS, ...cfg.light_colors });
+      document.documentElement.setAttribute("data-theme", cfg.theme);
+      // Sync light class with theme for index.html styles
+      if (cfg.theme === "light") {
+        document.documentElement.classList.add("light");
+      } else {
+        document.documentElement.classList.remove("light");
+      }
+      localStorage.setItem("theme", cfg.theme);
+      applyThemeColors();
+
+      // Show welcome modal if first run (or ?welcome=1 in dev)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (!cfg.onboarding_complete || urlParams.get("welcome") === "1") {
+        setShowWelcome(true);
+      }
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", handleKeyDown);
+
+      // Check for initial file from CLI first
+      const initialFile = await invoke<string | null>("get_initial_file");
+      if (initialFile) {
+        await loadFile(initialFile);
+      } else if (cfg.history.length > 0) {
+        await loadMostRecentFile(cfg.history);
+      }
+
+      // Listen for file changes
+      await listen<string>("file-changed", (event) => {
+        setContent(event.payload);
+        setOriginalContent(event.payload);
+      });
+    } catch (err) {
+      logger.error(`Failed to initialize app: ${err}`);
+    } finally {
+      logger.info("App ready, hiding splash");
+      
+      // Always hide splash screen
+      (window as any).hideSplash?.();
     }
-    localStorage.setItem("theme", cfg.theme);
-    applyThemeColors();
-
-    // Keyboard shortcuts
-    document.addEventListener("keydown", handleKeyDown);
-
-    // Check for initial file from CLI first
-    const initialFile = await invoke<string | null>("get_initial_file");
-    if (initialFile) {
-      await loadFile(initialFile);
-    } else if (cfg.history.length > 0) {
-      await loadMostRecentFile(cfg.history);
-    }
-
-    // Listen for file changes
-    await listen<string>("file-changed", (event) => {
-      setContent(event.payload);
-      setOriginalContent(event.payload);
-    });
-
-    // Hide splash screen now that app is ready
-    (window as any).hideSplash?.();
   });
 
   // Render markdown when content changes
@@ -204,6 +221,10 @@ function App() {
         case "o":
           e.preventDefault();
           openFileDialog();
+          break;
+        case "w":
+          e.preventDefault();
+          closeFile();
           break;
         case "t":
           e.preventDefault();
@@ -342,6 +363,30 @@ function App() {
     }
   }
 
+  // Close current file
+  async function closeFile() {
+    const file = currentFile();
+    if (file) {
+      // Remove from history
+      const newHistory = config().history.filter((p) => p !== file);
+      const newConfig = { ...config(), history: newHistory };
+      setConfig(newConfig);
+      await invoke("save_config", { config: newConfig });
+      
+      // Open next file in list if available
+      if (newHistory.length > 0) {
+        await loadFile(newHistory[0], false);
+        return;
+      }
+    }
+    setCurrentFile(null);
+    setContent("");
+    setOriginalContent("");
+    setRenderedHtml("");
+    setFileInfo(null);
+    setShowRawMarkdown(false);
+  }
+
   return (
     <div
       class={`app-container ${isResizing() ? "resizing" : ""}`}
@@ -358,6 +403,7 @@ function App() {
       </main>
 
       <SettingsModal />
+      <WelcomeModal show={showWelcome()} onComplete={() => setShowWelcome(false)} />
     </div>
   );
 }

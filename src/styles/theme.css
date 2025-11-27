@@ -649,3 +649,129 @@ body {
 .empty-state-text {
   font-size: 1em;
 }
+
+/* ============================================================================
+   Welcome Modal
+   ============================================================================ */
+
+.welcome-modal {
+  max-width: 400px;
+  text-align: center;
+}
+
+.welcome-header {
+  padding: 20px 24px 12px;
+}
+
+.welcome-icon {
+  margin-bottom: 12px;
+}
+
+.welcome-header h2 {
+  margin: 0 0 4px;
+  font-size: 1.4em;
+  color: var(--text-heading);
+}
+
+.welcome-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+}
+
+.welcome-content {
+  padding: 12px 24px 20px;
+}
+
+.theme-choices {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.theme-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.theme-choice:hover {
+  border-color: var(--accent-color);
+  transform: scale(1.02);
+}
+
+.theme-choice span {
+  font-size: 0.9em;
+  color: var(--text-primary);
+}
+
+.theme-preview {
+  width: 100px;
+  height: 70px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.dark-preview {
+  background: #1e1e1e;
+}
+
+.light-preview {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+}
+
+.preview-header {
+  height: 12px;
+  background: rgba(128, 128, 128, 0.2);
+}
+
+.preview-content {
+  padding: 8px;
+}
+
+.preview-line {
+  height: 6px;
+  border-radius: 3px;
+  margin-bottom: 6px;
+}
+
+.dark-preview .preview-line {
+  background: #4a4a4a;
+}
+
+.light-preview .preview-line {
+  background: #e0e0e0;
+}
+
+.preview-line.short {
+  width: 60%;
+}
+
+.theme-choice.selected {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-color);
+}
+
+.welcome-confirm {
+  margin-top: 20px;
+  padding: 12px 24px;
+  font-size: 1em;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.welcome-confirm:hover {
+  background: color-mix(in srgb, var(--accent-color) 85%, white);
+}

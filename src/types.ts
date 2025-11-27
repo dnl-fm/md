@@ -31,6 +31,7 @@ export interface AppConfig {
   markdown_font_family?: string;
   dark_colors?: ThemeColors;
   light_colors?: ThemeColors;
+  onboarding_complete?: boolean;
 }
 
 export interface FileInfo {
