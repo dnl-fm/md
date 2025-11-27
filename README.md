@@ -13,6 +13,14 @@
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
 </p>
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/theme-dark.png" alt="Dark Theme" width="45%">
+  &nbsp;&nbsp;
+  <img src="docs/theme-light.png" alt="Light Theme" width="45%">
+</p>
+
 ## Features
 
 - **Live Preview** - Real-time markdown rendering with GitHub-flavored markdown support
