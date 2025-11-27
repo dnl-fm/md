@@ -320,17 +320,25 @@ function App() {
   }
 
   // Open file dialog
+  let isDialogOpen = false;
   async function openFileDialog() {
-    const selected = await open({
-      multiple: false,
-      filters: [
-        { name: "Markdown", extensions: ["md", "markdown", "mkd"] },
-        { name: "All Files", extensions: ["*"] },
-      ],
-    });
+    if (isDialogOpen) return;
+    isDialogOpen = true;
+    
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [
+          { name: "Markdown", extensions: ["md", "markdown", "mkd"] },
+          { name: "All Files", extensions: ["*"] },
+        ],
+      });
 
-    if (selected) {
-      await loadFile(selected);
+      if (selected) {
+        await loadFile(selected);
+      }
+    } finally {
+      isDialogOpen = false;
     }
   }
 
