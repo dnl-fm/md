@@ -141,6 +141,7 @@ function App() {
     setDarkColors(cfg.dark_colors || { ...DEFAULT_DARK_COLORS });
     setLightColors(cfg.light_colors || { ...DEFAULT_LIGHT_COLORS });
     document.documentElement.setAttribute("data-theme", cfg.theme);
+    localStorage.setItem("theme", cfg.theme);
     applyThemeColors();
 
     // Keyboard shortcuts
@@ -160,6 +161,9 @@ function App() {
       setContent(event.payload);
       setOriginalContent(event.payload);
     });
+
+    // Hide splash screen now that app is ready
+    (window as any).hideSplash?.();
   });
 
   // Load most recent file that exists
@@ -368,6 +372,8 @@ function App() {
     const newConfig = { ...config(), theme: newTheme };
     setConfig(newConfig);
     document.documentElement.setAttribute("data-theme", newTheme);
+    // Save to localStorage for splash screen
+    localStorage.setItem("theme", newTheme);
     applyThemeColors();
     await invoke("save_config", { config: newConfig });
   }
