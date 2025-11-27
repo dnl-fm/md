@@ -25,6 +25,9 @@
   --table-row-even: #252528;
   --table-row-hover: #2a2a2d;
   
+  --btn-edit-active: #a96dd6;
+  --btn-save: #3b82f6;
+  
   --scrollbar-bg: transparent;
   --scrollbar-thumb: #4a4a4a;
   --scrollbar-thumb-hover: #5a5a5a;
@@ -51,6 +54,9 @@
   --table-row-odd: #ffffff;
   --table-row-even: #f8f8fa;
   --table-row-hover: #eef1f5;
+  
+  --btn-edit-active: #9333ea;
+  --btn-save: #2563eb;
   
   --scrollbar-thumb: #c0c0c0;
   --scrollbar-thumb-hover: #a0a0a0;
@@ -304,6 +310,34 @@ body {
   color: var(--text-heading);
 }
 
+.settings-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-tab {
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.settings-tab:hover {
+  color: var(--text-primary);
+}
+
+.settings-tab.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+}
+
 .modal-content {
   flex: 1;
   overflow-y: auto;
@@ -420,30 +454,30 @@ body {
 }
 
 .btn.btn-small.active {
-  background: #a96dd6 !important;
+  background: var(--btn-edit-active) !important;
   color: #fff;
-  border-color: #a96dd6 !important;
+  border-color: var(--btn-edit-active) !important;
 }
 
 .btn.btn-small.active:hover {
-  background: #b985dd !important;
-  border-color: #b985dd !important;
+  background: color-mix(in srgb, var(--btn-edit-active) 85%, white) !important;
+  border-color: color-mix(in srgb, var(--btn-edit-active) 85%, white) !important;
 }
 
 .btn.btn-small.active:focus,
 .btn.btn-small.active:focus-visible {
   outline: none;
   box-shadow: none;
-  border-color: #a96dd6 !important;
+  border-color: var(--btn-edit-active) !important;
 }
 
 .btn.btn-dirty {
-  background: #3b82f6 !important;
+  background: var(--btn-save) !important;
   color: white !important;
 }
 
 .btn.btn-dirty:hover {
-  background: #60a5fa !important;
+  background: color-mix(in srgb, var(--btn-save) 85%, white) !important;
 }
 
 .shortcuts-list {
