@@ -89,17 +89,13 @@ The built application will be in `src-tauri/target/release/bundle/`.
 
 ### Open a file
 
-```bash
-# Open MD with a file
-md-preview-tauri /path/to/file.md
-
-# Or just open MD and use Ctrl+O to select a file
-md-preview-tauri
-```
+- **From file manager**: Double-click any `.md` file or right-click → "Open with MD"
+- **From app**: Launch MD and press `Ctrl+O` to select a file
+- **From terminal**: `md /path/to/file.md` (if installed via .deb/.rpm)
 
 ### File Associations
 
-MD registers itself for `.md` and `.markdown` files. Right-click any markdown file and select "Open with MD".
+MD registers itself for `.md` and `.markdown` files during installation.
 
 ### Settings
 
