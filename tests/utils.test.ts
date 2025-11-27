@@ -183,6 +183,8 @@ describe("constants", () => {
       "text_primary",
       "text_link",
       "accent_color",
+      "btn_edit_active",
+      "btn_save",
     ];
     requiredKeys.forEach((key) => {
       expect(DEFAULT_DARK_COLORS).toHaveProperty(key);
@@ -196,6 +198,8 @@ describe("constants", () => {
       "text_primary",
       "text_link",
       "accent_color",
+      "btn_edit_active",
+      "btn_save",
     ];
     requiredKeys.forEach((key) => {
       expect(DEFAULT_LIGHT_COLORS).toHaveProperty(key);
