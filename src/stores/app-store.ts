@@ -70,6 +70,12 @@ async function toggleTheme() {
   const newConfig = { ...config(), theme: newTheme };
   setConfig(newConfig);
   document.documentElement.setAttribute("data-theme", newTheme);
+  // Toggle light class for index.html splash screen styles
+  if (newTheme === "light") {
+    document.documentElement.classList.add("light");
+  } else {
+    document.documentElement.classList.remove("light");
+  }
   localStorage.setItem("theme", newTheme);
   applyThemeColors(newTheme);
   await invoke("save_config", { config: newConfig });

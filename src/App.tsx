@@ -106,6 +106,12 @@ function App() {
     setDarkColors({ ...DEFAULT_DARK_COLORS, ...cfg.dark_colors });
     setLightColors({ ...DEFAULT_LIGHT_COLORS, ...cfg.light_colors });
     document.documentElement.setAttribute("data-theme", cfg.theme);
+    // Sync light class with theme for index.html styles
+    if (cfg.theme === "light") {
+      document.documentElement.classList.add("light");
+    } else {
+      document.documentElement.classList.remove("light");
+    }
     localStorage.setItem("theme", cfg.theme);
     applyThemeColors();
 
