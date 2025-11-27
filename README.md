@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/dnl-fm/md/main/src-tauri/icons/128x128@2x.png" alt="MD Logo" width="128" height="128">
+  <img src="src-tauri/icons/128x128@2x.png" alt="MD Logo" width="128" height="128">
 </p>
 
 <h1 align="center">MD</h1>
