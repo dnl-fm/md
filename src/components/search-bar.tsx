@@ -1,4 +1,4 @@
-import { createEffect, onCleanup } from "solid-js";
+import { createEffect } from "solid-js";
 import {
   showSearch,
   setShowSearch,
@@ -6,7 +6,6 @@ import {
   setSearchQuery,
   searchMatches,
   currentMatch,
-  setCurrentMatch,
 } from "../stores/app-store";
 
 interface SearchBarProps {
