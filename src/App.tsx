@@ -41,6 +41,9 @@ import {
   setShowSettings,
   showRawMarkdown,
   setShowRawMarkdown,
+  showSearch,
+  setShowSearch,
+  setSearchQuery,
 } from "./stores/app-store";
 import {
   DEFAULT_DARK_COLORS,
@@ -267,6 +270,17 @@ function App() {
             setShowRawMarkdown(!showRawMarkdown());
           }
           break;
+        case "f": {
+          e.preventDefault();
+          if (!showRawMarkdown()) {
+            const willOpen = !showSearch();
+            setShowSearch(willOpen);
+            if (willOpen) {
+              setSearchQuery("");
+            }
+          }
+          break;
+        }
         case "1":
         case "2":
         case "3":
@@ -286,7 +300,10 @@ function App() {
       }
     }
     if (e.key === "Escape") {
-      if (showSettings()) {
+      if (showSearch()) {
+        setShowSearch(false);
+        setSearchQuery("");
+      } else if (showSettings()) {
         setShowSettings(false);
       } else if (showRawMarkdown()) {
         setContent(originalContent());

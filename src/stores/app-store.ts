@@ -30,6 +30,12 @@ const [markdownFontFamily, setMarkdownFontFamily] = createSignal("JetBrains Mono
 const [showSettings, setShowSettings] = createSignal(false);
 const [showRawMarkdown, setShowRawMarkdown] = createSignal(false);
 
+// Search state
+const [showSearch, setShowSearch] = createSignal(false);
+const [searchQuery, setSearchQuery] = createSignal("");
+const [searchMatches, setSearchMatches] = createSignal<number>(0);
+const [currentMatch, setCurrentMatch] = createSignal<number>(0);
+
 // Derived state
 const isDirty = () => showRawMarkdown() && content() !== originalContent();
 
@@ -163,4 +169,13 @@ export {
   setShowSettings,
   showRawMarkdown,
   setShowRawMarkdown,
+  // Search state
+  showSearch,
+  setShowSearch,
+  searchQuery,
+  setSearchQuery,
+  searchMatches,
+  setSearchMatches,
+  currentMatch,
+  setCurrentMatch,
 };
