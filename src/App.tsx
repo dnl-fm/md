@@ -41,6 +41,9 @@ import {
   setShowSettings,
   showRawMarkdown,
   setShowRawMarkdown,
+  showSearch,
+  setShowSearch,
+  setSearchQuery,
 } from "./stores/app-store";
 import {
   DEFAULT_DARK_COLORS,
@@ -265,6 +268,15 @@ function App() {
           e.preventDefault();
           if (!isDirty()) {
             setShowRawMarkdown(!showRawMarkdown());
+          }
+          break;
+        case "f":
+          e.preventDefault();
+          if (!showRawMarkdown()) {
+            setShowSearch(!showSearch());
+            if (!showSearch()) {
+              setSearchQuery("");
+            }
           }
           break;
         case "1":
