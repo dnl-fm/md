@@ -1,6 +1,6 @@
 [package]
 name = "md"
-version = "0.2.0"
+version = "0.2.1"
 description = "A fast, lightweight Markdown preview application built with Tauri 2, SolidJS, and Shiki."
 authors = ["Tino Ehrich"]
 edition = "2021"

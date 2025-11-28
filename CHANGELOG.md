@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2025-11-28
+
+### Added
+- Single-instance support: opening a file reuses existing window instead of launching new instance
+
 ## [0.2.0] - 2025-11-27
 
 ### Added
