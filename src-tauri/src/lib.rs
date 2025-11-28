@@ -8,7 +8,7 @@ use std::{
     path::PathBuf,
     time::Duration,
 };
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use chrono::Local;
 
 const MAX_HISTORY: usize = 20;
@@ -315,6 +315,25 @@ fn get_initial_file() -> Option<String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            // When second instance is launched, this callback runs in the first instance
+            // argv[0] is the program path, argv[1] would be the file path if provided
+            if argv.len() > 1 {
+                let file_path = &argv[1];
+                if !file_path.starts_with('-') {
+                    if let Ok(canonical) = std::fs::canonicalize(file_path) {
+                        if let Some(path_str) = canonical.to_str() {
+                            let _ = app.emit("open-file", path_str.to_string());
+                        }
+                    }
+                }
+            }
+            // Focus the main window
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_focus();
+                let _ = window.unminimize();
+            }
+        }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())

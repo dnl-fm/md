@@ -143,6 +143,12 @@ function App() {
         setContent(event.payload);
         setOriginalContent(event.payload);
       });
+
+      // Listen for file opened from another instance (single-instance)
+      await listen<string>("open-file", (event) => {
+        logger.info(`Opening file from second instance: ${event.payload}`);
+        loadFile(event.payload);
+      });
     } catch (err) {
       logger.error(`Failed to initialize app: ${err}`);
     } finally {
