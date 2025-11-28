@@ -291,21 +291,29 @@ fn stop_watching(state: tauri::State<AppState>) {
     *state.current_file.lock() = None;
 }
 
-#[tauri::command]
-fn get_initial_file() -> Option<String> {
-    // Get CLI args - skip the first one (program name)
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    
-    args.first()
-        .filter(|arg| !arg.starts_with('-'))
+/// Resolve a file path argument from CLI args.
+/// Skips flags (args starting with '-') and returns canonicalized path if file exists.
+fn resolve_file_arg<I, S>(args: I) -> Option<String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    args.into_iter()
+        .find(|arg| !arg.as_ref().starts_with('-'))
         .and_then(|path| {
-            let p = PathBuf::from(path);
+            let p = PathBuf::from(path.as_ref());
             if p.exists() {
                 p.canonicalize().ok()?.to_str().map(|s| s.to_string())
             } else {
                 None
             }
         })
+}
+
+#[tauri::command]
+fn get_initial_file() -> Option<String> {
+    // Get CLI args - skip the first one (program name)
+    resolve_file_arg(std::env::args().skip(1))
 }
 
 // ============================================================================
@@ -317,16 +325,9 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             // When second instance is launched, this callback runs in the first instance
-            // argv[0] is the program path, argv[1] would be the file path if provided
-            if argv.len() > 1 {
-                let file_path = &argv[1];
-                if !file_path.starts_with('-') {
-                    if let Ok(canonical) = std::fs::canonicalize(file_path) {
-                        if let Some(path_str) = canonical.to_str() {
-                            let _ = app.emit("open-file", path_str.to_string());
-                        }
-                    }
-                }
+            // argv[0] is the program path, so skip it
+            if let Some(path) = resolve_file_arg(argv.iter().skip(1)) {
+                let _ = app.emit("open-file", path);
             }
             // Focus the main window
             if let Some(window) = app.get_webview_window("main") {
