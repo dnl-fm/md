@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2025-11-28
+
+### Added
+- In-document search with Ctrl+F
+- Search highlights matches in yellow, current match in orange
+- Navigate matches with Enter/Shift+Enter or arrow buttons
+- Minimap on right edge shows match positions in document
+- Click minimap markers to jump to specific match
+- LLM.md reference documentation for codebase
+
 ## [0.2.1] - 2025-11-28
 
 ### Added
