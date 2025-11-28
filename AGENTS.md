@@ -1,5 +1,9 @@
 # Project Instructions
 
+## Reference
+
+See [LLM.md](LLM.md) for comprehensive project documentation including architecture, state management, Tauri commands, theming, and common patterns.
+
 ## Versioning
 
 When creating a new version:
