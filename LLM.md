@@ -16,7 +16,7 @@
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Tauri Window                            │
 ├─────────────────────────────────────────────────────────────────┤
@@ -45,7 +45,7 @@
 
 ## Project Structure
 
-```
+```text
 md/
 ├── src/                          # Frontend (SolidJS/TypeScript)
 │   ├── App.tsx                   # Main application component
@@ -149,7 +149,7 @@ Frontend calls Rust via `invoke()`:
 | `add_to_history` | `path: string` | - | Add file to recent history |
 | `remove_from_history` | `path: string` | - | Remove from history |
 | `file_exists` | `path: string` | `boolean` | Check if file exists |
-| `get_initial_file` | - | `string | null` | Get CLI-provided file path |
+| `get_initial_file` | - | `string \| null` | Get CLI-provided file path |
 | `log_message` | `level, message` | - | Write to log file |
 
 ---
