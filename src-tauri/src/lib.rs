@@ -149,9 +149,13 @@ impl AppConfig {
         }
     }
 
-    pub fn add_to_history(&mut self, path: &str) {
+    pub fn add_to_history(&mut self, path: &str, append_to_end: bool) {
         self.history.retain(|p| p != path);
-        self.history.push_front(path.to_string());
+        if append_to_end {
+            self.history.push_back(path.to_string());
+        } else {
+            self.history.push_front(path.to_string());
+        }
         while self.history.len() > MAX_HISTORY {
             self.history.pop_back();
         }
@@ -231,8 +235,8 @@ fn get_file_info(path: &str) -> Result<FileInfo, String> {
 }
 
 #[tauri::command]
-fn add_to_history(state: tauri::State<AppState>, path: &str) {
-    state.config.lock().add_to_history(path);
+fn add_to_history(state: tauri::State<AppState>, path: &str, append_to_end: bool) {
+    state.config.lock().add_to_history(path, append_to_end);
 }
 
 #[tauri::command]

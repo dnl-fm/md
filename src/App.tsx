@@ -148,9 +148,10 @@ function App() {
       });
 
       // Listen for file opened from another instance (single-instance)
+      // Append to end of history so it doesn't jump to top of sidebar
       await listen<string>("open-file", (event) => {
         logger.info(`Opening file from second instance: ${event.payload}`);
-        loadFile(event.payload);
+        loadFile(event.payload, true, true);
       });
     } catch (err) {
       logger.error(`Failed to initialize app: ${err}`);
@@ -341,7 +342,7 @@ function App() {
   }
 
   // Load a file
-  async function loadFile(path: string, addToHistory: boolean = true) {
+  async function loadFile(path: string, addToHistory: boolean = true, appendToEnd: boolean = false) {
     try {
       const fileContent = await invoke<string>("read_file", { path });
       setContent(fileContent);
@@ -352,7 +353,7 @@ function App() {
       setFileInfo(info);
 
       if (addToHistory && !config().history.includes(path)) {
-        await invoke("add_to_history", { path });
+        await invoke("add_to_history", { path, appendToEnd });
         const cfg = await invoke<AppConfig>("get_config");
         setConfig(cfg);
       }
