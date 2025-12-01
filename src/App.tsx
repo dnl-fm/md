@@ -204,9 +204,9 @@ function App() {
     setRenderedHtml(html);
   });
 
-  // Load most recent file that exists
+  // Load most recent file that exists (last in list = most recently opened)
   async function loadMostRecentFile(history: string[]) {
-    for (const path of history) {
+    for (const path of [...history].reverse()) {
       try {
         const exists = await invoke<boolean>("file_exists", { path });
         if (exists) {
