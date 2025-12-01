@@ -44,6 +44,8 @@ export function HelpModal(props: HelpModalProps) {
                   <div class="shortcut"><kbd>Ctrl+W</kbd> Close file</div>
                   <div class="shortcut"><kbd>Ctrl+S</kbd> Save file</div>
                   <div class="shortcut"><kbd>Ctrl+1-9</kbd> Quick access</div>
+                  <div class="shortcut"><kbd>Ctrl+]</kbd> Next file</div>
+                  <div class="shortcut"><kbd>Ctrl+[</kbd> Previous file</div>
                 </div>
               </div>
 

@@ -341,6 +341,43 @@ function App() {
           }
           break;
         }
+        case "[":
+        case "]": {
+          e.preventDefault();
+          const history = config().history;
+          const draftList = drafts();
+          const totalItems = history.length + draftList.length;
+          if (totalItems === 0) break;
+          
+          // Find current index
+          const file = currentFile();
+          const draftId = currentDraftId();
+          let currentIndex = -1;
+          if (file) {
+            currentIndex = history.indexOf(file);
+          } else if (draftId) {
+            const draftIndex = draftList.findIndex(d => d.id === draftId);
+            if (draftIndex !== -1) currentIndex = history.length + draftIndex;
+          }
+          
+          // Calculate next/previous with wrap-around
+          let newIndex: number;
+          if (e.key === "]") {
+            // Next
+            newIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % totalItems;
+          } else {
+            // Previous
+            newIndex = currentIndex === -1 ? totalItems - 1 : (currentIndex - 1 + totalItems) % totalItems;
+          }
+          
+          // Load the item
+          if (newIndex < history.length) {
+            loadFile(history[newIndex], false);
+          } else {
+            loadDraft(draftList[newIndex - history.length].id);
+          }
+          break;
+        }
       }
     }
     if (e.key === "Escape") {
