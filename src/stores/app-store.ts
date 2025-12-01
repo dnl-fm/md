@@ -19,6 +19,37 @@ const [originalContent, setOriginalContent] = createSignal<string>("");
 const [renderedHtml, setRenderedHtml] = createSignal<string>("");
 const [fileInfo, setFileInfo] = createSignal<FileInfo | null>(null);
 
+// Draft state (unsaved new files)
+export interface Draft {
+  id: string;
+  content: string;
+}
+const [drafts, setDrafts] = createSignal<Draft[]>([]);
+const [currentDraftId, setCurrentDraftId] = createSignal<string | null>(null);
+let draftCounter = 0;
+
+function createDraft(): string {
+  draftCounter++;
+  const id = `draft-${draftCounter}`;
+  setDrafts([...drafts(), { id, content: "" }]);
+  return id;
+}
+
+function updateDraft(id: string, content: string) {
+  setDrafts(drafts().map(d => d.id === id ? { ...d, content } : d));
+}
+
+function removeDraft(id: string) {
+  setDrafts(drafts().filter(d => d.id !== id));
+  if (currentDraftId() === id) {
+    setCurrentDraftId(null);
+  }
+}
+
+function getDraft(id: string): Draft | undefined {
+  return drafts().find(d => d.id === id);
+}
+
 // UI state
 const [sidebarCollapsed, setSidebarCollapsed] = createSignal(false);
 const [sidebarWidth, setSidebarWidth] = createSignal(220);
@@ -68,6 +99,8 @@ function applyThemeColors(theme?: "dark" | "light") {
   root.style.setProperty("--table-row-hover", getColor("table_row_hover"));
   root.style.setProperty("--btn-edit-active", getColor("btn_edit_active"));
   root.style.setProperty("--btn-save", getColor("btn_save"));
+  root.style.setProperty("--draft-bg", getColor("draft_bg"));
+  root.style.setProperty("--draft-hover", getColor("draft_hover"));
 }
 
 // Toggle theme
@@ -178,4 +211,13 @@ export {
   setSearchMatches,
   currentMatch,
   setCurrentMatch,
+  // Draft state
+  drafts,
+  setDrafts,
+  currentDraftId,
+  setCurrentDraftId,
+  createDraft,
+  updateDraft,
+  removeDraft,
+  getDraft,
 };

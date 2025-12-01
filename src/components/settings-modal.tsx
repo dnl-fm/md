@@ -43,6 +43,8 @@ const colorLabels: Record<keyof ThemeColors, string> = {
   table_row_hover: "Table Row Hover",
   btn_edit_active: "Edit Button Active",
   btn_save: "Save Button",
+  draft_bg: "Draft Background",
+  draft_hover: "Draft Hover",
 };
 
 type SettingsTab = "fonts" | "dark" | "light" | "shortcuts";
@@ -243,6 +245,9 @@ export function SettingsModal() {
             <Show when={activeTab() === "shortcuts"}>
               <div class="settings-section">
                 <div class="shortcuts-list">
+                  <div class="shortcut">
+                    <kbd>Ctrl+N</kbd> New file
+                  </div>
                   <div class="shortcut">
                     <kbd>Ctrl+O</kbd> Open file
                   </div>

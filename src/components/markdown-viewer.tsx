@@ -11,6 +11,7 @@ import {
   currentMatch,
   setCurrentMatch,
   searchMatches,
+  currentDraftId,
 } from "../stores/app-store";
 import { getFontFamilyCSS } from "../utils";
 import { EmptyState } from "./empty-state";
@@ -18,6 +19,7 @@ import { SearchBar } from "./search-bar";
 
 interface MarkdownViewerProps {
   onSaveAndPreview: () => void;
+  onSaveDraft?: () => void;
 }
 
 // Match position for minimap
@@ -150,7 +152,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   return (
     <div class="markdown-container" ref={containerRef}>
       <SearchBar onNavigate={navigateMatch} />
-      <Show when={content()} fallback={<EmptyState />}>
+      <Show when={content() || showRawMarkdown() || currentDraftId()} fallback={<EmptyState />}>
         <Show when={showRawMarkdown()}>
           <textarea
             class="markdown-raw markdown-editor"
@@ -163,7 +165,11 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
             onKeyDown={(e) => {
               if ((e.ctrlKey || e.metaKey) && e.key === "s") {
                 e.preventDefault();
-                props.onSaveAndPreview();
+                if (currentDraftId()) {
+                  props.onSaveDraft?.();
+                } else {
+                  props.onSaveAndPreview();
+                }
               }
             }}
             spellcheck={false}

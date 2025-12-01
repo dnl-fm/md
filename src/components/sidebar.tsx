@@ -12,12 +12,15 @@ import {
   setIsResizing,
   toggleTheme,
   setShowSettings,
+  drafts,
+  currentDraftId,
 } from "../stores/app-store";
 import { getFilename, clamp, calculateSidebarWidth } from "../utils";
 
 interface SidebarProps {
   onOpenFile: () => void;
   onLoadFile: (path: string, addToHistory?: boolean) => void;
+  onLoadDraft: (id: string) => void;
 }
 
 export function Sidebar(props: SidebarProps) {
@@ -99,6 +102,17 @@ export function Sidebar(props: SidebarProps) {
                 </div>
               )}
             </For>
+            <For each={drafts()}>
+              {(draft) => (
+                <div
+                  class={`history-item draft ${currentDraftId() === draft.id ? "active" : ""}`}
+                  onClick={() => props.onLoadDraft(draft.id)}
+                  title="Untitled (unsaved)"
+                >
+                  📄 Untitled
+                </div>
+              )}
+            </For>
           </div>
         </div>
       </Show>
@@ -114,17 +128,35 @@ export function Sidebar(props: SidebarProps) {
             📂
           </button>
           <div class="recent-buttons">
-            <For each={config().history.slice(0, 9)}>
-              {(path, index) => (
-                <button
-                  class={`btn btn-icon ${currentFile() === path ? "active" : ""}`}
-                  onClick={() => props.onLoadFile(path, false)}
-                  title={`${path} (Ctrl+${index() + 1})`}
-                >
-                  {index() + 1}
-                </button>
-              )}
-            </For>
+            {(() => {
+              const historyCount = config().history.length;
+              return (
+                <>
+                  <For each={config().history.slice(0, 9)}>
+                    {(path, index) => (
+                      <button
+                        class={`btn btn-icon ${currentFile() === path ? "active" : ""}`}
+                        onClick={() => props.onLoadFile(path, false)}
+                        title={`${path} (Ctrl+${index() + 1})`}
+                      >
+                        {index() + 1}
+                      </button>
+                    )}
+                  </For>
+                  <For each={drafts().slice(0, 9 - historyCount)}>
+                    {(draft, index) => (
+                      <button
+                        class={`btn btn-icon draft ${currentDraftId() === draft.id ? "active" : ""}`}
+                        onClick={() => props.onLoadDraft(draft.id)}
+                        title="Untitled (unsaved)"
+                      >
+                        {historyCount + index() + 1}
+                      </button>
+                    )}
+                  </For>
+                </>
+              );
+            })()}
           </div>
         </div>
       </Show>

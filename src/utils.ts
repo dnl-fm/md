@@ -20,6 +20,8 @@ export const DEFAULT_DARK_COLORS: ThemeColors = {
   table_row_hover: "#2a2a2d",
   btn_edit_active: "#a96dd6",
   btn_save: "#3b82f6",
+  draft_bg: "#4a4020",
+  draft_hover: "#3d351a",
 };
 
 export const DEFAULT_LIGHT_COLORS: ThemeColors = {
@@ -42,6 +44,8 @@ export const DEFAULT_LIGHT_COLORS: ThemeColors = {
   table_row_hover: "#eef1f5",
   btn_edit_active: "#9333ea",
   btn_save: "#2563eb",
+  draft_bg: "#fff3d0",
+  draft_hover: "#ffe9a0",
 };
 
 export const FONT_OPTIONS = [

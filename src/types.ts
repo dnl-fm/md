@@ -18,6 +18,8 @@ export interface ThemeColors {
   table_row_hover: string;
   btn_edit_active: string;
   btn_save: string;
+  draft_bg: string;
+  draft_hover: string;
 }
 
 export interface AppConfig {
