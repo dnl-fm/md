@@ -228,6 +228,8 @@ Key CSS variables:
 | `Ctrl++/-/0` | Font size | `changeMarkdownFontSize()` |
 | `Ctrl+Space` | Toggle edit mode | `setShowRawMarkdown()` |
 | `Ctrl+1-9` | Open Nth file/draft | Quick access |
+| `Tab` | Indent line(s) (edit mode) | `markdown-viewer.tsx` |
+| `Shift+Tab` | Dedent line(s) (edit mode) | `markdown-viewer.tsx` |
 | `Esc` | Cancel edit / close modal / search | Various |
 
 ---

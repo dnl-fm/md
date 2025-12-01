@@ -53,6 +53,8 @@
 | `Ctrl+0` | Reset font size |
 | `Ctrl+1-9` | Open Nth file/draft from sidebar |
 | `Ctrl+Space` | Toggle edit mode |
+| `Tab` | Indent line(s) (in edit mode) |
+| `Shift+Tab` | Dedent line(s) (in edit mode) |
 | `Esc` | Cancel edit / close search / discard changes |
 
 ## Installation

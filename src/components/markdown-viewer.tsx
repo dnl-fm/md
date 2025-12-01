@@ -226,7 +226,58 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                     }
                   }}
                   onKeyDown={(e) => {
-                    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+                    if (e.key === "Tab" || e.code === "Tab") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const textarea = e.currentTarget;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      const value = content();
+                      
+                      // Find line boundaries for selection
+                      const firstLineStart = value.lastIndexOf("\n", start - 1) + 1;
+                      const lastLineEnd = value.indexOf("\n", end);
+                      const selectionEnd = lastLineEnd === -1 ? value.length : lastLineEnd;
+                      
+                      // Get selected lines
+                      const before = value.substring(0, firstLineStart);
+                      const selectedText = value.substring(firstLineStart, selectionEnd);
+                      const after = value.substring(selectionEnd);
+                      const lines = selectedText.split("\n");
+                      
+                      let newLines: string[];
+                      let deltaFirst = 0; // Change in first line length
+                      let deltaTotal = 0; // Total change in length
+                      
+                      if (e.shiftKey) {
+                        // Dedent: remove up to 2 spaces from start of each line
+                        newLines = lines.map((line, i) => {
+                          const spaces = line.startsWith("  ") ? 2 : line.startsWith(" ") ? 1 : 0;
+                          if (i === 0) deltaFirst = -spaces;
+                          deltaTotal -= spaces;
+                          return line.substring(spaces);
+                        });
+                      } else {
+                        // Indent: add 2 spaces to start of each line
+                        newLines = lines.map((line, i) => {
+                          if (i === 0) deltaFirst = 2;
+                          deltaTotal += 2;
+                          return "  " + line;
+                        });
+                      }
+                      
+                      const newValue = before + newLines.join("\n") + after;
+                      const newStart = Math.max(firstLineStart, start + deltaFirst);
+                      const newEnd = end + deltaTotal;
+                      
+                      setContent(newValue);
+                      queueMicrotask(() => {
+                        if (textareaRef) {
+                          textareaRef.focus();
+                          textareaRef.setSelectionRange(newStart, newEnd);
+                        }
+                      });
+                    } else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
                       e.preventDefault();
                       if (currentDraftId()) {
                         props.onSaveDraft?.();
