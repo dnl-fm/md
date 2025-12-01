@@ -60,6 +60,8 @@ md/
 │   │   ├── settings-modal.tsx    # Font & color customization (UI/Markdown sub-tabs)
 │   │   ├── confirm-dialog.tsx    # Reusable centered confirm dialog
 │   │   ├── welcome-modal.tsx     # First-run onboarding
+│   │   ├── help-modal.tsx        # Help with shortcuts and version info
+│   │   ├── release-notification.tsx # New version toast notification
 │   │   └── empty-state.tsx       # No file open state
 │   ├── stores/
 │   │   └── app-store.ts          # SolidJS signals (reactive state)
@@ -103,6 +105,8 @@ md/
 | `src/components/sidebar.tsx` | Collapsible sidebar with file history, resizable |
 | `src/components/settings-modal.tsx` | Settings UI: fonts, theme colors (UI/Markdown sub-tabs) |
 | `src/components/confirm-dialog.tsx` | Reusable confirm dialog with `confirm()` function |
+| `src/components/help-modal.tsx` | Help modal with keyboard shortcuts and version info |
+| `src/components/release-notification.tsx` | Toast notification for new releases |
 
 ### Backend
 
@@ -129,7 +133,9 @@ renderedHtml()        // string: HTML output from marked
 // UI state signals
 sidebarCollapsed()    // boolean
 showSettings()        // boolean
+showHelp()            // boolean: help modal visible
 showRawMarkdown()     // boolean: edit mode toggle
+isReadOnly()          // boolean: current file is read-only (e.g., bundled changelog)
 showLineNumbers()     // boolean: line numbers in edit mode
 showSearch()          // boolean: search bar visible
 searchQuery()         // string: current search term
@@ -160,6 +166,8 @@ Frontend calls Rust via `invoke()`:
 | `file_exists` | `path: string` | `boolean` | Check if file exists |
 | `get_initial_file` | - | `string \| null` | Get CLI-provided file path |
 | `log_message` | `level, message` | - | Write to log file |
+| `get_app_version` | - | `string` | Get app version from Cargo.toml |
+| `get_changelog_path` | - | `string` | Get path to bundled CHANGELOG.md |
 
 ---
 
@@ -189,6 +197,7 @@ interface AppConfig {
   dark_colors?: ThemeColors;   // Custom theme overrides
   light_colors?: ThemeColors;
   onboarding_complete: boolean;
+  last_seen_version?: string;  // Tracks which release notification user has seen
 }
 ```
 
@@ -227,6 +236,7 @@ Key CSS variables:
 | `Ctrl+T` | Toggle theme | `toggleTheme()` |
 | `Ctrl+B` | Toggle sidebar | `toggleSidebar()` |
 | `Ctrl+,` | Open settings | `setShowSettings()` |
+| `Ctrl+H` | Open help | `setShowHelp()` |
 | `Ctrl++/-/0` | Font size | `changeMarkdownFontSize()` |
 | `Ctrl+Space` | Toggle edit mode | `setShowRawMarkdown()` |
 | `Ctrl+1-9` | Open Nth file/draft | Quick access |
@@ -234,6 +244,17 @@ Key CSS variables:
 | `Shift+Tab` | Dedent line(s) (edit mode) | `markdown-viewer.tsx` |
 | Wrap chars (`'`, `## "`, `` ` ``, etc.) | Wrap/replace selection | `markdown-viewer.tsx` |
 | `Esc` | Cancel edit / close modal / search | Various |
+
+---
+
+## Release Notifications
+
+On app startup, if `config.last_seen_version` differs from the current app version (and onboarding is complete), a toast notification appears in the lower-right corner:
+
+- Shows "New Release X.Y.Z" with a "View Changelog" button
+- Clicking "View Changelog" loads the bundled `CHANGELOG.md` as a read-only file
+- Dismissing (X button or viewing changelog) saves `last_seen_version` to config
+- The changelog is added to recent files like any normal file but cannot be edited
 
 ---
 
