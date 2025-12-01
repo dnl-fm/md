@@ -26,6 +26,8 @@ import {
   setOriginalContent,
   setRenderedHtml,
   setFileInfo,
+  setIsReadOnly,
+  isReadOnly,
   isDirty,
   sidebarCollapsed,
   setSidebarCollapsed,
@@ -70,6 +72,7 @@ import { MarkdownViewer } from "./components/markdown-viewer";
 import { SettingsModal } from "./components/settings-modal";
 import { ConfirmDialog } from "./components/confirm-dialog";
 import { WelcomeModal } from "./components/welcome-modal";
+import { ReleaseNotification } from "./components/release-notification";
 
 // Initialize marked
 const marked = new Marked();
@@ -79,6 +82,8 @@ let highlighter: Highlighter | null = null;
 
 function App() {
   const [showWelcome, setShowWelcome] = createSignal(false);
+  const [showReleaseNotification, setShowReleaseNotification] = createSignal(false);
+  const [appVersion, setAppVersion] = createSignal("");
 
   // Initialize highlighter and config
   onMount(async () => {
@@ -139,6 +144,13 @@ function App() {
       const urlParams = new URLSearchParams(window.location.search);
       if (!cfg.onboarding_complete || urlParams.get("welcome") === "1") {
         setShowWelcome(true);
+      }
+
+      // Check for new version notification
+      const version = await invoke<string>("get_app_version");
+      setAppVersion(version);
+      if (cfg.onboarding_complete && cfg.last_seen_version !== version) {
+        setShowReleaseNotification(true);
       }
 
       // Keyboard shortcuts
@@ -277,11 +289,13 @@ function App() {
           break;
         case " ":
           e.preventDefault();
-          setShowRawMarkdown(!showRawMarkdown());
+          if (!isReadOnly()) {
+            setShowRawMarkdown(!showRawMarkdown());
+          }
           break;
         case "e":
           e.preventDefault();
-          if (!isDirty()) {
+          if (!isDirty() && !isReadOnly()) {
             setShowRawMarkdown(!showRawMarkdown());
           }
           break;
@@ -433,6 +447,10 @@ function App() {
       setCurrentFile(path);
       setCurrentDraftId(null);
       setShowRawMarkdown(false);
+      
+      // Mark bundled changelog as read-only (in resource dir or dev src-tauri parent)
+      const changelogPath = await invoke<string>("get_changelog_path").catch(() => null);
+      setIsReadOnly(changelogPath !== null && path === changelogPath);
 
       const info = await invoke<FileInfo>("get_file_info", { path });
       setFileInfo(info);
@@ -562,6 +580,13 @@ function App() {
       <SettingsModal />
       <WelcomeModal show={showWelcome()} onComplete={() => setShowWelcome(false)} />
       <ConfirmDialog />
+      {showReleaseNotification() && (
+        <ReleaseNotification 
+          version={appVersion()} 
+          onDismiss={() => setShowReleaseNotification(false)}
+          onLoadFile={loadFile}
+        />
+      )}
     </div>
   );
 }

@@ -19,6 +19,7 @@ const [content, setContent] = createSignal<string>("");
 const [originalContent, setOriginalContent] = createSignal<string>("");
 const [renderedHtml, setRenderedHtml] = createSignal<string>("");
 const [fileInfo, setFileInfo] = createSignal<FileInfo | null>(null);
+const [isReadOnly, setIsReadOnly] = createSignal(false);
 
 // Draft state (unsaved new files)
 export interface Draft {
@@ -189,6 +190,8 @@ export {
   setRenderedHtml,
   fileInfo,
   setFileInfo,
+  isReadOnly,
+  setIsReadOnly,
   isDirty,
   // UI state
   sidebarCollapsed,

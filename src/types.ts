@@ -36,6 +36,7 @@ export interface AppConfig {
   dark_colors?: ThemeColors;
   light_colors?: ThemeColors;
   onboarding_complete?: boolean;
+  last_seen_version?: string;
 }
 
 export interface FileInfo {

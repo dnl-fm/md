@@ -3,6 +3,7 @@ import {
   currentFile,
   fileInfo,
   isDirty,
+  isReadOnly,
   showRawMarkdown,
   setShowRawMarkdown,
   setContent,
@@ -36,25 +37,27 @@ export function FileHeader(props: FileHeaderProps) {
                 Cancel
               </button>
             </Show>
-            <button
-              class={`btn btn-small ${showRawMarkdown() ? "active" : ""} ${isDirty() ? "btn-dirty" : ""}`}
-              onClick={() => {
-                if (showRawMarkdown()) {
-                  props.onSaveAndPreview();
-                } else {
-                  setShowRawMarkdown(true);
+            <Show when={!isReadOnly()}>
+              <button
+                class={`btn btn-small ${showRawMarkdown() ? "active" : ""} ${isDirty() ? "btn-dirty" : ""}`}
+                onClick={() => {
+                  if (showRawMarkdown()) {
+                    props.onSaveAndPreview();
+                  } else {
+                    setShowRawMarkdown(true);
+                  }
+                }}
+                title={
+                  showRawMarkdown()
+                    ? isDirty()
+                      ? "Save changes (Ctrl+S)"
+                      : "Back to preview (Esc)"
+                    : "Edit markdown (Ctrl+Space)"
                 }
-              }}
-              title={
-                showRawMarkdown()
-                  ? isDirty()
-                    ? "Save changes (Ctrl+S)"
-                    : "Back to preview (Esc)"
-                  : "Edit markdown (Ctrl+Space)"
-              }
-            >
-              {showRawMarkdown() ? (isDirty() ? "Save" : "Preview") : "Edit"}
-            </button>
+              >
+                {showRawMarkdown() ? (isDirty() ? "Save" : "Preview") : "Edit"}
+              </button>
+            </Show>
             <Show when={fileInfo()}>
               <span class="file-meta">
                 {formatFileSize(fileInfo()!.size)} · {fileInfo()!.modified}

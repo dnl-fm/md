@@ -104,6 +104,8 @@ pub struct AppConfig {
     pub light_colors: Option<ThemeColors>,
     #[serde(default)]
     pub onboarding_complete: bool,
+    #[serde(default)]
+    pub last_seen_version: Option<String>,
 }
 
 fn default_sidebar_width() -> u32 {
@@ -135,6 +137,7 @@ impl AppConfig {
                 dark_colors: None,
                 light_colors: None,
                 onboarding_complete: false,
+                last_seen_version: None,
             })
     }
 
@@ -316,6 +319,39 @@ fn get_initial_file() -> Option<String> {
     resolve_file_arg(std::env::args().skip(1))
 }
 
+#[tauri::command]
+fn get_app_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
+#[tauri::command]
+fn get_changelog_path(app: AppHandle) -> Result<String, String> {
+    // Try resource directory first (production)
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        let resource_path = resource_dir.join("CHANGELOG.md");
+        if resource_path.exists() {
+            return resource_path.to_str()
+                .map(|s| s.to_string())
+                .ok_or_else(|| "Invalid path".to_string());
+        }
+    }
+    
+    // Fallback: try relative path from executable (dev mode)
+    let dev_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .map(|p| p.join("CHANGELOG.md"));
+    
+    if let Some(path) = dev_path {
+        if path.exists() {
+            return path.to_str()
+                .map(|s| s.to_string())
+                .ok_or_else(|| "Invalid path".to_string());
+        }
+    }
+    
+    Err("Changelog not found".to_string())
+}
+
 // ============================================================================
 // Plugin Setup
 // ============================================================================
@@ -353,6 +389,8 @@ pub fn run() {
             get_initial_file,
             log_message,
             get_log_path_cmd,
+            get_app_version,
+            get_changelog_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
