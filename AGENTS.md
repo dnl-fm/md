@@ -1,5 +1,15 @@
 # Project Instructions
 
+## Tech Stack (IMPORTANT)
+
+- **Tauri 2** - Desktop app framework (Rust backend)
+- **SolidJS** - Frontend framework (NOT React, NOT Svelte, NOT Vue)
+- **TypeScript** - Language
+- **Vite** - Build tool
+- **Bun** - Package manager and test runner
+
+SolidJS uses signals for reactivity (`createSignal`, `createEffect`, `Show`, `For`). Do NOT use React hooks or Svelte syntax.
+
 ## Reference
 
 See [LLM.md](LLM.md) for comprehensive project documentation including architecture, state management, Tauri commands, theming, and common patterns.
