@@ -112,12 +112,9 @@ Click the ⚙ Settings button or press `Ctrl+,` to customize:
 - UI Font Family and Size
 - Markdown Font Family and Size
 
-**Dark/Light Theme Tabs**
-- Background colors
-- Text colors  
-- Accent colors
-- Table colors
-- Button colors
+**Dark/Light Theme Tabs** (with UI and Markdown sub-tabs)
+- UI colors: backgrounds, text, borders, buttons, sidebar, drafts
+- Markdown colors: headings, links, code blocks, tables
 
 Settings are automatically saved and persisted.
 
