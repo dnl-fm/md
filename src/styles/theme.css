@@ -182,16 +182,16 @@ body {
 .sidebar-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   padding: 8px;
   border-top: 1px solid var(--border-color);
 }
 
-.sidebar-footer-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.sidebar-footer .btn {
+  flex: 1;
+  font-size: 0.85em;
+  padding: 6px 8px;
 }
 
 .sidebar.collapsed .sidebar-footer {
@@ -1132,4 +1132,82 @@ body {
 
 .release-notification-btn:hover {
   opacity: 0.9;
+}
+
+/* Help modal */
+.help-modal {
+  max-width: 500px;
+}
+
+.help-version-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.help-version {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.help-version-label {
+  font-weight: 600;
+  font-size: 1.1em;
+  color: var(--text-primary);
+}
+
+.help-version-number {
+  color: var(--text-secondary);
+  font-size: 0.95em;
+}
+
+.help-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 1em;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.shortcuts-group {
+  margin-bottom: 16px;
+}
+
+.shortcuts-group h4 {
+  margin: 0 0 8px 0;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.shortcuts-group .shortcuts-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 16px;
+}
+
+.shortcut {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  color: var(--text-primary);
+}
+
+.shortcut kbd {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  min-width: 70px;
+  text-align: center;
 }

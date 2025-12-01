@@ -98,14 +98,13 @@ const markdownColorGroups: ColorGroup[] = [
   },
 ];
 
-type SettingsTab = "fonts" | "dark" | "light" | "shortcuts";
+type SettingsTab = "fonts" | "dark" | "light";
 type ThemeSubTab = "ui" | "markdown";
 
 const tabs: { id: SettingsTab; label: string }[] = [
   { id: "fonts", label: "Fonts" },
   { id: "dark", label: "Dark Theme" },
   { id: "light", label: "Light Theme" },
-  { id: "shortcuts", label: "Shortcuts" },
 ];
 
 export function SettingsModal() {
@@ -322,43 +321,7 @@ export function SettingsModal() {
               </div>
             </Show>
 
-            {/* Keyboard Shortcuts */}
-            <Show when={activeTab() === "shortcuts"}>
-              <div class="settings-section">
-                <div class="shortcuts-list">
-                  <div class="shortcut">
-                    <kbd>Ctrl+N</kbd> New file
-                  </div>
-                  <div class="shortcut">
-                    <kbd>Ctrl+O</kbd> Open file
-                  </div>
-                  <div class="shortcut">
-                    <kbd>Ctrl+T</kbd> Toggle theme
-                  </div>
-                  <div class="shortcut">
-                    <kbd>Ctrl+B</kbd> Toggle sidebar
-                  </div>
-                  <div class="shortcut">
-                    <kbd>Ctrl+,</kbd> Settings
-                  </div>
-                  <div class="shortcut">
-                    <kbd>Ctrl++</kbd> Increase font
-                  </div>
-                  <div class="shortcut">
-                    <kbd>Ctrl+-</kbd> Decrease font
-                  </div>
-                  <div class="shortcut">
-                    <kbd>Ctrl+0</kbd> Reset font
-                  </div>
-                  <div class="shortcut">
-                    <kbd>Ctrl+Space</kbd> Toggle raw
-                  </div>
-                  <div class="shortcut">
-                    <kbd>Ctrl+L</kbd> Toggle line numbers
-                  </div>
-                </div>
-              </div>
-            </Show>
+
           </div>
         </div>
       </div>

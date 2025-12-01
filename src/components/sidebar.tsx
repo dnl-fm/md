@@ -12,6 +12,7 @@ import {
   setIsResizing,
   toggleTheme,
   setShowSettings,
+  setShowHelp,
   drafts,
   currentDraftId,
 } from "../stores/app-store";
@@ -161,18 +162,23 @@ export function Sidebar(props: SidebarProps) {
         </div>
       </Show>
 
-      {/* Footer with theme and settings */}
+      {/* Footer with theme, help and settings */}
       <div class="sidebar-footer">
         <Show when={!sidebarCollapsed()}>
-          <div class="sidebar-footer-left">
-            <button
-              class="btn"
-              onClick={toggleTheme}
-              title="Toggle theme (Ctrl+T)"
-            >
-              {config().theme === "dark" ? "☀ Light" : "🌙 Dark"}
-            </button>
-          </div>
+          <button
+            class="btn"
+            onClick={toggleTheme}
+            title="Toggle theme (Ctrl+T)"
+          >
+            {config().theme === "dark" ? "☀ Light" : "🌙 Dark"}
+          </button>
+          <button
+            class="btn"
+            onClick={() => setShowHelp(true)}
+            title="Help (Ctrl+H)"
+          >
+            ? Help
+          </button>
           <button
             class="btn"
             onClick={() => setShowSettings(true)}
@@ -189,6 +195,13 @@ export function Sidebar(props: SidebarProps) {
             title="Toggle theme (Ctrl+T)"
           >
             {config().theme === "dark" ? "☀" : "🌙"}
+          </button>
+          <button
+            class="btn btn-icon"
+            onClick={() => setShowHelp(true)}
+            title="Help (Ctrl+H)"
+          >
+            ?
           </button>
           <button
             class="btn btn-icon"

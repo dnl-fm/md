@@ -42,6 +42,8 @@ import {
   setMarkdownFontFamily,
   showSettings,
   setShowSettings,
+  showHelp,
+  setShowHelp,
   showRawMarkdown,
   setShowRawMarkdown,
   showSearch,
@@ -72,6 +74,7 @@ import { MarkdownViewer } from "./components/markdown-viewer";
 import { SettingsModal } from "./components/settings-modal";
 import { ConfirmDialog } from "./components/confirm-dialog";
 import { WelcomeModal } from "./components/welcome-modal";
+import { HelpModal } from "./components/help-modal";
 import { ReleaseNotification } from "./components/release-notification";
 
 // Initialize marked
@@ -274,6 +277,10 @@ function App() {
           e.preventDefault();
           setShowSettings(!showSettings());
           break;
+        case "h":
+          e.preventDefault();
+          setShowHelp(!showHelp());
+          break;
         case "=":
         case "+":
           e.preventDefault();
@@ -342,6 +349,8 @@ function App() {
         setSearchQuery("");
       } else if (showSettings()) {
         setShowSettings(false);
+      } else if (showHelp()) {
+        setShowHelp(false);
       } else if (showRawMarkdown()) {
         setContent(originalContent());
         setShowRawMarkdown(false);
@@ -429,6 +438,17 @@ function App() {
       await invoke("write_file", { path, content: content() });
       removeDraft(draftId);
       await loadFile(path, true);
+    }
+  }
+
+  // View changelog from help modal
+  async function viewChangelogFromHelp() {
+    try {
+      const changelogPath = await invoke<string>("get_changelog_path");
+      setShowHelp(false);
+      await loadFile(changelogPath);
+    } catch (err) {
+      console.error("Failed to load changelog:", err);
     }
   }
 
@@ -579,6 +599,12 @@ function App() {
 
       <SettingsModal />
       <WelcomeModal show={showWelcome()} onComplete={() => setShowWelcome(false)} />
+      <HelpModal 
+        show={showHelp()} 
+        version={appVersion()} 
+        onClose={() => setShowHelp(false)}
+        onViewChangelog={viewChangelogFromHelp}
+      />
       <ConfirmDialog />
       {showReleaseNotification() && (
         <ReleaseNotification 
