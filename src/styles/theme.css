@@ -1136,14 +1136,16 @@ body {
 
 /* Help modal */
 .help-modal {
-  max-width: 500px;
+  width: 600px;
+  max-width: 90vw;
 }
 
 .help-version-section {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 16px;
   background: var(--bg-secondary);
   border-radius: 8px;
   margin-bottom: 20px;
@@ -1159,6 +1161,10 @@ body {
   font-weight: 600;
   font-size: 1.1em;
   color: var(--text-primary);
+}
+
+.help-version-separator {
+  color: var(--text-secondary);
 }
 
 .help-version-number {

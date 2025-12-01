@@ -24,10 +24,11 @@ export function HelpModal(props: HelpModalProps) {
             <div class="help-version-section">
               <div class="help-version">
                 <span class="help-version-label">MD</span>
-                <span class="help-version-number">v{props.version}</span>
+                <span class="help-version-separator">—</span>
+                <span class="help-version-number">{props.version}</span>
               </div>
               <button class="btn btn-small" onClick={props.onViewChangelog}>
-                View Changelog
+                Changelog
               </button>
             </div>
 

@@ -44,7 +44,7 @@ export function Sidebar(props: SidebarProps) {
 
   function handleResize(e: MouseEvent) {
     if (!isResizing()) return;
-    setSidebarWidth(clamp(e.clientX, 150, 500));
+    setSidebarWidth(clamp(e.clientX, 300, 500));
   }
 
   async function stopResize() {
