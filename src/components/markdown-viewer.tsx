@@ -155,6 +155,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
       <Show when={content() || showRawMarkdown() || currentDraftId()} fallback={<EmptyState />}>
         <Show when={showRawMarkdown()}>
           <textarea
+            ref={(el) => setTimeout(() => el.focus(), 0)}
             class="markdown-raw markdown-editor"
             style={{
               "font-size": `${markdownFontSize()}px`,
