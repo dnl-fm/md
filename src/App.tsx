@@ -44,6 +44,8 @@ import {
   showSearch,
   setShowSearch,
   setSearchQuery,
+  showLineNumbers,
+  setShowLineNumbers,
   drafts,
   currentDraftId,
   setCurrentDraftId,
@@ -292,6 +294,10 @@ function App() {
           }
           break;
         }
+        case "l":
+          e.preventDefault();
+          setShowLineNumbers(!showLineNumbers());
+          break;
         case "1":
         case "2":
         case "3":

@@ -60,6 +60,7 @@ const [uiFontFamily, setUiFontFamily] = createSignal("system");
 const [markdownFontFamily, setMarkdownFontFamily] = createSignal("JetBrains Mono");
 const [showSettings, setShowSettings] = createSignal(false);
 const [showRawMarkdown, setShowRawMarkdown] = createSignal(false);
+const [showLineNumbers, setShowLineNumbers] = createSignal(true);
 
 // Search state
 const [showSearch, setShowSearch] = createSignal(false);
@@ -202,6 +203,8 @@ export {
   setShowSettings,
   showRawMarkdown,
   setShowRawMarkdown,
+  showLineNumbers,
+  setShowLineNumbers,
   // Search state
   showSearch,
   setShowSearch,

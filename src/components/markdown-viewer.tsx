@@ -4,6 +4,7 @@ import {
   setContent,
   renderedHtml,
   showRawMarkdown,
+  showLineNumbers,
   markdownFontSize,
   markdownFontFamily,
   searchQuery,
@@ -154,27 +155,84 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
       <SearchBar onNavigate={navigateMatch} />
       <Show when={content() || showRawMarkdown() || currentDraftId()} fallback={<EmptyState />}>
         <Show when={showRawMarkdown()}>
-          <textarea
-            ref={(el) => setTimeout(() => el.focus(), 0)}
-            class="markdown-raw markdown-editor"
-            style={{
-              "font-size": `${markdownFontSize()}px`,
-              "font-family": getFontFamilyCSS(markdownFontFamily()),
-            }}
-            value={content()}
-            onInput={(e) => setContent(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-                e.preventDefault();
-                if (currentDraftId()) {
-                  props.onSaveDraft?.();
-                } else {
-                  props.onSaveAndPreview();
-                }
+          {(() => {
+            let textareaRef: HTMLTextAreaElement | undefined;
+            let gutterRef: HTMLDivElement | undefined;
+            
+            const [currentLine, setCurrentLine] = createSignal(1);
+            
+            const lineCount = createMemo(() => {
+              const text = content();
+              return text ? text.split("\n").length : 1;
+            });
+            
+            const syncScroll = () => {
+              if (gutterRef && textareaRef) {
+                gutterRef.scrollTop = textareaRef.scrollTop;
               }
-            }}
-            spellcheck={false}
-          />
+            };
+            
+            const updateCurrentLine = () => {
+              if (textareaRef) {
+                const text = textareaRef.value.substring(0, textareaRef.selectionStart);
+                const line = text.split("\n").length;
+                setCurrentLine(line);
+              }
+            };
+            
+            return (
+              <div class={`editor-container ${showLineNumbers() ? "with-line-numbers" : ""}`}>
+                <Show when={showLineNumbers()}>
+                  <div
+                    ref={gutterRef}
+                    class="line-numbers"
+                    style={{
+                      "font-size": `${markdownFontSize()}px`,
+                      "font-family": getFontFamilyCSS(markdownFontFamily()),
+                    }}
+                  >
+                    <For each={Array.from({ length: lineCount() }, (_, i) => i + 1)}>
+                      {(num) => (
+                        <div class={`line-number ${currentLine() === num ? "active" : ""}`}>
+                          {num}
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                </Show>
+                <textarea
+                  ref={(el) => {
+                    textareaRef = el;
+                    setTimeout(() => el.focus(), 0);
+                  }}
+                  class="markdown-raw markdown-editor"
+                  style={{
+                    "font-size": `${markdownFontSize()}px`,
+                    "font-family": getFontFamilyCSS(markdownFontFamily()),
+                  }}
+                  value={content()}
+                  onInput={(e) => {
+                    setContent(e.currentTarget.value);
+                    updateCurrentLine();
+                  }}
+                  onScroll={syncScroll}
+                  onClick={updateCurrentLine}
+                  onKeyUp={updateCurrentLine}
+                  onKeyDown={(e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+                      e.preventDefault();
+                      if (currentDraftId()) {
+                        props.onSaveDraft?.();
+                      } else {
+                        props.onSaveAndPreview();
+                      }
+                    }
+                  }}
+                  spellcheck={false}
+                />
+              </div>
+            );
+          })()}
         </Show>
         <Show when={!showRawMarkdown()}>
           <article

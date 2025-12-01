@@ -272,6 +272,9 @@ export function SettingsModal() {
                   <div class="shortcut">
                     <kbd>Ctrl+Space</kbd> Toggle raw
                   </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+L</kbd> Toggle line numbers
+                  </div>
                 </div>
               </div>
             </Show>
