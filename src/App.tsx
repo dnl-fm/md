@@ -386,8 +386,6 @@ function App() {
   // Save file and return to preview
   async function saveAndPreview() {
     const file = currentFile();
-    const draftId = currentDraftId();
-    
     if (file && isDirty()) {
       // Save existing file
       await invoke("write_file", { path: file, content: content() });
