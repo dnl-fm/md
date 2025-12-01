@@ -128,6 +128,9 @@ renderedHtml()        // string: HTML output from marked
 sidebarCollapsed()    // boolean
 showSettings()        // boolean
 showRawMarkdown()     // boolean: edit mode toggle
+showLineNumbers()     // boolean: line numbers in edit mode
+showSearch()          // boolean: search bar visible
+searchQuery()         // string: current search term
 isDirty()            // derived: content !== originalContent
 ```
 
@@ -206,15 +209,17 @@ Key CSS variables:
 | Shortcut | Action | Handler in |
 |----------|--------|------------|
 | `Ctrl+O` | Open file dialog | `App.tsx` |
+| `Ctrl+N` | New untitled draft | `App.tsx` |
 | `Ctrl+W` | Close current file | `App.tsx` |
 | `Ctrl+S` | Save (in edit mode) | Triggers save flow |
+| `Ctrl+F` | Toggle search bar | `setShowSearch()` |
+| `Ctrl+L` | Toggle line numbers (edit mode) | `setShowLineNumbers()` |
 | `Ctrl+T` | Toggle theme | `toggleTheme()` |
 | `Ctrl+B` | Toggle sidebar | `toggleSidebar()` |
 | `Ctrl+,` | Open settings | `setShowSettings()` |
 | `Ctrl++/-/0` | Font size | `changeMarkdownFontSize()` |
 | `Ctrl+Space` | Toggle edit mode | `setShowRawMarkdown()` |
-| `Ctrl+F` | Toggle search bar | `setShowSearch()` |
-| `Ctrl+1-9` | Open Nth history file | Quick access |
+| `Ctrl+1-9` | Open Nth file/draft | Quick access |
 | `Esc` | Cancel edit / close modal / search | Various |
 
 ---

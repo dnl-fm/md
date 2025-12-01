@@ -25,10 +25,12 @@
 
 - **Live Preview** - Real-time markdown rendering with GitHub-flavored markdown support
 - **Syntax Highlighting** - Code blocks with beautiful syntax highlighting powered by Shiki
-- **Edit Mode** - Edit markdown directly in the app with save/cancel support
+- **Edit Mode** - Edit markdown directly in the app with toggleable line numbers
+- **In-Document Search** - Find text with Ctrl+F, visual minimap for match locations
+- **Draft Tabs** - Create untitled drafts with Ctrl+N, auto-numbered for easy access
 - **Themes** - Dark and light themes with fully customizable colors
 - **File Watching** - Automatic reload when the file changes externally
-- **Recent Files** - Quick access to recently opened files
+- **Recent Files** - Quick access to recently opened files with Ctrl+1-9
 - **Customizable Fonts** - Choose font family and size for both UI and markdown content
 - **Resizable Sidebar** - Drag to resize or double-click to auto-fit content
 - **Lightweight** - Native performance with minimal resource usage
@@ -38,16 +40,20 @@
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+O` | Open file |
+| `Ctrl+N` | New untitled draft |
 | `Ctrl+W` | Close file |
 | `Ctrl+S` | Save changes (in edit mode) |
+| `Ctrl+F` | Find in document |
+| `Ctrl+L` | Toggle line numbers (in edit mode) |
 | `Ctrl+T` | Toggle theme (dark/light) |
 | `Ctrl+B` | Toggle sidebar |
 | `Ctrl+,` | Open settings |
 | `Ctrl++` | Increase font size |
 | `Ctrl+-` | Decrease font size |
 | `Ctrl+0` | Reset font size |
+| `Ctrl+1-9` | Open Nth file/draft from sidebar |
 | `Ctrl+Space` | Toggle edit mode |
-| `Esc` | Cancel edit / discard changes |
+| `Esc` | Cancel edit / close search / discard changes |
 
 ## Installation
 
