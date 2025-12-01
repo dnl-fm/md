@@ -1,5 +1,6 @@
 import { createSignal } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
+import { confirm } from "../components/confirm-dialog";
 import type { AppConfig, FileInfo, ThemeColors } from "../types";
 import { DEFAULT_DARK_COLORS, DEFAULT_LIGHT_COLORS } from "../utils";
 
@@ -152,6 +153,9 @@ async function updateColor(theme: "dark" | "light", key: keyof ThemeColors, valu
 
 // Reset colors to defaults
 async function resetColors(theme: "dark" | "light") {
+  const confirmed = await confirm(`Reset ${theme} theme colors to defaults?`, "Reset Colors");
+  if (!confirmed) return;
+  
   if (theme === "dark") {
     setDarkColors({ ...DEFAULT_DARK_COLORS });
   } else {

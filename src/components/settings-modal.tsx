@@ -28,7 +28,7 @@ type ColorGroup = {
   colors: { key: keyof ThemeColors; label: string }[];
 };
 
-const colorGroups: ColorGroup[] = [
+const uiColorGroups: ColorGroup[] = [
   {
     label: "Backgrounds",
     colors: [
@@ -43,23 +43,48 @@ const colorGroups: ColorGroup[] = [
     colors: [
       { key: "text_primary", label: "Primary" },
       { key: "text_secondary", label: "Secondary" },
-      { key: "text_heading", label: "Headings" },
-      { key: "text_link", label: "Links" },
       { key: "accent_color", label: "Accent" },
     ],
   },
   {
     label: "Borders",
+    colors: [{ key: "border_color", label: "Default" }],
+  },
+  {
+    label: "Buttons",
     colors: [
-      { key: "border_color", label: "Default" },
-      { key: "code_border", label: "Code" },
+      { key: "btn_edit_active", label: "Edit Active" },
+      { key: "btn_save", label: "Save" },
     ],
   },
   {
-    label: "Code Blocks",
+    label: "Sidebar",
+    colors: [{ key: "sidebar_active_bg", label: "Active Item" }],
+  },
+  {
+    label: "Drafts",
+    colors: [
+      { key: "draft_bg", label: "Background" },
+      { key: "draft_bg_active", label: "Active" },
+      { key: "draft_border", label: "Border" },
+    ],
+  },
+];
+
+const markdownColorGroups: ColorGroup[] = [
+  {
+    label: "Text",
+    colors: [
+      { key: "text_heading", label: "Headings" },
+      { key: "text_link", label: "Links" },
+    ],
+  },
+  {
+    label: "Code",
     colors: [
       { key: "bg_code", label: "Block Background" },
       { key: "bg_inline_code", label: "Inline Background" },
+      { key: "code_border", label: "Border" },
     ],
   },
   {
@@ -71,30 +96,10 @@ const colorGroups: ColorGroup[] = [
       { key: "table_row_hover", label: "Row Hover" },
     ],
   },
-  {
-    label: "Buttons",
-    colors: [
-      { key: "btn_edit_active", label: "Edit Active" },
-      { key: "btn_save", label: "Save" },
-    ],
-  },
-  {
-    label: "Drafts",
-    colors: [
-      { key: "draft_bg", label: "Background" },
-      { key: "draft_bg_active", label: "Active" },
-      { key: "draft_border", label: "Border" },
-    ],
-  },
-  {
-    label: "Sidebar",
-    colors: [
-      { key: "sidebar_active_bg", label: "Active Item" },
-    ],
-  },
 ];
 
 type SettingsTab = "fonts" | "dark" | "light" | "shortcuts";
+type ThemeSubTab = "ui" | "markdown";
 
 const tabs: { id: SettingsTab; label: string }[] = [
   { id: "fonts", label: "Fonts" },
@@ -105,6 +110,7 @@ const tabs: { id: SettingsTab; label: string }[] = [
 
 export function SettingsModal() {
   const [activeTab, setActiveTab] = createSignal<SettingsTab>("fonts");
+  const [themeSubTab, setThemeSubTab] = createSignal<ThemeSubTab>("ui");
 
   return (
     <Show when={showSettings()}>
@@ -221,16 +227,27 @@ export function SettingsModal() {
             {/* Dark Theme Colors */}
             <Show when={activeTab() === "dark"}>
               <div class="settings-section">
-                <div class="settings-section-header">
-                  <h3>Dark Theme Colors</h3>
+                <div class="theme-sub-tabs">
                   <button
-                    class="btn btn-small"
+                    class={`btn btn-small ${themeSubTab() === "ui" ? "active" : ""}`}
+                    onClick={() => setThemeSubTab("ui")}
+                  >
+                    UI
+                  </button>
+                  <button
+                    class={`btn btn-small ${themeSubTab() === "markdown" ? "active" : ""}`}
+                    onClick={() => setThemeSubTab("markdown")}
+                  >
+                    Markdown
+                  </button>
+                  <button
+                    class="btn btn-small reset-btn"
                     onClick={() => resetColors("dark")}
                   >
                     Reset
                   </button>
                 </div>
-                <For each={colorGroups}>
+                <For each={themeSubTab() === "ui" ? uiColorGroups : markdownColorGroups}>
                   {(group) => (
                     <div class="color-group">
                       <h4 class="color-group-label">{group.label}</h4>
@@ -259,16 +276,27 @@ export function SettingsModal() {
             {/* Light Theme Colors */}
             <Show when={activeTab() === "light"}>
               <div class="settings-section">
-                <div class="settings-section-header">
-                  <h3>Light Theme Colors</h3>
+                <div class="theme-sub-tabs">
                   <button
-                    class="btn btn-small"
+                    class={`btn btn-small ${themeSubTab() === "ui" ? "active" : ""}`}
+                    onClick={() => setThemeSubTab("ui")}
+                  >
+                    UI
+                  </button>
+                  <button
+                    class={`btn btn-small ${themeSubTab() === "markdown" ? "active" : ""}`}
+                    onClick={() => setThemeSubTab("markdown")}
+                  >
+                    Markdown
+                  </button>
+                  <button
+                    class="btn btn-small reset-btn"
                     onClick={() => resetColors("light")}
                   >
                     Reset
                   </button>
                 </div>
-                <For each={colorGroups}>
+                <For each={themeSubTab() === "ui" ? uiColorGroups : markdownColorGroups}>
                   {(group) => (
                     <div class="color-group">
                       <h4 class="color-group-label">{group.label}</h4>

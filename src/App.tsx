@@ -2,7 +2,8 @@ import { createEffect, createSignal, onMount } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
 import { logger } from "./logger";
 import { listen } from "@tauri-apps/api/event";
-import { open, save, ask } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { confirm } from "./components/confirm-dialog";
 import { Marked } from "marked";
 import { createHighlighter, type Highlighter } from "shiki";
 
@@ -67,6 +68,7 @@ import { Sidebar } from "./components/sidebar";
 import { FileHeader } from "./components/file-header";
 import { MarkdownViewer } from "./components/markdown-viewer";
 import { SettingsModal } from "./components/settings-modal";
+import { ConfirmDialog } from "./components/confirm-dialog";
 import { WelcomeModal } from "./components/welcome-modal";
 
 // Initialize marked
@@ -473,10 +475,7 @@ function App() {
     if (draftId) {
       // Check current content (not stored draft content, as it may not be synced)
       if (content().trim()) {
-        const shouldClose = await ask("Close without saving?", {
-          title: "Unsaved Changes",
-          kind: "warning",
-        });
+        const shouldClose = await confirm("Close without saving?", "Unsaved Changes");
         if (!shouldClose) return;
       }
       
@@ -502,10 +501,7 @@ function App() {
     if (file) {
       // Check for unsaved changes
       if (isDirty()) {
-        const shouldClose = await ask("Close without saving?", {
-          title: "Unsaved Changes",
-          kind: "warning",
-        });
+        const shouldClose = await confirm("Close without saving?", "Unsaved Changes");
         if (!shouldClose) return;
       }
       
@@ -559,6 +555,7 @@ function App() {
 
       <SettingsModal />
       <WelcomeModal show={showWelcome()} onComplete={() => setShowWelcome(false)} />
+      <ConfirmDialog />
     </div>
   );
 }
