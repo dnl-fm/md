@@ -204,9 +204,9 @@ function App() {
     setRenderedHtml(html);
   });
 
-  // Load most recent file that exists
+  // Load most recent file that exists (last in list = most recently opened)
   async function loadMostRecentFile(history: string[]) {
-    for (const path of history) {
+    for (const path of [...history].reverse()) {
       try {
         const exists = await invoke<boolean>("file_exists", { path });
         if (exists) {
@@ -390,15 +390,19 @@ function App() {
   async function closeFile() {
     const file = currentFile();
     if (file) {
+      const history = config().history;
+      const closedIndex = history.indexOf(file);
+      
       // Remove from history
-      const newHistory = config().history.filter((p) => p !== file);
+      const newHistory = history.filter((p) => p !== file);
       const newConfig = { ...config(), history: newHistory };
       setConfig(newConfig);
       await invoke("save_config", { config: newConfig });
       
-      // Open next file in list if available
+      // Stay at same position (select file below), or last file if closing last one
       if (newHistory.length > 0) {
-        await loadFile(newHistory[0], false);
+        const nextIndex = closedIndex < newHistory.length ? closedIndex : newHistory.length - 1;
+        await loadFile(newHistory[nextIndex], false);
         return;
       }
     }

@@ -151,9 +151,9 @@ impl AppConfig {
 
     pub fn add_to_history(&mut self, path: &str) {
         self.history.retain(|p| p != path);
-        self.history.push_front(path.to_string());
+        self.history.push_back(path.to_string());
         while self.history.len() > MAX_HISTORY {
-            self.history.pop_back();
+            self.history.pop_front();
         }
         self.save();
     }
