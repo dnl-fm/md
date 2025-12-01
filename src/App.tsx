@@ -284,15 +284,15 @@ function App() {
         case "=":
         case "+":
           e.preventDefault();
-          changeMarkdownFontSize(1);
+          changeFontSize(1);
           break;
         case "-":
           e.preventDefault();
-          changeMarkdownFontSize(-1);
+          changeFontSize(-1);
           break;
         case "0":
           e.preventDefault();
-          changeMarkdownFontSize(0);
+          changeFontSize(0);
           break;
         case " ":
           e.preventDefault();
@@ -404,11 +404,17 @@ function App() {
     await invoke("save_config", { config: newConfig });
   }
 
-  // Change markdown font size
-  async function changeMarkdownFontSize(delta: number) {
-    const newSize = delta === 0 ? 14 : clamp(markdownFontSize() + delta, 10, 24);
-    setMarkdownFontSize(newSize);
-    const newConfig = { ...config(), markdown_font_size: newSize };
+  // Change both UI and markdown font sizes together
+  async function changeFontSize(delta: number) {
+    const newUiSize = delta === 0 ? 14 : clamp(uiFontSize() + delta, 10, 20);
+    const newMarkdownSize = delta === 0 ? 14 : clamp(markdownFontSize() + delta, 10, 24);
+    setUiFontSize(newUiSize);
+    setMarkdownFontSize(newMarkdownSize);
+    const newConfig = { 
+      ...config(), 
+      ui_font_size: newUiSize,
+      markdown_font_size: newMarkdownSize 
+    };
     setConfig(newConfig);
     await invoke("save_config", { config: newConfig });
   }
