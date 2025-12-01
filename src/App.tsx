@@ -390,15 +390,19 @@ function App() {
   async function closeFile() {
     const file = currentFile();
     if (file) {
+      const history = config().history;
+      const closedIndex = history.indexOf(file);
+      
       // Remove from history
-      const newHistory = config().history.filter((p) => p !== file);
+      const newHistory = history.filter((p) => p !== file);
       const newConfig = { ...config(), history: newHistory };
       setConfig(newConfig);
       await invoke("save_config", { config: newConfig });
       
-      // Open next file in list if available
+      // Stay at same position (select file below), or last file if closing last one
       if (newHistory.length > 0) {
-        await loadFile(newHistory[0], false);
+        const nextIndex = closedIndex < newHistory.length ? closedIndex : newHistory.length - 1;
+        await loadFile(newHistory[nextIndex], false);
         return;
       }
     }
