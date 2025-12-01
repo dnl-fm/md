@@ -161,6 +161,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 8px;
+  height: 48px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -225,6 +227,8 @@ body {
 
 .file-header {
   padding: 8px 20px;
+  height: 48px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--border-color);
   font-size: 1.05em;
   color: var(--text-secondary);
