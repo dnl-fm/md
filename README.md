@@ -43,6 +43,8 @@
 | `Ctrl+N` | New untitled draft |
 | `Ctrl+W` | Close file |
 | `Ctrl+S` | Save changes (in edit mode) |
+| `Ctrl+Z` | Undo (in edit mode) |
+| `Ctrl+Y` | Redo (in edit mode) |
 | `Ctrl+F` | Find in document |
 | `Ctrl+L` | Toggle line numbers (in edit mode) |
 | `Ctrl+T` | Toggle theme (dark/light) |
@@ -55,6 +57,7 @@
 | `Ctrl+Space` | Toggle edit mode |
 | `Tab` | Indent line(s) (in edit mode) |
 | `Shift+Tab` | Dedent line(s) (in edit mode) |
+| `'`, `"`, `` ` ``, `(`, `[`, `{`, `<`, `*`, `_` | Wrap selection (in edit mode) |
 | `Esc` | Cancel edit / close search / discard changes |
 
 ## Installation

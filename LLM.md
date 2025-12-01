@@ -220,6 +220,8 @@ Key CSS variables:
 | `Ctrl+N` | New untitled draft | `App.tsx` |
 | `Ctrl+W` | Close current file | `App.tsx` |
 | `Ctrl+S` | Save (in edit mode) | Triggers save flow |
+| `Ctrl+Z` | Undo (edit mode) | `markdown-viewer.tsx` |
+| `Ctrl+Y` / `Ctrl+Shift+Z` | Redo (edit mode) | `markdown-viewer.tsx` |
 | `Ctrl+F` | Toggle search bar | `setShowSearch()` |
 | `Ctrl+L` | Toggle line numbers (edit mode) | `setShowLineNumbers()` |
 | `Ctrl+T` | Toggle theme | `toggleTheme()` |
@@ -230,6 +232,7 @@ Key CSS variables:
 | `Ctrl+1-9` | Open Nth file/draft | Quick access |
 | `Tab` | Indent line(s) (edit mode) | `markdown-viewer.tsx` |
 | `Shift+Tab` | Dedent line(s) (edit mode) | `markdown-viewer.tsx` |
+| Wrap chars (`'`, `## "`, `` ` ``, etc.) | Wrap/replace selection | `markdown-viewer.tsx` |
 | `Esc` | Cancel edit / close modal / search | Various |
 
 ---
