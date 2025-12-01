@@ -203,7 +203,10 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                 <textarea
                   ref={(el) => {
                     textareaRef = el;
-                    setTimeout(() => el.focus(), 0);
+                    setTimeout(() => {
+                      el.focus();
+                      el.setSelectionRange(0, 0);
+                    }, 0);
                   }}
                   class="markdown-raw markdown-editor"
                   style={{
