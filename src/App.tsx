@@ -378,7 +378,7 @@ function App() {
       setCurrentFile(null);
       setCurrentDraftId(id);
       setContent(draft.content);
-      setOriginalContent("");
+      setOriginalContent(draft.content);
       setRenderedHtml("");
       setFileInfo(null);
       setShowRawMarkdown(true);
