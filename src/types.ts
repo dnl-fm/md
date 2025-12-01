@@ -21,6 +21,7 @@ export interface ThemeColors {
   draft_bg: string;
   draft_bg_active: string;
   draft_border: string;
+  sidebar_active_bg: string;
 }
 
 export interface AppConfig {

@@ -654,25 +654,7 @@ body {
 }
 
 .history-item.active {
-  background: var(--bg-elevated);
-  color: var(--accent-color);
-}
-
-.history-item.draft {
-  background: var(--draft-bg);
-  border-color: var(--draft-border);
-  color: var(--text-primary);
-}
-
-.history-item.draft:hover {
-  background: var(--draft-bg-active);
-  border-color: var(--draft-bg-active);
-}
-
-.history-item.draft.active,
-.history-item.draft.active:hover {
-  background: var(--draft-bg-active);
-  border-color: var(--draft-bg-active);
+  background: var(--sidebar-active-bg);
   color: var(--text-primary);
 }
 

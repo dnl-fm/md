@@ -86,6 +86,12 @@ const colorGroups: ColorGroup[] = [
       { key: "draft_border", label: "Border" },
     ],
   },
+  {
+    label: "Sidebar",
+    colors: [
+      { key: "sidebar_active_bg", label: "Active Item" },
+    ],
+  },
 ];
 
 type SettingsTab = "fonts" | "dark" | "light" | "shortcuts";
