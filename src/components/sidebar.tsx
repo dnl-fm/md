@@ -174,14 +174,14 @@ export function Sidebar(props: SidebarProps) {
           </button>
           <button
             class="btn"
-            onClick={() => setShowHelp(true)}
+            onClick={() => { setShowSettings(false); setShowHelp(true); }}
             title="Help (Ctrl+H)"
           >
             ? Help
           </button>
           <button
             class="btn"
-            onClick={() => setShowSettings(true)}
+            onClick={() => { setShowHelp(false); setShowSettings(true); }}
             title="Settings (Ctrl+,)"
           >
             ⚙ Settings
@@ -198,14 +198,14 @@ export function Sidebar(props: SidebarProps) {
           </button>
           <button
             class="btn btn-icon"
-            onClick={() => setShowHelp(true)}
+            onClick={() => { setShowSettings(false); setShowHelp(true); }}
             title="Help (Ctrl+H)"
           >
             ?
           </button>
           <button
             class="btn btn-icon"
-            onClick={() => setShowSettings(true)}
+            onClick={() => { setShowHelp(false); setShowSettings(true); }}
             title="Settings (Ctrl+,)"
           >
             ⚙

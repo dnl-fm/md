@@ -275,10 +275,16 @@ function App() {
           break;
         case ",":
           e.preventDefault();
+          if (!showSettings()) {
+            setShowHelp(false);
+          }
           setShowSettings(!showSettings());
           break;
         case "h":
           e.preventDefault();
+          if (!showHelp()) {
+            setShowSettings(false);
+          }
           setShowHelp(!showHelp());
           break;
         case "=":
