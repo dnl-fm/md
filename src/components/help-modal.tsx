@@ -35,50 +35,94 @@ export function HelpModal(props: HelpModalProps) {
             {/* Keyboard Shortcuts */}
             <div class="help-section">
               <h3>Keyboard Shortcuts</h3>
-              
+
               <div class="shortcuts-group">
                 <h4>Files</h4>
                 <div class="shortcuts-list">
-                  <div class="shortcut"><kbd>Ctrl+N</kbd> New file</div>
-                  <div class="shortcut"><kbd>Ctrl+O</kbd> Open file</div>
-                  <div class="shortcut"><kbd>Ctrl+W</kbd> Close file</div>
-                  <div class="shortcut"><kbd>Ctrl+S</kbd> Save file</div>
-                  <div class="shortcut"><kbd>Ctrl+1-9</kbd> Quick access</div>
-                  <div class="shortcut"><kbd>Ctrl+]</kbd> Next file</div>
-                  <div class="shortcut"><kbd>Ctrl+[</kbd> Previous file</div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+N</kbd> New file
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+O</kbd> Open file
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+W</kbd> Close file
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+S</kbd> Save file
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+1-9</kbd> Quick access
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+]</kbd> Next file
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+[</kbd> Previous file
+                  </div>
                 </div>
               </div>
 
               <div class="shortcuts-group">
                 <h4>Editing</h4>
                 <div class="shortcuts-list">
-                  <div class="shortcut"><kbd>Ctrl+Space</kbd> Toggle edit mode</div>
-                  <div class="shortcut"><kbd>Ctrl+Z</kbd> Undo</div>
-                  <div class="shortcut"><kbd>Ctrl+Y</kbd> Redo</div>
-                  <div class="shortcut"><kbd>Tab</kbd> Indent</div>
-                  <div class="shortcut"><kbd>Shift+Tab</kbd> Dedent</div>
-                  <div class="shortcut"><kbd>Ctrl+L</kbd> Toggle line numbers</div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+Space</kbd> Toggle edit mode
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+Z</kbd> Undo
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+Y</kbd> Redo
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Tab</kbd> Indent
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Shift+Tab</kbd> Dedent
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+L</kbd> Toggle line numbers
+                  </div>
                 </div>
               </div>
 
               <div class="shortcuts-group">
                 <h4>View</h4>
                 <div class="shortcuts-list">
-                  <div class="shortcut"><kbd>Ctrl+F</kbd> Search</div>
-                  <div class="shortcut"><kbd>Ctrl+B</kbd> Toggle sidebar</div>
-                  <div class="shortcut"><kbd>Ctrl+T</kbd> Toggle theme</div>
-                  <div class="shortcut"><kbd>Ctrl++</kbd> Increase font</div>
-                  <div class="shortcut"><kbd>Ctrl+-</kbd> Decrease font</div>
-                  <div class="shortcut"><kbd>Ctrl+0</kbd> Reset font</div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+F</kbd> Search
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+B</kbd> Toggle sidebar
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+T</kbd> Toggle theme
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl++</kbd> Increase font
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+-</kbd> Decrease font
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+0</kbd> Reset font
+                  </div>
                 </div>
               </div>
 
               <div class="shortcuts-group">
                 <h4>App</h4>
                 <div class="shortcuts-list">
-                  <div class="shortcut"><kbd>Ctrl+,</kbd> Settings</div>
-                  <div class="shortcut"><kbd>Ctrl+H</kbd> Help</div>
-                  <div class="shortcut"><kbd>Esc</kbd> Close modal / Cancel</div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+,</kbd> Settings
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Ctrl+H</kbd> Help
+                  </div>
+                  <div class="shortcut">
+                    <kbd>Esc</kbd> Close / Cancel
+                  </div>
                 </div>
               </div>
             </div>
