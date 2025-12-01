@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Replace existing wrapper by selecting wrapped text and typing a different wrapper character
 - Undo/Redo support (Ctrl+Z / Ctrl+Y or Ctrl+Shift+Z)
 - Quick access to files and drafts via Ctrl+1-9
+- Ctrl+] and Ctrl+[ to cycle through open files/drafts (wraps around)
 - Confirm dialog for destructive actions (closing unsaved drafts)
 - Customizable draft and sidebar colors in theme settings
 - Release notification toast on app startup when new version is available
@@ -23,6 +24,8 @@ All notable changes to this project will be documented in this file.
 - Improved edit mode with uncontrolled textarea for better undo support
 - Keyboard shortcuts moved from Settings to Help modal
 - Sidebar minimum width increased to 300px
+- Ctrl++/-/0 now changes both UI and markdown font sizes together
+- Opening help closes settings and vice versa (no modal stacking)
 
 ### Fixed
 - Line number drift on long documents

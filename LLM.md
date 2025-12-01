@@ -237,9 +237,11 @@ Key CSS variables:
 | `Ctrl+B` | Toggle sidebar | `toggleSidebar()` |
 | `Ctrl+,` | Open settings | `setShowSettings()` |
 | `Ctrl+H` | Open help | `setShowHelp()` |
-| `Ctrl++/-/0` | Font size | `changeMarkdownFontSize()` |
+| `Ctrl++/-/0` | Font size (UI + markdown) | `changeFontSize()` |
 | `Ctrl+Space` | Toggle edit mode | `setShowRawMarkdown()` |
 | `Ctrl+1-9` | Open Nth file/draft | Quick access |
+| `Ctrl+]` | Next file/draft | Cycle with wrap |
+| `Ctrl+[` | Previous file/draft | Cycle with wrap |
 | `Tab` | Indent line(s) (edit mode) | `markdown-viewer.tsx` |
 | `Shift+Tab` | Dedent line(s) (edit mode) | `markdown-viewer.tsx` |
 | Wrap chars (`'`, `## "`, `` ` ``, etc.) | Wrap/replace selection | `markdown-viewer.tsx` |
