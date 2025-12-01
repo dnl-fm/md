@@ -4,7 +4,7 @@ export function EmptyState() {
       <div class="empty-state-icon">📄</div>
       <div class="empty-state-title">No file open</div>
       <div class="empty-state-text">
-        Open a Markdown file from the sidebar or press Ctrl+O
+        Press <kbd>Ctrl+N</kbd> for a new file or <kbd>Ctrl+O</kbd> to open
       </div>
     </div>
   );

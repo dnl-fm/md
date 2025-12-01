@@ -1,5 +1,6 @@
 import { createSignal } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
+import { confirm } from "../components/confirm-dialog";
 import type { AppConfig, FileInfo, ThemeColors } from "../types";
 import { DEFAULT_DARK_COLORS, DEFAULT_LIGHT_COLORS } from "../utils";
 
@@ -19,6 +20,37 @@ const [originalContent, setOriginalContent] = createSignal<string>("");
 const [renderedHtml, setRenderedHtml] = createSignal<string>("");
 const [fileInfo, setFileInfo] = createSignal<FileInfo | null>(null);
 
+// Draft state (unsaved new files)
+export interface Draft {
+  id: string;
+  content: string;
+}
+const [drafts, setDrafts] = createSignal<Draft[]>([]);
+const [currentDraftId, setCurrentDraftId] = createSignal<string | null>(null);
+let draftCounter = 0;
+
+function createDraft(): string {
+  draftCounter++;
+  const id = `draft-${draftCounter}`;
+  setDrafts([...drafts(), { id, content: "" }]);
+  return id;
+}
+
+function updateDraft(id: string, content: string) {
+  setDrafts(drafts().map(d => d.id === id ? { ...d, content } : d));
+}
+
+function removeDraft(id: string) {
+  setDrafts(drafts().filter(d => d.id !== id));
+  if (currentDraftId() === id) {
+    setCurrentDraftId(null);
+  }
+}
+
+function getDraft(id: string): Draft | undefined {
+  return drafts().find(d => d.id === id);
+}
+
 // UI state
 const [sidebarCollapsed, setSidebarCollapsed] = createSignal(false);
 const [sidebarWidth, setSidebarWidth] = createSignal(220);
@@ -29,6 +61,7 @@ const [uiFontFamily, setUiFontFamily] = createSignal("system");
 const [markdownFontFamily, setMarkdownFontFamily] = createSignal("JetBrains Mono");
 const [showSettings, setShowSettings] = createSignal(false);
 const [showRawMarkdown, setShowRawMarkdown] = createSignal(false);
+const [showLineNumbers, setShowLineNumbers] = createSignal(true);
 
 // Search state
 const [showSearch, setShowSearch] = createSignal(false);
@@ -68,6 +101,10 @@ function applyThemeColors(theme?: "dark" | "light") {
   root.style.setProperty("--table-row-hover", getColor("table_row_hover"));
   root.style.setProperty("--btn-edit-active", getColor("btn_edit_active"));
   root.style.setProperty("--btn-save", getColor("btn_save"));
+  root.style.setProperty("--draft-bg", getColor("draft_bg"));
+  root.style.setProperty("--draft-bg-active", getColor("draft_bg_active"));
+  root.style.setProperty("--draft-border", getColor("draft_border"));
+  root.style.setProperty("--sidebar-active-bg", getColor("sidebar_active_bg"));
 }
 
 // Toggle theme
@@ -116,6 +153,9 @@ async function updateColor(theme: "dark" | "light", key: keyof ThemeColors, valu
 
 // Reset colors to defaults
 async function resetColors(theme: "dark" | "light") {
+  const confirmed = await confirm(`Reset ${theme} theme colors to defaults?`, "Reset Colors");
+  if (!confirmed) return;
+  
   if (theme === "dark") {
     setDarkColors({ ...DEFAULT_DARK_COLORS });
   } else {
@@ -169,6 +209,8 @@ export {
   setShowSettings,
   showRawMarkdown,
   setShowRawMarkdown,
+  showLineNumbers,
+  setShowLineNumbers,
   // Search state
   showSearch,
   setShowSearch,
@@ -178,4 +220,13 @@ export {
   setSearchMatches,
   currentMatch,
   setCurrentMatch,
+  // Draft state
+  drafts,
+  setDrafts,
+  currentDraftId,
+  setCurrentDraftId,
+  createDraft,
+  updateDraft,
+  removeDraft,
+  getDraft,
 };

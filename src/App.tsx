@@ -2,7 +2,8 @@ import { createEffect, createSignal, onMount } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
 import { logger } from "./logger";
 import { listen } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { confirm } from "./components/confirm-dialog";
 import { Marked } from "marked";
 import { createHighlighter, type Highlighter } from "shiki";
 
@@ -44,6 +45,15 @@ import {
   showSearch,
   setShowSearch,
   setSearchQuery,
+  showLineNumbers,
+  setShowLineNumbers,
+  drafts,
+  currentDraftId,
+  setCurrentDraftId,
+  createDraft,
+  updateDraft,
+  removeDraft,
+  getDraft,
 } from "./stores/app-store";
 import {
   DEFAULT_DARK_COLORS,
@@ -58,6 +68,7 @@ import { Sidebar } from "./components/sidebar";
 import { FileHeader } from "./components/file-header";
 import { MarkdownViewer } from "./components/markdown-viewer";
 import { SettingsModal } from "./components/settings-modal";
+import { ConfirmDialog } from "./components/confirm-dialog";
 import { WelcomeModal } from "./components/welcome-modal";
 
 // Initialize marked
@@ -227,6 +238,10 @@ function App() {
   async function handleKeyDown(e: KeyboardEvent) {
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
+        case "n":
+          e.preventDefault();
+          newFile();
+          break;
         case "o":
           e.preventDefault();
           openFileDialog();
@@ -281,6 +296,10 @@ function App() {
           }
           break;
         }
+        case "l":
+          e.preventDefault();
+          setShowLineNumbers(!showLineNumbers());
+          break;
         case "1":
         case "2":
         case "3":
@@ -289,14 +308,18 @@ function App() {
         case "6":
         case "7":
         case "8":
-        case "9":
+        case "9": {
           e.preventDefault();
           const index = parseInt(e.key) - 1;
           const history = config().history;
+          const draftList = drafts();
           if (index < history.length) {
             loadFile(history[index], false);
+          } else if (index < history.length + draftList.length) {
+            loadDraft(draftList[index - history.length].id);
           }
           break;
+        }
       }
     }
     if (e.key === "Escape") {
@@ -330,23 +353,86 @@ function App() {
     await invoke("save_config", { config: newConfig });
   }
 
+  // Create new untitled file
+  function newFile() {
+    // Save current draft content before creating new
+    const currentDraft = currentDraftId();
+    if (currentDraft) {
+      updateDraft(currentDraft, content());
+    }
+    
+    const id = createDraft();
+    setCurrentFile(null);
+    setCurrentDraftId(id);
+    setContent("");
+    setOriginalContent("");
+    setRenderedHtml("");
+    setFileInfo(null);
+    setShowRawMarkdown(true);
+  }
+
+  // Switch to a draft
+  function loadDraft(id: string) {
+    // Save current draft content before switching
+    const currentDraft = currentDraftId();
+    if (currentDraft && currentDraft !== id) {
+      updateDraft(currentDraft, content());
+    }
+    
+    const draft = getDraft(id);
+    if (draft) {
+      setCurrentFile(null);
+      setCurrentDraftId(id);
+      setContent(draft.content);
+      setOriginalContent(draft.content);
+      setRenderedHtml("");
+      setFileInfo(null);
+      setShowRawMarkdown(true);
+    }
+  }
+
   // Save file and return to preview
   async function saveAndPreview() {
     const file = currentFile();
     if (file && isDirty()) {
+      // Save existing file
       await invoke("write_file", { path: file, content: content() });
       setOriginalContent(content());
     }
+    // For drafts, just toggle to preview (no auto-save dialog)
     setShowRawMarkdown(false);
+  }
+
+  // Save draft to file (with dialog)
+  async function saveDraftToFile() {
+    const draftId = currentDraftId();
+    if (!draftId) return;
+    
+    const path = await save({
+      filters: [{ name: "Markdown", extensions: ["md"] }],
+    });
+    if (path) {
+      await invoke("write_file", { path, content: content() });
+      removeDraft(draftId);
+      await loadFile(path, true);
+    }
   }
 
   // Load a file
   async function loadFile(path: string, addToHistory: boolean = true) {
     try {
+      // Save current draft content before switching
+      const draftId = currentDraftId();
+      if (draftId) {
+        updateDraft(draftId, content());
+      }
+      
       const fileContent = await invoke<string>("read_file", { path });
       setContent(fileContent);
       setOriginalContent(fileContent);
       setCurrentFile(path);
+      setCurrentDraftId(null);
+      setShowRawMarkdown(false);
 
       const info = await invoke<FileInfo>("get_file_info", { path });
       setFileInfo(info);
@@ -389,7 +475,42 @@ function App() {
   // Close current file
   async function closeFile() {
     const file = currentFile();
+    const draftId = currentDraftId();
+    
+    // Handle closing a draft
+    if (draftId) {
+      // Check current content (not stored draft content, as it may not be synced)
+      if (content().trim()) {
+        const shouldClose = await confirm("Close without saving?", "Unsaved Changes");
+        if (!shouldClose) return;
+      }
+      
+      const draftList = drafts();
+      const closedIndex = draftList.findIndex(d => d.id === draftId);
+      removeDraft(draftId);
+      
+      // Select next tab: prefer file from history, then another draft
+      const history = config().history;
+      const remainingDrafts = draftList.filter(d => d.id !== draftId);
+      
+      if (remainingDrafts.length > 0) {
+        const nextIndex = closedIndex < remainingDrafts.length ? closedIndex : remainingDrafts.length - 1;
+        loadDraft(remainingDrafts[nextIndex].id);
+        return;
+      } else if (history.length > 0) {
+        await loadFile(history[history.length - 1], false);
+        return;
+      }
+    }
+    
+    // Handle closing a file from history
     if (file) {
+      // Check for unsaved changes
+      if (isDirty()) {
+        const shouldClose = await confirm("Close without saving?", "Unsaved Changes");
+        if (!shouldClose) return;
+      }
+      
       const history = config().history;
       const closedIndex = history.indexOf(file);
       
@@ -405,8 +526,17 @@ function App() {
         await loadFile(newHistory[nextIndex], false);
         return;
       }
+      
+      // No more files, check for drafts
+      const draftList = drafts();
+      if (draftList.length > 0) {
+        loadDraft(draftList[draftList.length - 1].id);
+        return;
+      }
     }
+    
     setCurrentFile(null);
+    setCurrentDraftId(null);
     setContent("");
     setOriginalContent("");
     setRenderedHtml("");
@@ -422,15 +552,16 @@ function App() {
         "font-family": getFontFamilyCSS(uiFontFamily()),
       }}
     >
-      <Sidebar onOpenFile={openFileDialog} onLoadFile={loadFile} />
+      <Sidebar onOpenFile={openFileDialog} onLoadFile={loadFile} onLoadDraft={loadDraft} />
 
       <main class="main-content">
-        <FileHeader onSaveAndPreview={saveAndPreview} />
-        <MarkdownViewer onSaveAndPreview={saveAndPreview} />
+        <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} />
+        <MarkdownViewer onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} />
       </main>
 
       <SettingsModal />
       <WelcomeModal show={showWelcome()} onComplete={() => setShowWelcome(false)} />
+      <ConfirmDialog />
     </div>
   );
 }

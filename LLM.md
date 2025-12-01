@@ -54,10 +54,11 @@ md/
 │   ├── utils.ts                  # Utility functions, default colors
 │   ├── logger.ts                 # Frontend logging (calls Rust backend)
 │   ├── components/
-│   │   ├── sidebar.tsx           # Recent files, open button
+│   │   ├── sidebar.tsx           # Recent files, drafts, open button
 │   │   ├── file-header.tsx       # Current file info, edit/save buttons
-│   │   ├── markdown-viewer.tsx   # Rendered markdown or raw editor
-│   │   ├── settings-modal.tsx    # Font & color customization
+│   │   ├── markdown-viewer.tsx   # Rendered markdown or raw editor with line numbers
+│   │   ├── settings-modal.tsx    # Font & color customization (UI/Markdown sub-tabs)
+│   │   ├── confirm-dialog.tsx    # Reusable centered confirm dialog
 │   │   ├── welcome-modal.tsx     # First-run onboarding
 │   │   └── empty-state.tsx       # No file open state
 │   ├── stores/
@@ -100,7 +101,8 @@ md/
 | `src/types.ts` | TypeScript interfaces: `AppConfig`, `ThemeColors`, `FileInfo` |
 | `src/utils.ts` | Constants (`DEFAULT_DARK_COLORS`, `DEFAULT_LIGHT_COLORS`), helper functions |
 | `src/components/sidebar.tsx` | Collapsible sidebar with file history, resizable |
-| `src/components/settings-modal.tsx` | Settings UI: fonts tab, dark/light theme color pickers |
+| `src/components/settings-modal.tsx` | Settings UI: fonts, theme colors (UI/Markdown sub-tabs) |
+| `src/components/confirm-dialog.tsx` | Reusable confirm dialog with `confirm()` function |
 
 ### Backend
 
@@ -128,7 +130,14 @@ renderedHtml()        // string: HTML output from marked
 sidebarCollapsed()    // boolean
 showSettings()        // boolean
 showRawMarkdown()     // boolean: edit mode toggle
-isDirty()            // derived: content !== originalContent
+showLineNumbers()     // boolean: line numbers in edit mode
+showSearch()          // boolean: search bar visible
+searchQuery()         // string: current search term
+isDirty()             // derived: content !== originalContent
+
+// Draft state
+drafts()              // Draft[]: in-memory unsaved files
+currentDraftId()      // string | null: active draft ID
 ```
 
 ---
@@ -198,6 +207,8 @@ Key CSS variables:
 - `--border-color`, `--accent-color`
 - `--table-*` for table styling
 - `--btn-*` for button colors
+- `--draft-*` for draft styling
+- `--sidebar-active-bg` for active sidebar item
 
 ---
 
@@ -206,15 +217,22 @@ Key CSS variables:
 | Shortcut | Action | Handler in |
 |----------|--------|------------|
 | `Ctrl+O` | Open file dialog | `App.tsx` |
+| `Ctrl+N` | New untitled draft | `App.tsx` |
 | `Ctrl+W` | Close current file | `App.tsx` |
 | `Ctrl+S` | Save (in edit mode) | Triggers save flow |
+| `Ctrl+Z` | Undo (edit mode) | `markdown-viewer.tsx` |
+| `Ctrl+Y` / `Ctrl+Shift+Z` | Redo (edit mode) | `markdown-viewer.tsx` |
+| `Ctrl+F` | Toggle search bar | `setShowSearch()` |
+| `Ctrl+L` | Toggle line numbers (edit mode) | `setShowLineNumbers()` |
 | `Ctrl+T` | Toggle theme | `toggleTheme()` |
 | `Ctrl+B` | Toggle sidebar | `toggleSidebar()` |
 | `Ctrl+,` | Open settings | `setShowSettings()` |
 | `Ctrl++/-/0` | Font size | `changeMarkdownFontSize()` |
 | `Ctrl+Space` | Toggle edit mode | `setShowRawMarkdown()` |
-| `Ctrl+F` | Toggle search bar | `setShowSearch()` |
-| `Ctrl+1-9` | Open Nth history file | Quick access |
+| `Ctrl+1-9` | Open Nth file/draft | Quick access |
+| `Tab` | Indent line(s) (edit mode) | `markdown-viewer.tsx` |
+| `Shift+Tab` | Dedent line(s) (edit mode) | `markdown-viewer.tsx` |
+| Wrap chars (`'`, `## "`, `` ` ``, etc.) | Wrap/replace selection | `markdown-viewer.tsx` |
 | `Esc` | Cancel edit / close modal / search | Various |
 
 ---
@@ -276,6 +294,16 @@ async function saveSettings() {
 1. Add function in `src-tauri/src/lib.rs` with `#[tauri::command]`
 2. Register in `invoke_handler![]` macro
 3. Call from frontend: `await invoke("command_name", { params })`
+
+### Using the confirm dialog
+```typescript
+import { confirm } from "./components/confirm-dialog";
+
+const confirmed = await confirm("Are you sure?", "Confirm Action");
+if (confirmed) {
+  // User clicked OK
+}
+```
 
 ---
 
