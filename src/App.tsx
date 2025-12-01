@@ -306,14 +306,18 @@ function App() {
         case "6":
         case "7":
         case "8":
-        case "9":
+        case "9": {
           e.preventDefault();
           const index = parseInt(e.key) - 1;
           const history = config().history;
+          const draftList = drafts();
           if (index < history.length) {
             loadFile(history[index], false);
+          } else if (index < history.length + draftList.length) {
+            loadDraft(draftList[index - history.length].id);
           }
           break;
+        }
       }
     }
     if (e.key === "Escape") {

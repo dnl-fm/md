@@ -578,18 +578,19 @@ body {
 
 .btn-icon.draft {
   background: var(--draft-bg);
-  border-color: var(--draft-bg);
+  border-color: var(--draft-border);
   color: var(--text-primary);
 }
 
-.btn-icon.draft:hover,
-.btn-icon.draft.active:hover {
-  background: var(--draft-hover);
+.btn-icon.draft:hover {
+  background: var(--draft-bg-active);
+  border-color: var(--draft-bg-active);
 }
 
-.btn-icon.draft.active {
-  background: var(--draft-bg);
-  border-color: var(--draft-bg);
+.btn-icon.draft.active,
+.btn-icon.draft.active:hover {
+  background: var(--draft-bg-active);
+  border-color: var(--draft-bg-active);
   color: var(--text-primary);
 }
 
@@ -640,18 +641,19 @@ body {
 
 .history-item.draft {
   background: var(--draft-bg);
-  border-color: var(--draft-bg);
+  border-color: var(--draft-border);
   color: var(--text-primary);
 }
 
-.history-item.draft:hover,
-.history-item.draft.active:hover {
-  background: var(--draft-hover);
+.history-item.draft:hover {
+  background: var(--draft-bg-active);
+  border-color: var(--draft-bg-active);
 }
 
-.history-item.draft.active {
-  background: var(--draft-bg);
-  border-color: var(--draft-bg);
+.history-item.draft.active,
+.history-item.draft.active:hover {
+  background: var(--draft-bg-active);
+  border-color: var(--draft-bg-active);
   color: var(--text-primary);
 }
 

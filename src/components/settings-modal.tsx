@@ -44,7 +44,8 @@ const colorLabels: Record<keyof ThemeColors, string> = {
   btn_edit_active: "Edit Button Active",
   btn_save: "Save Button",
   draft_bg: "Draft Background",
-  draft_hover: "Draft Hover",
+  draft_bg_active: "Draft Active",
+  draft_border: "Draft Border",
 };
 
 type SettingsTab = "fonts" | "dark" | "light" | "shortcuts";

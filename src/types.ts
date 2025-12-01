@@ -19,7 +19,8 @@ export interface ThemeColors {
   btn_edit_active: string;
   btn_save: string;
   draft_bg: string;
-  draft_hover: string;
+  draft_bg_active: string;
+  draft_border: string;
 }
 
 export interface AppConfig {

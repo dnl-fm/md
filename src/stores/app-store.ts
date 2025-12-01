@@ -101,7 +101,8 @@ function applyThemeColors(theme?: "dark" | "light") {
   root.style.setProperty("--btn-edit-active", getColor("btn_edit_active"));
   root.style.setProperty("--btn-save", getColor("btn_save"));
   root.style.setProperty("--draft-bg", getColor("draft_bg"));
-  root.style.setProperty("--draft-hover", getColor("draft_hover"));
+  root.style.setProperty("--draft-bg-active", getColor("draft_bg_active"));
+  root.style.setProperty("--draft-border", getColor("draft_border"));
 }
 
 // Toggle theme

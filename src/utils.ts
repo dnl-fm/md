@@ -20,8 +20,9 @@ export const DEFAULT_DARK_COLORS: ThemeColors = {
   table_row_hover: "#2a2a2d",
   btn_edit_active: "#a96dd6",
   btn_save: "#3b82f6",
-  draft_bg: "#4a4020",
-  draft_hover: "#3d351a",
+  draft_bg: "#5c4d1a",
+  draft_bg_active: "#7a6620",
+  draft_border: "#4a4a4a",
 };
 
 export const DEFAULT_LIGHT_COLORS: ThemeColors = {
@@ -44,8 +45,9 @@ export const DEFAULT_LIGHT_COLORS: ThemeColors = {
   table_row_hover: "#eef1f5",
   btn_edit_active: "#9333ea",
   btn_save: "#2563eb",
-  draft_bg: "#fff3d0",
-  draft_hover: "#ffe9a0",
+  draft_bg: "#ffefaf",
+  draft_bg_active: "#ffe065",
+  draft_border: "#cccccc",
 };
 
 export const FONT_OPTIONS = [
