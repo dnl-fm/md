@@ -14,10 +14,15 @@ All notable changes to this project will be documented in this file.
 - Quick access to files and drafts via Ctrl+1-9
 - Confirm dialog for destructive actions (closing unsaved drafts)
 - Customizable draft and sidebar colors in theme settings
+- Release notification toast on app startup when new version is available
+- Help modal (Ctrl+H) with keyboard shortcuts and version info
+- View Changelog button in help modal (loads bundled CHANGELOG.md)
 
 ### Changed
 - Settings modal now groups colors by category (UI/Markdown sub-tabs)
 - Improved edit mode with uncontrolled textarea for better undo support
+- Keyboard shortcuts moved from Settings to Help modal
+- Sidebar minimum width increased to 300px
 
 ### Fixed
 - Line number drift on long documents
