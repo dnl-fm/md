@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2025-12-01
+
+### Added
+- Draft tabs: create untitled drafts with Ctrl+N, auto-numbered as Untitled-1, Untitled-2, etc.
+- Toggleable line numbers in edit mode (Ctrl+L)
+- Tab/Shift+Tab to indent/dedent single or multiple lines
+- Wrap selection with quotes/brackets: select text and type ', ", `, (, [, {, <, *, _
+- Replace existing wrapper by selecting wrapped text and typing a different wrapper character
+- Undo/Redo support (Ctrl+Z / Ctrl+Y or Ctrl+Shift+Z)
+- Quick access to files and drafts via Ctrl+1-9
+- Confirm dialog for destructive actions (closing unsaved drafts)
+- Customizable draft and sidebar colors in theme settings
+
+### Changed
+- Settings modal now groups colors by category (UI/Markdown sub-tabs)
+- Improved edit mode with uncontrolled textarea for better undo support
+
+### Fixed
+- Line number drift on long documents
+- Preserve draft content on Escape (revert to last saved state)
+- Save current draft before creating new or switching files
+
 ## [0.3.0] - 2025-11-28
 
 ### Added
