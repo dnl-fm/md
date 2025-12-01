@@ -220,7 +220,11 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                   }}
                   onScroll={syncScroll}
                   onClick={updateCurrentLine}
-                  onKeyUp={updateCurrentLine}
+                  onKeyUp={(e) => {
+                    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"].includes(e.key)) {
+                      updateCurrentLine();
+                    }
+                  }}
                   onKeyDown={(e) => {
                     if ((e.ctrlKey || e.metaKey) && e.key === "s") {
                       e.preventDefault();
