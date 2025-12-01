@@ -107,9 +107,9 @@ export function Sidebar(props: SidebarProps) {
                 <div
                   class={`history-item draft ${currentDraftId() === draft.id ? "active" : ""}`}
                   onClick={() => props.onLoadDraft(draft.id)}
-                  title="Untitled (unsaved)"
+                  title={`Untitled-${draft.id.split("-")[1]} (unsaved)`}
                 >
-                  📄 Untitled
+                  📄 Untitled-{draft.id.split("-")[1]}
                 </div>
               )}
             </For>
@@ -148,7 +148,7 @@ export function Sidebar(props: SidebarProps) {
                       <button
                         class={`btn btn-icon draft ${currentDraftId() === draft.id ? "active" : ""}`}
                         onClick={() => props.onLoadDraft(draft.id)}
-                        title="Untitled (unsaved)"
+                        title={`Untitled-${draft.id.split("-")[1]} (unsaved)`}
                       >
                         {historyCount + index() + 1}
                       </button>

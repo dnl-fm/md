@@ -67,7 +67,7 @@ export function FileHeader(props: FileHeaderProps) {
       {/* Header for drafts */}
       <Show when={currentDraftId()}>
         <div class="file-header">
-          <span class="file-path">📄 Untitled (unsaved)</span>
+          <span class="file-path">📄 Untitled-{currentDraftId()?.split("-")[1]} (unsaved)</span>
           <div class="file-header-right">
             <button
               class={`btn btn-small ${showRawMarkdown() ? "active" : ""}`}
