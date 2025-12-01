@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Line number drift on long documents
 - Preserve draft content on Escape (revert to last saved state)
 - Save current draft before creating new or switching files
+- File header height now matches sidebar header (both 48px)
 
 ## [0.3.0] - 2025-11-28
 
