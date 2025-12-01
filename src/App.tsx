@@ -355,6 +355,12 @@ function App() {
 
   // Create new untitled file
   function newFile() {
+    // Save current draft content before creating new
+    const currentDraft = currentDraftId();
+    if (currentDraft) {
+      updateDraft(currentDraft, content());
+    }
+    
     const id = createDraft();
     setCurrentFile(null);
     setCurrentDraftId(id);

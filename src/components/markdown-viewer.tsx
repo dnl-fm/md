@@ -184,6 +184,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
               textareaRef.value = entry.text;
               textareaRef.setSelectionRange(entry.cursorPos, entry.cursorPos);
               setContent(entry.text);
+              updateCurrentLine();
             };
             
             const redo = () => {
@@ -194,6 +195,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
               textareaRef.value = entry.text;
               textareaRef.setSelectionRange(entry.cursorPos, entry.cursorPos);
               setContent(entry.text);
+              updateCurrentLine();
             };
             
             const lineCount = createMemo(() => {
