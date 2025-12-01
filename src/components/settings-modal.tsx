@@ -23,30 +23,70 @@ import { FONT_OPTIONS, DEFAULT_DARK_COLORS, DEFAULT_LIGHT_COLORS } from "../util
 const getDarkColor = (key: keyof ThemeColors) => darkColors()[key] || DEFAULT_DARK_COLORS[key];
 const getLightColor = (key: keyof ThemeColors) => lightColors()[key] || DEFAULT_LIGHT_COLORS[key];
 
-const colorLabels: Record<keyof ThemeColors, string> = {
-  bg_primary: "Background",
-  bg_secondary: "Sidebar Background",
-  bg_elevated: "Elevated Background",
-  bg_code: "Code Block Background",
-  bg_inline_code: "Inline Code Background",
-  bg_icon: "Icon Background",
-  text_primary: "Text",
-  text_secondary: "Secondary Text",
-  text_heading: "Headings",
-  text_link: "Links",
-  border_color: "Borders",
-  code_border: "Code Border",
-  accent_color: "Accent",
-  table_header_bg: "Table Header",
-  table_row_odd: "Table Odd Row",
-  table_row_even: "Table Even Row",
-  table_row_hover: "Table Row Hover",
-  btn_edit_active: "Edit Button Active",
-  btn_save: "Save Button",
-  draft_bg: "Draft Background",
-  draft_bg_active: "Draft Active",
-  draft_border: "Draft Border",
+type ColorGroup = {
+  label: string;
+  colors: { key: keyof ThemeColors; label: string }[];
 };
+
+const colorGroups: ColorGroup[] = [
+  {
+    label: "Backgrounds",
+    colors: [
+      { key: "bg_primary", label: "Primary" },
+      { key: "bg_secondary", label: "Sidebar" },
+      { key: "bg_elevated", label: "Elevated" },
+      { key: "bg_icon", label: "Icons" },
+    ],
+  },
+  {
+    label: "Text",
+    colors: [
+      { key: "text_primary", label: "Primary" },
+      { key: "text_secondary", label: "Secondary" },
+      { key: "text_heading", label: "Headings" },
+      { key: "text_link", label: "Links" },
+      { key: "accent_color", label: "Accent" },
+    ],
+  },
+  {
+    label: "Borders",
+    colors: [
+      { key: "border_color", label: "Default" },
+      { key: "code_border", label: "Code" },
+    ],
+  },
+  {
+    label: "Code Blocks",
+    colors: [
+      { key: "bg_code", label: "Block Background" },
+      { key: "bg_inline_code", label: "Inline Background" },
+    ],
+  },
+  {
+    label: "Tables",
+    colors: [
+      { key: "table_header_bg", label: "Header" },
+      { key: "table_row_odd", label: "Odd Row" },
+      { key: "table_row_even", label: "Even Row" },
+      { key: "table_row_hover", label: "Row Hover" },
+    ],
+  },
+  {
+    label: "Buttons",
+    colors: [
+      { key: "btn_edit_active", label: "Edit Active" },
+      { key: "btn_save", label: "Save" },
+    ],
+  },
+  {
+    label: "Drafts",
+    colors: [
+      { key: "draft_bg", label: "Background" },
+      { key: "draft_bg_active", label: "Active" },
+      { key: "draft_border", label: "Border" },
+    ],
+  },
+];
 
 type SettingsTab = "fonts" | "dark" | "light" | "shortcuts";
 
@@ -184,26 +224,29 @@ export function SettingsModal() {
                     Reset
                   </button>
                 </div>
-                <div class="color-grid">
-                  <For each={Object.entries(colorLabels)}>
-                    {([key, label]) => (
-                      <div class="color-item">
-                        <label>{label}</label>
-                        <input
-                          type="color"
-                          value={getDarkColor(key as keyof ThemeColors)}
-                          onInput={(e) =>
-                            updateColor(
-                              "dark",
-                              key as keyof ThemeColors,
-                              e.currentTarget.value,
-                            )
-                          }
-                        />
+                <For each={colorGroups}>
+                  {(group) => (
+                    <div class="color-group">
+                      <h4 class="color-group-label">{group.label}</h4>
+                      <div class="color-grid">
+                        <For each={group.colors}>
+                          {(color) => (
+                            <div class="color-item">
+                              <label>{color.label}</label>
+                              <input
+                                type="color"
+                                value={getDarkColor(color.key)}
+                                onInput={(e) =>
+                                  updateColor("dark", color.key, e.currentTarget.value)
+                                }
+                              />
+                            </div>
+                          )}
+                        </For>
                       </div>
-                    )}
-                  </For>
-                </div>
+                    </div>
+                  )}
+                </For>
               </div>
             </Show>
 
@@ -219,26 +262,29 @@ export function SettingsModal() {
                     Reset
                   </button>
                 </div>
-                <div class="color-grid">
-                  <For each={Object.entries(colorLabels)}>
-                    {([key, label]) => (
-                      <div class="color-item">
-                        <label>{label}</label>
-                        <input
-                          type="color"
-                          value={getLightColor(key as keyof ThemeColors)}
-                          onInput={(e) =>
-                            updateColor(
-                              "light",
-                              key as keyof ThemeColors,
-                              e.currentTarget.value,
-                            )
-                          }
-                        />
+                <For each={colorGroups}>
+                  {(group) => (
+                    <div class="color-group">
+                      <h4 class="color-group-label">{group.label}</h4>
+                      <div class="color-grid">
+                        <For each={group.colors}>
+                          {(color) => (
+                            <div class="color-item">
+                              <label>{color.label}</label>
+                              <input
+                                type="color"
+                                value={getLightColor(color.key)}
+                                onInput={(e) =>
+                                  updateColor("light", color.key, e.currentTarget.value)
+                                }
+                              />
+                            </div>
+                          )}
+                        </For>
                       </div>
-                    )}
-                  </For>
-                </div>
+                    </div>
+                  )}
+                </For>
               </div>
             </Show>
 
