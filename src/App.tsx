@@ -429,7 +429,10 @@ function App() {
   // Create new untitled file
   async function newFile() {
     // Check for unsaved changes in current file
-    if (isDirty()) {
+    const dirty = isDirty();
+    const currentDraft = currentDraftId();
+    
+    if (dirty) {
       const shouldSwitch = await confirm(
         "You have unsaved changes that will be lost.",
         {
@@ -439,11 +442,13 @@ function App() {
         }
       );
       if (!shouldSwitch) return;
-    }
-    
-    // Save current draft content before creating new
-    const currentDraft = currentDraftId();
-    if (currentDraft) {
+      
+      // If discarding a draft with content, remove it entirely
+      if (currentDraft && content().trim()) {
+        removeDraft(currentDraft);
+      }
+    } else if (currentDraft) {
+      // Not dirty but has draft - save current content before creating new
       updateDraft(currentDraft, content());
     }
     
@@ -463,7 +468,10 @@ function App() {
     if (currentDraftId() === id) return;
     
     // Check for unsaved changes in current file
-    if (isDirty()) {
+    const dirty = isDirty();
+    const currentDraft = currentDraftId();
+    
+    if (dirty) {
       const shouldSwitch = await confirm(
         "You have unsaved changes that will be lost.",
         {
@@ -473,11 +481,13 @@ function App() {
         }
       );
       if (!shouldSwitch) return;
-    }
-    
-    // Save current draft content before switching
-    const currentDraft = currentDraftId();
-    if (currentDraft && currentDraft !== id) {
+      
+      // If discarding a draft with content, remove it entirely
+      if (currentDraft && content().trim()) {
+        removeDraft(currentDraft);
+      }
+    } else if (currentDraft && currentDraft !== id) {
+      // Not dirty but has draft - save current content before switching
       updateDraft(currentDraft, content());
     }
     
@@ -537,7 +547,10 @@ function App() {
     if (currentFile() === path) return;
     
     // Check for unsaved changes in current file
-    if (isDirty()) {
+    const dirty = isDirty();
+    const draftId = currentDraftId();
+    
+    if (dirty) {
       const shouldSwitch = await confirm(
         "You have unsaved changes that will be lost.",
         {
@@ -547,14 +560,17 @@ function App() {
         }
       );
       if (!shouldSwitch) return;
+      
+      // If discarding a draft with content, remove it entirely
+      if (draftId && content().trim()) {
+        removeDraft(draftId);
+      }
+    } else if (draftId) {
+      // Not dirty but has draft - save current content before switching
+      updateDraft(draftId, content());
     }
     
     try {
-      // Save current draft content before switching
-      const draftId = currentDraftId();
-      if (draftId) {
-        updateDraft(draftId, content());
-      }
       
       const fileContent = await invoke<string>("read_file", { path });
       setContent(fileContent);
