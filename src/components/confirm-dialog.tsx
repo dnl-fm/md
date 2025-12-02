@@ -86,18 +86,47 @@ function handleCancel() {
 /**
  * Confirm dialog UI component.
  * Renders as a centered modal overlay when open.
- * Supports Enter to confirm and Escape to cancel.
+ * Supports Tab to switch buttons, Enter to activate, Escape to cancel.
  */
 export function ConfirmDialog() {
+  let cancelBtnRef: HTMLButtonElement | undefined;
+  let confirmBtnRef: HTMLButtonElement | undefined;
+  
+  // Focus confirm button when dialog opens
+  createEffect(() => {
+    if (isOpen()) {
+      // Focus confirm button by default
+      setTimeout(() => confirmBtnRef?.focus(), 0);
+    }
+  });
+  
   createEffect(() => {
     if (isOpen()) {
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape") {
+          e.preventDefault();
           e.stopPropagation();
           handleCancel();
         } else if (e.key === "Enter") {
+          e.preventDefault();
           e.stopPropagation();
-          handleConfirm();
+          // Activate the currently focused button
+          const focused = document.activeElement;
+          if (focused === cancelBtnRef) {
+            handleCancel();
+          } else {
+            handleConfirm();
+          }
+        } else if (e.key === "Tab") {
+          e.preventDefault();
+          e.stopPropagation();
+          // Toggle focus between buttons
+          const focused = document.activeElement;
+          if (focused === confirmBtnRef) {
+            cancelBtnRef?.focus();
+          } else {
+            confirmBtnRef?.focus();
+          }
         }
       };
       
@@ -113,10 +142,10 @@ export function ConfirmDialog() {
           <h3>{title()}</h3>
           <p>{message()}</p>
           <div class="confirm-dialog-buttons">
-            <button class="btn btn-small" onClick={handleCancel}>
+            <button ref={cancelBtnRef} class="btn btn-small" onClick={handleCancel}>
               {cancelLabel()}
             </button>
-            <button class="btn btn-small btn-confirm" onClick={handleConfirm}>
+            <button ref={confirmBtnRef} class="btn btn-small btn-confirm" onClick={handleConfirm}>
               {confirmLabel()}
             </button>
           </div>
