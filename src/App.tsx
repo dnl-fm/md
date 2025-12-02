@@ -426,6 +426,12 @@ function App() {
     await invoke("save_config", { config: newConfig });
   }
 
+  // Refocus the editor textarea (used after dialogs)
+  function focusEditor() {
+    const textarea = document.querySelector(".markdown-editor") as HTMLTextAreaElement;
+    textarea?.focus();
+  }
+
   // Create new untitled file
   async function newFile() {
     // Check for unsaved changes in current file
@@ -441,7 +447,10 @@ function App() {
           cancelLabel: "Stay",
         }
       );
-      if (!shouldSwitch) return;
+      if (!shouldSwitch) {
+        focusEditor();
+        return;
+      }
       
       // If discarding a draft with content, remove it entirely
       if (currentDraft && content().trim()) {
@@ -480,7 +489,10 @@ function App() {
           cancelLabel: "Stay",
         }
       );
-      if (!shouldSwitch) return;
+      if (!shouldSwitch) {
+        focusEditor();
+        return;
+      }
       
       // If discarding a draft with content, remove it entirely
       if (currentDraft && content().trim()) {
@@ -561,7 +573,10 @@ function App() {
           cancelLabel: "Stay",
         }
       );
-      if (!shouldSwitch) return;
+      if (!shouldSwitch) {
+        focusEditor();
+        return;
+      }
       
       // If discarding a draft with content, remove it entirely
       if (draftId && content().trim()) {
