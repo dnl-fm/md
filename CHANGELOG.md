@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2025-12-02
+
+### Added
+- JSDoc documentation across entire codebase
+- Per-file undo/redo stacks (history preserved when switching files)
+- Keyboard navigation in confirm dialog (Tab to switch buttons, Enter to activate)
+- `normalizeMarkdown()` utility to convert LLM-generated en/em-dashes to list markers
+
+### Changed
+- Confirm dialog buttons now show custom labels ("Discard"/"Stay" instead of "OK"/"Cancel")
+- Confirm button focused by default with visible focus outline
+
+### Fixed
+- LLM-generated lists with en-dash (–) or em-dash (—) now render correctly
+- Prompt to save unsaved changes when switching files or creating new file
+- Remove draft from sidebar when discarding unsaved changes
+- Sync textarea content when switching files while in edit mode
+- No false "unsaved changes" dialog after saving draft to file
+- Refocus editor when clicking "Stay" in confirm dialog
+- Line numbers performance: only update on Enter/Backspace/Delete, not every keystroke
+
 ## [0.4.0] - 2025-12-01
 
 ### Added

@@ -322,10 +322,27 @@ async function saveSettings() {
 ```typescript
 import { confirm } from "./components/confirm-dialog";
 
+// Simple usage
 const confirmed = await confirm("Are you sure?", "Confirm Action");
-if (confirmed) {
-  // User clicked OK
-}
+
+// With custom button labels
+const shouldDiscard = await confirm(
+  "You have unsaved changes that will be lost.",
+  {
+    title: "Unsaved Changes",
+    confirmLabel: "Discard",
+    cancelLabel: "Stay",
+  }
+);
+```
+
+### Normalizing LLM markdown
+```typescript
+import { normalizeMarkdown } from "./utils";
+
+// Converts LLM-generated en-dash (–) and em-dash (—) list markers to hyphens
+const normalized = normalizeMarkdown(rawMarkdown);
+// "– Item" becomes "- Item"
 ```
 
 ---
