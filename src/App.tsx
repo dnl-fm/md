@@ -445,7 +445,19 @@ function App() {
   }
 
   // Switch to a draft
-  function loadDraft(id: string) {
+  async function loadDraft(id: string) {
+    // Don't reload the same draft
+    if (currentDraftId() === id) return;
+    
+    // Check for unsaved changes in current file
+    if (isDirty()) {
+      const shouldSwitch = await confirm(
+        "You have unsaved changes. Discard and switch files?",
+        "Unsaved Changes"
+      );
+      if (!shouldSwitch) return;
+    }
+    
     // Save current draft content before switching
     const currentDraft = currentDraftId();
     if (currentDraft && currentDraft !== id) {
@@ -504,6 +516,18 @@ function App() {
 
   // Load a file
   async function loadFile(path: string, addToHistory: boolean = true) {
+    // Don't reload the same file
+    if (currentFile() === path) return;
+    
+    // Check for unsaved changes in current file
+    if (isDirty()) {
+      const shouldSwitch = await confirm(
+        "You have unsaved changes. Discard and switch files?",
+        "Unsaved Changes"
+      );
+      if (!shouldSwitch) return;
+    }
+    
     try {
       // Save current draft content before switching
       const draftId = currentDraftId();

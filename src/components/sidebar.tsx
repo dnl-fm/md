@@ -33,9 +33,9 @@ interface SidebarProps {
   /** Handler to open file picker dialog */
   onOpenFile: () => void;
   /** Handler to load a file by path */
-  onLoadFile: (path: string, addToHistory?: boolean) => void;
+  onLoadFile: (path: string, addToHistory?: boolean) => Promise<void>;
   /** Handler to load a draft by ID */
-  onLoadDraft: (id: string) => void;
+  onLoadDraft: (id: string) => Promise<void>;
 }
 
 /**
