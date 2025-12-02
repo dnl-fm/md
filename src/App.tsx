@@ -526,6 +526,8 @@ function App() {
     if (path) {
       await invoke("write_file", { path, content: content() });
       removeDraft(draftId);
+      // Mark as clean before loading to avoid dirty check
+      setOriginalContent(content());
       await loadFile(path, true);
     }
   }
