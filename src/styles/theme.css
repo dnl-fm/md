@@ -450,6 +450,11 @@ body {
     border-color: #2563eb !important;
 }
 
+.confirm-dialog button.btn.btn-small:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
 .settings-control {
     display: flex;
     align-items: center;

@@ -1,3 +1,7 @@
+/**
+ * Empty state component shown when no file is open.
+ * Displays keyboard shortcuts for creating or opening files.
+ */
 export function EmptyState() {
   return (
     <div class="empty-state">

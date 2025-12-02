@@ -1,3 +1,12 @@
+/**
+ * Markdown viewer component with preview and edit modes.
+ *
+ * Features:
+ * - Preview mode: renders markdown as styled HTML with syntax highlighting
+ * - Edit mode: textarea with line numbers, undo/redo, smart indentation
+ * - Search: highlights matches in preview with minimap navigation
+ * - Keyboard shortcuts for editing (Tab indent, wrap selection, etc.)
+ */
 import { Show, createEffect, createMemo, createSignal, For } from "solid-js";
 import {
   content,
@@ -13,27 +22,69 @@ import {
   setCurrentMatch,
   searchMatches,
   currentDraftId,
+  currentFile,
 } from "../stores/app-store";
 import { getFontFamilyCSS } from "../utils";
 import { EmptyState } from "./empty-state";
 import { SearchBar } from "./search-bar";
 
-// Undo/redo stack (module level to persist across re-renders)
+/** Undo/redo history entry */
 type HistoryEntry = { text: string; cursorPos: number };
-const undoStack: HistoryEntry[] = [];
-const redoStack: HistoryEntry[] = [];
 
+/** Per-file undo/redo history */
+type FileHistory = { undo: HistoryEntry[]; redo: HistoryEntry[] };
+
+/** Map of file path or draft ID to undo/redo stacks */
+const historyMap = new Map<string, FileHistory>();
+
+/** Maximum undo stack size per file */
+const MAX_HISTORY_SIZE = 100;
+
+/**
+ * Get the current history key based on active file or draft.
+ * Returns empty string if nothing is open (shouldn't happen in practice).
+ */
+function getHistoryKey(): string {
+  return currentDraftId() ?? currentFile() ?? "";
+}
+
+/**
+ * Get or create undo/redo stacks for the current file/draft.
+ */
+function getHistory(): FileHistory {
+  const key = getHistoryKey();
+  if (!historyMap.has(key)) {
+    historyMap.set(key, { undo: [], redo: [] });
+  }
+  return historyMap.get(key)!;
+}
+
+/**
+ * Clear history for a specific file/draft (e.g., after save or discard).
+ */
+export function clearHistoryFor(key: string) {
+  historyMap.delete(key);
+}
+
+/** Props for MarkdownViewer component */
 interface MarkdownViewerProps {
+  /** Handler to save file and switch to preview */
   onSaveAndPreview: () => void;
+  /** Handler to save draft to new file */
   onSaveDraft?: () => void;
 }
 
-// Match position for minimap
+/** Search match position for minimap display */
 interface MatchPosition {
+  /** Match index (1-based) */
   index: number;
+  /** Vertical position as percentage of document height */
   percent: number;
 }
 
+/**
+ * Main content area showing markdown preview or editor.
+ */
 export function MarkdownViewer(props: MarkdownViewerProps) {
   let containerRef: HTMLDivElement | undefined;
   let articleRef: HTMLElement | undefined;
@@ -167,20 +218,22 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
             const [currentLine, setCurrentLine] = createSignal(1);
             
             const pushUndo = (text: string, cursorPos: number) => {
+              const history = getHistory();
               // Don't push if same as last entry
-              if (undoStack.length > 0 && undoStack[undoStack.length - 1].text === text) return;
-              undoStack.push({ text, cursorPos });
+              if (history.undo.length > 0 && history.undo[history.undo.length - 1].text === text) return;
+              history.undo.push({ text, cursorPos });
               // Limit stack size
-              if (undoStack.length > 100) undoStack.shift();
+              if (history.undo.length > MAX_HISTORY_SIZE) history.undo.shift();
               // Clear redo on new change
-              redoStack.length = 0;
+              history.redo.length = 0;
             };
             
             const undo = () => {
-              if (!textareaRef || undoStack.length === 0) return;
+              const history = getHistory();
+              if (!textareaRef || history.undo.length === 0) return;
               // Save current state to redo
-              redoStack.push({ text: textareaRef.value, cursorPos: textareaRef.selectionStart });
-              const entry = undoStack.pop()!;
+              history.redo.push({ text: textareaRef.value, cursorPos: textareaRef.selectionStart });
+              const entry = history.undo.pop()!;
               textareaRef.value = entry.text;
               textareaRef.setSelectionRange(entry.cursorPos, entry.cursorPos);
               setContent(entry.text);
@@ -188,20 +241,19 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
             };
             
             const redo = () => {
-              if (!textareaRef || redoStack.length === 0) return;
+              const history = getHistory();
+              if (!textareaRef || history.redo.length === 0) return;
               // Save current state to undo
-              undoStack.push({ text: textareaRef.value, cursorPos: textareaRef.selectionStart });
-              const entry = redoStack.pop()!;
+              history.undo.push({ text: textareaRef.value, cursorPos: textareaRef.selectionStart });
+              const entry = history.redo.pop()!;
               textareaRef.value = entry.text;
               textareaRef.setSelectionRange(entry.cursorPos, entry.cursorPos);
               setContent(entry.text);
               updateCurrentLine();
             };
             
-            const lineCount = createMemo(() => {
-              const text = content();
-              return text ? text.split("\n").length : 1;
-            });
+            // Track line count separately to avoid recalculating on every keystroke
+            const [lineCount, setLineCount] = createSignal(1);
             
             const syncScroll = () => {
               if (gutterRef && textareaRef) {
@@ -217,6 +269,60 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
               }
             };
             
+            // Full recount - only used on init, paste, undo/redo
+            const recountLines = () => {
+              if (textareaRef) {
+                let count = 1;
+                const text = textareaRef.value;
+                for (let i = 0; i < text.length; i++) {
+                  if (text[i] === "\n") count++;
+                }
+                setLineCount(count);
+              }
+            };
+            
+            // Sync textarea when switching files/drafts (content changes externally)
+            createEffect(() => {
+              // Track file/draft changes to trigger effect
+              currentFile();
+              currentDraftId();
+              const text = content();
+              
+              // Update textarea if it exists and value differs (external change)
+              if (textareaRef && textareaRef.value !== text) {
+                textareaRef.value = text;
+                recountLines();
+              }
+            });
+            
+            // Check if backspace/delete will remove a newline
+            const willRemoveLine = (key: string): boolean => {
+              if (!textareaRef) return false;
+              const { selectionStart, selectionEnd, value } = textareaRef;
+              
+              // Selection spans multiple chars - might contain newlines
+              if (selectionStart !== selectionEnd) {
+                const selected = value.substring(selectionStart, selectionEnd);
+                return selected.includes("\n");
+              }
+              
+              if (key === "Backspace" && selectionStart > 0) {
+                return value[selectionStart - 1] === "\n";
+              }
+              if (key === "Delete" && selectionStart < value.length) {
+                return value[selectionStart] === "\n";
+              }
+              return false;
+            };
+            
+            // Memoized line numbers array - only recreates when count changes
+            const lineNumbers = createMemo(() => {
+              const count = lineCount();
+              const nums: number[] = new Array(count);
+              for (let i = 0; i < count; i++) nums[i] = i + 1;
+              return nums;
+            });
+            
             return (
               <div class={`editor-container ${showLineNumbers() ? "with-line-numbers" : ""}`}>
                 <Show when={showLineNumbers()}>
@@ -228,9 +334,9 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                       "font-family": getFontFamilyCSS(markdownFontFamily()),
                     }}
                   >
-                    <For each={Array.from({ length: lineCount() }, (_, i) => i + 1)}>
+                    <For each={lineNumbers()}>
                       {(num) => (
-                        <div class={`line-number ${currentLine() === num ? "active" : ""}`}>
+                        <div class="line-number" classList={{ active: currentLine() === num }}>
                           {num}
                         </div>
                       )}
@@ -241,6 +347,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                   ref={(el) => {
                     textareaRef = el;
                     el.value = content();
+                    recountLines();
                     setTimeout(() => {
                       el.focus();
                       el.setSelectionRange(0, 0);
@@ -267,13 +374,27 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                       updateCurrentLine();
                     }
                   }}
+                  onPaste={() => {
+                    // Paste can add/remove multiple lines - recount after DOM update
+                    setTimeout(recountLines, 0);
+                  }}
                   onKeyDown={(e) => {
                     const textarea = e.currentTarget;
                     const start = textarea.selectionStart;
                     const end = textarea.selectionEnd;
                     const hasSelection = start !== end;
                     
-                    // Undo/Redo
+                    // Enter adds a line
+                    if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+                      setLineCount(lineCount() + 1);
+                    }
+                    
+                    // Backspace/Delete might remove a line
+                    if ((e.key === "Backspace" || e.key === "Delete") && willRemoveLine(e.key)) {
+                      setLineCount(Math.max(1, lineCount() - 1));
+                    }
+                    
+                    // Undo/Redo - recount since we don't know the change
                     if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z" || e.key === "y")) {
                       e.preventDefault();
                       if (e.key === "y" || e.shiftKey || e.key === "Z") {
@@ -281,6 +402,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                       } else {
                         undo();
                       }
+                      recountLines();
                       return;
                     }
                     

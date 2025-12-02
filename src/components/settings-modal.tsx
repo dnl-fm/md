@@ -1,3 +1,13 @@
+/**
+ * Settings modal for customizing fonts and theme colors.
+ *
+ * Organized into tabs:
+ * - UI: fonts and colors for app chrome (sidebar, buttons, etc.)
+ * - Markdown: fonts and colors for rendered content (headings, code, tables)
+ *
+ * Each theme (dark/light) has its own color customization.
+ * Colors can be reset to defaults per-theme.
+ */
 import { Show, For, createSignal } from "solid-js";
 import type { ThemeColors } from "../types";
 import {
@@ -107,6 +117,10 @@ const tabs: { id: SettingsTab; label: string }[] = [
   { id: "light", label: "Light Theme" },
 ];
 
+/**
+ * Settings modal component.
+ * Opens with Ctrl+, and closes with Escape.
+ */
 export function SettingsModal() {
   const [activeTab, setActiveTab] = createSignal<SettingsTab>("fonts");
   const [themeSubTab, setThemeSubTab] = createSignal<ThemeSubTab>("ui");

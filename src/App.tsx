@@ -64,6 +64,7 @@ import {
   DEFAULT_LIGHT_COLORS,
   getFontFamilyCSS,
   escapeHtml,
+  normalizeMarkdown,
   slugify,
   clamp,
 } from "./utils";
@@ -226,7 +227,7 @@ function App() {
 
     marked.use({ renderer });
 
-    const html = await marked.parse(md);
+    const html = await marked.parse(normalizeMarkdown(md));
     setRenderedHtml(html);
   });
 
@@ -425,11 +426,38 @@ function App() {
     await invoke("save_config", { config: newConfig });
   }
 
+  // Refocus the editor textarea (used after dialogs)
+  function focusEditor() {
+    const textarea = document.querySelector(".markdown-editor") as HTMLTextAreaElement;
+    textarea?.focus();
+  }
+
   // Create new untitled file
-  function newFile() {
-    // Save current draft content before creating new
+  async function newFile() {
+    // Check for unsaved changes in current file
+    const dirty = isDirty();
     const currentDraft = currentDraftId();
-    if (currentDraft) {
+    
+    if (dirty) {
+      const shouldSwitch = await confirm(
+        "You have unsaved changes that will be lost.",
+        {
+          title: "Unsaved Changes",
+          confirmLabel: "Discard",
+          cancelLabel: "Stay",
+        }
+      );
+      if (!shouldSwitch) {
+        focusEditor();
+        return;
+      }
+      
+      // If discarding a draft with content, remove it entirely
+      if (currentDraft && content().trim()) {
+        removeDraft(currentDraft);
+      }
+    } else if (currentDraft) {
+      // Not dirty but has draft - save current content before creating new
       updateDraft(currentDraft, content());
     }
     
@@ -444,10 +472,34 @@ function App() {
   }
 
   // Switch to a draft
-  function loadDraft(id: string) {
-    // Save current draft content before switching
+  async function loadDraft(id: string) {
+    // Don't reload the same draft
+    if (currentDraftId() === id) return;
+    
+    // Check for unsaved changes in current file
+    const dirty = isDirty();
     const currentDraft = currentDraftId();
-    if (currentDraft && currentDraft !== id) {
+    
+    if (dirty) {
+      const shouldSwitch = await confirm(
+        "You have unsaved changes that will be lost.",
+        {
+          title: "Unsaved Changes",
+          confirmLabel: "Discard",
+          cancelLabel: "Stay",
+        }
+      );
+      if (!shouldSwitch) {
+        focusEditor();
+        return;
+      }
+      
+      // If discarding a draft with content, remove it entirely
+      if (currentDraft && content().trim()) {
+        removeDraft(currentDraft);
+      }
+    } else if (currentDraft && currentDraft !== id) {
+      // Not dirty but has draft - save current content before switching
       updateDraft(currentDraft, content());
     }
     
@@ -486,6 +538,8 @@ function App() {
     if (path) {
       await invoke("write_file", { path, content: content() });
       removeDraft(draftId);
+      // Mark as clean before loading to avoid dirty check
+      setOriginalContent(content());
       await loadFile(path, true);
     }
   }
@@ -503,12 +557,37 @@ function App() {
 
   // Load a file
   async function loadFile(path: string, addToHistory: boolean = true) {
-    try {
-      // Save current draft content before switching
-      const draftId = currentDraftId();
-      if (draftId) {
-        updateDraft(draftId, content());
+    // Don't reload the same file
+    if (currentFile() === path) return;
+    
+    // Check for unsaved changes in current file
+    const dirty = isDirty();
+    const draftId = currentDraftId();
+    
+    if (dirty) {
+      const shouldSwitch = await confirm(
+        "You have unsaved changes that will be lost.",
+        {
+          title: "Unsaved Changes",
+          confirmLabel: "Discard",
+          cancelLabel: "Stay",
+        }
+      );
+      if (!shouldSwitch) {
+        focusEditor();
+        return;
       }
+      
+      // If discarding a draft with content, remove it entirely
+      if (draftId && content().trim()) {
+        removeDraft(draftId);
+      }
+    } else if (draftId) {
+      // Not dirty but has draft - save current content before switching
+      updateDraft(draftId, content());
+    }
+    
+    try {
       
       const fileContent = await invoke<string>("read_file", { path });
       setContent(fileContent);
@@ -568,7 +647,14 @@ function App() {
     if (draftId) {
       // Check current content (not stored draft content, as it may not be synced)
       if (content().trim()) {
-        const shouldClose = await confirm("Close without saving?", "Unsaved Changes");
+        const shouldClose = await confirm(
+          "This draft has content that will be lost.",
+          {
+            title: "Unsaved Draft",
+            confirmLabel: "Discard",
+            cancelLabel: "Keep",
+          }
+        );
         if (!shouldClose) return;
       }
       
@@ -594,7 +680,14 @@ function App() {
     if (file) {
       // Check for unsaved changes
       if (isDirty()) {
-        const shouldClose = await confirm("Close without saving?", "Unsaved Changes");
+        const shouldClose = await confirm(
+          "You have unsaved changes that will be lost.",
+          {
+            title: "Unsaved Changes",
+            confirmLabel: "Discard",
+            cancelLabel: "Keep",
+          }
+        );
         if (!shouldClose) return;
       }
       

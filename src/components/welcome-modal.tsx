@@ -1,3 +1,12 @@
+/**
+ * First-run welcome modal for onboarding new users.
+ *
+ * Guides users through:
+ * 1. Theme selection (dark/light) with live preview
+ * 2. Basic keyboard shortcuts introduction
+ *
+ * Only shown once; completion is persisted to config.
+ */
 import { Show, createSignal } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
 import {
@@ -7,11 +16,17 @@ import {
   applyThemeColors,
 } from "../stores/app-store";
 
+/** Props for WelcomeModal component */
 interface WelcomeModalProps {
+  /** Whether to show the modal */
   show: boolean;
+  /** Callback when onboarding is completed */
   onComplete: () => void;
 }
 
+/**
+ * Welcome/onboarding modal for first-time users.
+ */
 export function WelcomeModal(props: WelcomeModalProps) {
   const [selectedTheme, setSelectedTheme] = createSignal<"dark" | "light">("dark");
 
