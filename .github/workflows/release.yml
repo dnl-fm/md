@@ -63,6 +63,19 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
+      - name: Extract changelog for version
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Extract section between ## [VERSION] and next ## [
+          CHANGELOG=$(sed -n "/^## \[${VERSION}\]/,/^## \[/p" CHANGELOG.md | sed '$d')
+          # Remove the header line
+          CHANGELOG=$(echo "$CHANGELOG" | tail -n +2)
+          # Handle multiline for GitHub Actions
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -70,7 +83,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
-          releaseBody: "See [CHANGELOG.md](https://github.com/dnl-fm/md/blob/main/CHANGELOG.md) for details."
+          releaseBody: ${{ steps.changelog.outputs.content }}
           releaseDraft: false
           prerelease: false
           args: --target ${{ matrix.target }}
