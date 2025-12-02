@@ -281,6 +281,20 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
               }
             };
             
+            // Sync textarea when switching files/drafts (content changes externally)
+            createEffect(() => {
+              // Track file/draft changes to trigger effect
+              currentFile();
+              currentDraftId();
+              const text = content();
+              
+              // Update textarea if it exists and value differs (external change)
+              if (textareaRef && textareaRef.value !== text) {
+                textareaRef.value = text;
+                recountLines();
+              }
+            });
+            
             // Check if backspace/delete will remove a newline
             const willRemoveLine = (key: string): boolean => {
               if (!textareaRef) return false;
