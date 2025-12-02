@@ -22,6 +22,7 @@ import {
   setCurrentMatch,
   searchMatches,
   currentDraftId,
+  currentFile,
 } from "../stores/app-store";
 import { getFontFamilyCSS } from "../utils";
 import { EmptyState } from "./empty-state";
@@ -33,6 +34,12 @@ type HistoryEntry = { text: string; cursorPos: number };
 // Module-level undo/redo stacks (persist across re-renders)
 const undoStack: HistoryEntry[] = [];
 const redoStack: HistoryEntry[] = [];
+
+/** Reset undo/redo history (called on file/draft switch) */
+function resetHistory() {
+  undoStack.length = 0;
+  redoStack.length = 0;
+}
 
 /** Props for MarkdownViewer component */
 interface MarkdownViewerProps {
@@ -57,6 +64,14 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   let containerRef: HTMLDivElement | undefined;
   let articleRef: HTMLElement | undefined;
   const [matchPositions, setMatchPositions] = createSignal<MatchPosition[]>([]);
+
+  // Reset undo/redo history when switching between files/drafts
+  createEffect(() => {
+    // Access signals to create a dependency
+    currentFile();
+    currentDraftId();
+    resetHistory();
+  });
 
   // Get highlighted HTML with search matches
   const highlightedHtml = createMemo(() => {
