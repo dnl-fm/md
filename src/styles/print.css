@@ -1,0 +1,353 @@
+/* ============================================================================
+   Print Styles - Override screen styles for PDF output
+   ============================================================================ */
+
+@media print {
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+
+
+  /* Hide non-print elements */
+  .no-print,
+  .sidebar,
+  .file-header,
+  .search-bar,
+  .settings-modal,
+  .help-modal,
+  .welcome-modal,
+  .confirm-dialog-overlay,
+  .release-notification {
+    display: none !important;
+  }
+
+  /* Reset body for print - CRITICAL: remove ALL size/overflow constraints */
+  html,
+  body,
+  #root,
+  .app-container,
+  .main-content,
+  .markdown-container,
+  .markdown-content {
+    height: auto !important;
+    width: auto !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: #1a1a1a !important;
+    font-size: 8pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Markdown body adjustments - reset all overflow-causing styles */
+  .markdown-body {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    color: #000 !important;
+    font-size: 8pt !important;
+    line-height: 1.4 !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+  }
+
+  /* Force all content to fit page width and consistent font size */
+  .markdown-body *,
+  .markdown-body *::before,
+  .markdown-body *::after {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .markdown-body p,
+  .markdown-body li,
+  .markdown-body blockquote,
+  .markdown-body span {
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    font-size: 8pt !important;
+  }
+
+  .markdown-body h1 { font-size: 13pt !important; }
+  .markdown-body h2 { font-size: 11pt !important; }
+  .markdown-body h3 { font-size: 10pt !important; }
+  .markdown-body h4 { font-size: 9pt !important; }
+  .markdown-body h5, .markdown-body h6 { font-size: 8pt !important; }
+
+  /* Reset editor container for print */
+  .editor-container {
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Hide scrollbar-related elements */
+  .search-minimap {
+    display: none !important;
+  }
+
+  /* ALL text should be dark for print (except code spans for syntax highlighting) */
+  .markdown-body,
+  .markdown-body p,
+  .markdown-body li,
+  .markdown-body > span,
+  .markdown-body td,
+  .markdown-body th,
+  .markdown-body strong,
+  .markdown-body b,
+  .markdown-body em,
+  .markdown-body i {
+    color: #000 !important;
+  }
+
+
+
+  /* Bold text - ensure it's black and bold */
+  .markdown-body strong,
+  .markdown-body b {
+    color: #000 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Headings - darker for print */
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4,
+  .markdown-body h5,
+  .markdown-body h6 {
+    color: #000 !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .markdown-body h2 {
+    border-top-color: #ccc !important;
+  }
+
+  /* Links - show URL in parentheses */
+  .markdown-body a {
+    color: #0066cc !important;
+    text-decoration: underline;
+  }
+
+  .markdown-body a[href^="http"]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+    word-break: break-all;
+  }
+
+  /* Don't show URL for anchor links */
+  .markdown-body a[href^="#"]:after {
+    content: none;
+  }
+
+  /* Code blocks - keep background colors */
+  .markdown-body pre,
+  .markdown-body code,
+  .code-block-wrapper {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .markdown-body pre {
+    background: #f5f5f5 !important;
+    border-left-color: #ccc !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    overflow: hidden !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-all !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    font-size: 6.5pt !important;
+    line-height: 1.2 !important;
+  }
+
+  .code-block-wrapper {
+    background: #f5f5f5 !important;
+    border-left-color: #ccc !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .code-block-wrapper pre,
+  .code-block-wrapper code {
+    max-width: 100% !important;
+    width: 100% !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-all !important;
+    font-size: 6.5pt !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Inline code */
+  .markdown-body code {
+    font-size: 6pt !important;
+  }
+
+  .markdown-body pre code,
+  .markdown-body pre.shiki code,
+  .code-block-wrapper pre code,
+  .code-block-wrapper pre.shiki code,
+  .code-block-wrapper code,
+  .shiki code,
+  pre.shiki,
+  pre.shiki code {
+    font-size: 6.5pt !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Preserve Shiki syntax highlighting colors - let inline styles through */
+  .shiki span[style],
+  pre.shiki span[style],
+  .code-block-wrapper .shiki span[style],
+  .markdown-body .shiki span[style],
+  .markdown-body pre span[style] {
+    font-size: 6.5pt !important;
+    line-height: 1.2 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Shiki syntax highlighting - force print */
+  .code-block-wrapper pre.shiki {
+    background: transparent !important;
+  }
+
+  .code-block-wrapper pre.shiki code {
+    background: transparent !important;
+  }
+
+  /* Inline code */
+  .markdown-body code {
+    background: #e8e8e8 !important;
+  }
+
+  .markdown-body pre code {
+    background: transparent !important;
+  }
+
+  /* Blockquotes */
+  .markdown-body blockquote {
+    background: #f8f8f8 !important;
+    border-left-color: #0066cc !important;
+    color: #333 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Tables - fit to page width */
+  .markdown-body table {
+    page-break-inside: auto;
+    break-inside: auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
+    font-size: 7pt !important;
+    border-collapse: collapse !important;
+  }
+
+  /* But avoid breaking inside rows */
+  .markdown-body tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .markdown-body thead {
+    background: #e8e8e8 !important;
+  }
+
+  .markdown-body th,
+  .markdown-body td {
+    color: #000 !important;
+    border-color: #ccc !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-all !important;
+    padding: 2px 4px !important;
+    font-size: 7pt !important;
+    max-width: 150px !important;
+  }
+
+  .markdown-body tbody tr:nth-child(odd) {
+    background: #fff !important;
+  }
+
+  .markdown-body tbody tr:nth-child(even) {
+    background: #f8f8f8 !important;
+  }
+
+  .markdown-body tbody tr:hover {
+    background: inherit !important;
+  }
+
+  /* Horizontal rules */
+  .markdown-body hr {
+    background: #ccc !important;
+  }
+
+  /* Images - ensure they fit on page */
+  .markdown-body img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Kbd */
+  .markdown-body kbd {
+    background: #e8e8e8 !important;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+  }
+
+  /* Lists - avoid orphans */
+  .markdown-body li {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Paragraphs - avoid widows/orphans */
+  .markdown-body p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Code language label */
+  .code-block-lang,
+  .code-block-wrapper .code-block-lang,
+  .markdown-body .code-block-lang,
+  .markdown-body .code-block-wrapper .code-block-lang {
+    color: #666 !important;
+    font-size: 6pt !important;
+    top: 2px !important;
+    right: 4px !important;
+  }
+}

@@ -26,6 +26,8 @@ interface FileHeaderProps {
   onSaveAndPreview: () => void;
   /** Handler to save draft to a new file */
   onSaveDraft?: () => void;
+  /** Handler to print document as PDF */
+  onPrint?: () => void;
 }
 
 /**
@@ -72,6 +74,13 @@ export function FileHeader(props: FileHeaderProps) {
                 {showRawMarkdown() ? (isDirty() ? "Save" : "Preview") : "Edit"}
               </button>
             </Show>
+            <button
+              class="btn btn-small no-print"
+              onClick={() => props.onPrint?.()}
+              title="Print / Export PDF (Ctrl+P)"
+            >
+              Print
+            </button>
             <Show when={fileInfo()}>
               <span class="file-meta">
                 {formatFileSize(fileInfo()!.size)} · {fileInfo()!.modified}
@@ -99,6 +108,13 @@ export function FileHeader(props: FileHeaderProps) {
               title="Save to file (Ctrl+S)"
             >
               Save As
+            </button>
+            <button
+              class="btn btn-small no-print"
+              onClick={() => props.onPrint?.()}
+              title="Print / Export PDF (Ctrl+P)"
+            >
+              Print
             </button>
           </div>
         </div>

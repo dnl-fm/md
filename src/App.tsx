@@ -9,6 +9,7 @@ import { createHighlighter, type Highlighter } from "shiki";
 
 import "./styles/theme.css";
 import "./styles/markdown.css";
+import "./styles/print.css";
 
 import type { AppConfig, FileInfo } from "./types";
 import {
@@ -328,6 +329,10 @@ function App() {
           e.preventDefault();
           setShowLineNumbers(!showLineNumbers());
           break;
+        case "p":
+          e.preventDefault();
+          printDocument();
+          break;
         case "1":
         case "2":
         case "3":
@@ -638,6 +643,52 @@ function App() {
     }
   }
 
+  // Print document to PDF
+  async function printDocument() {
+    // Only print if we have content
+    if (!content()) return;
+    
+    // If in edit mode, temporarily switch to preview for printing
+    const wasInEditMode = showRawMarkdown();
+    if (wasInEditMode) {
+      setShowRawMarkdown(false);
+      // Wait for render
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Get file directory for resolving relative images
+    const file = currentFile();
+    let fileDir: string | null = null;
+    if (file) {
+      fileDir = await invoke<string | null>("get_file_dir", { path: file });
+    }
+    
+    // Resolve relative image paths to base64 data URIs
+    if (fileDir) {
+      const imgElements = document.querySelectorAll('.markdown-body img') as NodeListOf<HTMLImageElement>;
+      for (const img of imgElements) {
+        const src = img.getAttribute('src');
+        if (src && !src.startsWith('data:') && !src.startsWith('http')) {
+          const fullPath = src.startsWith('/') ? src : `${fileDir}/${src}`;
+          try {
+            const dataUri = await invoke<string>("read_image_base64", { path: fullPath });
+            img.src = dataUri;
+          } catch (e) {
+            console.warn(`Failed to load image for print: ${fullPath}`, e);
+          }
+        }
+      }
+    }
+    
+    // Trigger print dialog
+    window.print();
+    
+    // Restore edit mode if needed
+    if (wasInEditMode) {
+      setShowRawMarkdown(true);
+    }
+  }
+
   // Close current file
   async function closeFile() {
     const file = currentFile();
@@ -735,7 +786,7 @@ function App() {
       <Sidebar onOpenFile={openFileDialog} onLoadFile={loadFile} onLoadDraft={loadDraft} />
 
       <main class="main-content">
-        <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} />
+        <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} onPrint={printDocument} />
         <MarkdownViewer onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} />
       </main>
 

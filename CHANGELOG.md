@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2025-12-02
+
+### Added
+- Print / PDF export via Ctrl+P or "Print" button in file header
+- Print-optimized stylesheet with proper page breaks and sizing
+- Syntax highlighting preserved in PDF output
+- Relative images automatically embedded as base64 in PDF
+- New Tauri commands: `read_image_base64`, `get_file_dir`
+
 ## [0.5.0] - 2025-12-02
 
 ### Added

@@ -168,6 +168,8 @@ Frontend calls Rust via `invoke()`:
 | `log_message` | `level, message` | - | Write to log file |
 | `get_app_version` | - | `string` | Get app version from Cargo.toml |
 | `get_changelog_path` | - | `string` | Get path to bundled CHANGELOG.md |
+| `read_image_base64` | `path: string` | `string` | Read image as base64 data URI |
+| `get_file_dir` | `path: string` | `string \| null` | Get parent directory of file |
 
 ---
 
@@ -221,6 +223,27 @@ Key CSS variables:
 
 ---
 
+## Print / PDF Export
+
+Press `Ctrl+P` or click the "Print" button in the file header to export the current document as PDF.
+
+**Features:**
+- Uses browser's native print-to-PDF functionality
+- Optimized print stylesheet (`src/styles/print.css`)
+- Preserves syntax highlighting colors in code blocks
+- Automatically converts relative image paths to embedded base64
+- Tables and code blocks wrap to fit page width
+
+**Print CSS settings:**
+- Page: A4 with 1.5cm margins
+- Body text: 8pt
+- Headings: h1=13pt, h2=11pt, h3=10pt, h4=9pt
+- Code blocks: 6.5pt with syntax highlighting
+- Tables: 7pt with word wrapping
+- Language labels: 6pt
+
+---
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action | Handler in |
@@ -233,6 +256,7 @@ Key CSS variables:
 | `Ctrl+Y` / `Ctrl+Shift+Z` | Redo (edit mode) | `markdown-viewer.tsx` |
 | `Ctrl+F` | Toggle search bar | `setShowSearch()` |
 | `Ctrl+L` | Toggle line numbers (edit mode) | `setShowLineNumbers()` |
+| `Ctrl+P` | Print / Export PDF | `printDocument()` |
 | `Ctrl+T` | Toggle theme | `toggleTheme()` |
 | `Ctrl+B` | Toggle sidebar | `toggleSidebar()` |
 | `Ctrl+,` | Open settings | `setShowSettings()` |

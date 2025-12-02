@@ -325,6 +325,38 @@ fn get_app_version() -> String {
 }
 
 #[tauri::command]
+fn read_image_base64(path: &str) -> Result<String, String> {
+    use base64::{Engine as _, engine::general_purpose};
+    
+    let bytes = fs::read(path).map_err(|e| e.to_string())?;
+    let encoded = general_purpose::STANDARD.encode(&bytes);
+    
+    // Determine mime type from extension (case-insensitive)
+    let ext = std::path::Path::new(path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_ascii_lowercase());
+    let mime = match ext.as_deref() {
+        Some("png") => "image/png",
+        Some("jpg") | Some("jpeg") => "image/jpeg",
+        Some("gif") => "image/gif",
+        Some("svg") => "image/svg+xml",
+        Some("webp") => "image/webp",
+        _ => "application/octet-stream",
+    };
+    
+    Ok(format!("data:{};base64,{}", mime, encoded))
+}
+
+#[tauri::command]
+fn get_file_dir(path: &str) -> Option<String> {
+    std::path::Path::new(path)
+        .parent()
+        .and_then(|p| p.to_str())
+        .map(|s| s.to_string())
+}
+
+#[tauri::command]
 fn get_changelog_path(app: AppHandle) -> Result<String, String> {
     // Try resource directory first (production)
     if let Ok(resource_dir) = app.path().resource_dir() {
@@ -391,6 +423,8 @@ pub fn run() {
             get_log_path_cmd,
             get_app_version,
             get_changelog_path,
+            read_image_base64,
+            get_file_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
