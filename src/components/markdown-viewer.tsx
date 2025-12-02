@@ -31,14 +31,39 @@ import { SearchBar } from "./search-bar";
 /** Undo/redo history entry */
 type HistoryEntry = { text: string; cursorPos: number };
 
-// Module-level undo/redo stacks (persist across re-renders)
-const undoStack: HistoryEntry[] = [];
-const redoStack: HistoryEntry[] = [];
+/** Per-file undo/redo history */
+type FileHistory = { undo: HistoryEntry[]; redo: HistoryEntry[] };
 
-/** Reset undo/redo history (called on file/draft switch) */
-function resetHistory() {
-  undoStack.length = 0;
-  redoStack.length = 0;
+/** Map of file path or draft ID to undo/redo stacks */
+const historyMap = new Map<string, FileHistory>();
+
+/** Maximum undo stack size per file */
+const MAX_HISTORY_SIZE = 100;
+
+/**
+ * Get the current history key based on active file or draft.
+ * Returns empty string if nothing is open (shouldn't happen in practice).
+ */
+function getHistoryKey(): string {
+  return currentDraftId() ?? currentFile() ?? "";
+}
+
+/**
+ * Get or create undo/redo stacks for the current file/draft.
+ */
+function getHistory(): FileHistory {
+  const key = getHistoryKey();
+  if (!historyMap.has(key)) {
+    historyMap.set(key, { undo: [], redo: [] });
+  }
+  return historyMap.get(key)!;
+}
+
+/**
+ * Clear history for a specific file/draft (e.g., after save or discard).
+ */
+export function clearHistoryFor(key: string) {
+  historyMap.delete(key);
 }
 
 /** Props for MarkdownViewer component */
@@ -64,14 +89,6 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   let containerRef: HTMLDivElement | undefined;
   let articleRef: HTMLElement | undefined;
   const [matchPositions, setMatchPositions] = createSignal<MatchPosition[]>([]);
-
-  // Reset undo/redo history when switching between files/drafts
-  createEffect(() => {
-    // Access signals to create a dependency
-    currentFile();
-    currentDraftId();
-    resetHistory();
-  });
 
   // Get highlighted HTML with search matches
   const highlightedHtml = createMemo(() => {
@@ -201,20 +218,22 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
             const [currentLine, setCurrentLine] = createSignal(1);
             
             const pushUndo = (text: string, cursorPos: number) => {
+              const history = getHistory();
               // Don't push if same as last entry
-              if (undoStack.length > 0 && undoStack[undoStack.length - 1].text === text) return;
-              undoStack.push({ text, cursorPos });
+              if (history.undo.length > 0 && history.undo[history.undo.length - 1].text === text) return;
+              history.undo.push({ text, cursorPos });
               // Limit stack size
-              if (undoStack.length > 100) undoStack.shift();
+              if (history.undo.length > MAX_HISTORY_SIZE) history.undo.shift();
               // Clear redo on new change
-              redoStack.length = 0;
+              history.redo.length = 0;
             };
             
             const undo = () => {
-              if (!textareaRef || undoStack.length === 0) return;
+              const history = getHistory();
+              if (!textareaRef || history.undo.length === 0) return;
               // Save current state to redo
-              redoStack.push({ text: textareaRef.value, cursorPos: textareaRef.selectionStart });
-              const entry = undoStack.pop()!;
+              history.redo.push({ text: textareaRef.value, cursorPos: textareaRef.selectionStart });
+              const entry = history.undo.pop()!;
               textareaRef.value = entry.text;
               textareaRef.setSelectionRange(entry.cursorPos, entry.cursorPos);
               setContent(entry.text);
@@ -222,10 +241,11 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
             };
             
             const redo = () => {
-              if (!textareaRef || redoStack.length === 0) return;
+              const history = getHistory();
+              if (!textareaRef || history.redo.length === 0) return;
               // Save current state to undo
-              undoStack.push({ text: textareaRef.value, cursorPos: textareaRef.selectionStart });
-              const entry = redoStack.pop()!;
+              history.undo.push({ text: textareaRef.value, cursorPos: textareaRef.selectionStart });
+              const entry = history.redo.pop()!;
               textareaRef.value = entry.text;
               textareaRef.setSelectionRange(entry.cursorPos, entry.cursorPos);
               setContent(entry.text);
