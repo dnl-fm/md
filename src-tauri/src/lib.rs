@@ -326,8 +326,10 @@ fn get_app_version() -> String {
 
 #[tauri::command]
 fn read_image_base64(path: &str) -> Result<String, String> {
+    use base64::{Engine as _, engine::general_purpose};
+    
     let bytes = fs::read(path).map_err(|e| e.to_string())?;
-    let base64 = base64_encode(&bytes);
+    let encoded = general_purpose::STANDARD.encode(&bytes);
     
     // Determine mime type from extension
     let mime = match std::path::Path::new(path).extension().and_then(|e| e.to_str()) {
@@ -339,35 +341,7 @@ fn read_image_base64(path: &str) -> Result<String, String> {
         _ => "application/octet-stream",
     };
     
-    Ok(format!("data:{};base64,{}", mime, base64))
-}
-
-fn base64_encode(bytes: &[u8]) -> String {
-    const ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut result = String::new();
-    
-    for chunk in bytes.chunks(3) {
-        let b0 = chunk[0] as usize;
-        let b1 = chunk.get(1).copied().unwrap_or(0) as usize;
-        let b2 = chunk.get(2).copied().unwrap_or(0) as usize;
-        
-        result.push(ALPHABET[b0 >> 2] as char);
-        result.push(ALPHABET[((b0 & 0x03) << 4) | (b1 >> 4)] as char);
-        
-        if chunk.len() > 1 {
-            result.push(ALPHABET[((b1 & 0x0f) << 2) | (b2 >> 6)] as char);
-        } else {
-            result.push('=');
-        }
-        
-        if chunk.len() > 2 {
-            result.push(ALPHABET[b2 & 0x3f] as char);
-        } else {
-            result.push('=');
-        }
-    }
-    
-    result
+    Ok(format!("data:{};base64,{}", mime, encoded))
 }
 
 #[tauri::command]
