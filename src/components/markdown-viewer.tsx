@@ -252,10 +252,8 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
               updateCurrentLine();
             };
             
-            const lineCount = createMemo(() => {
-              const text = content();
-              return text ? text.split("\n").length : 1;
-            });
+            // Track line count separately to avoid recalculating on every keystroke
+            const [lineCount, setLineCount] = createSignal(1);
             
             const syncScroll = () => {
               if (gutterRef && textareaRef) {
@@ -271,6 +269,27 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
               }
             };
             
+            // Update line count only when content changes (debounced via signal)
+            const updateLineCount = () => {
+              if (textareaRef) {
+                // Count newlines directly instead of split (faster for large files)
+                let count = 1;
+                const text = textareaRef.value;
+                for (let i = 0; i < text.length; i++) {
+                  if (text[i] === "\n") count++;
+                }
+                setLineCount(count);
+              }
+            };
+            
+            // Memoized line numbers array - only recreates when count changes
+            const lineNumbers = createMemo(() => {
+              const count = lineCount();
+              const nums: number[] = new Array(count);
+              for (let i = 0; i < count; i++) nums[i] = i + 1;
+              return nums;
+            });
+            
             return (
               <div class={`editor-container ${showLineNumbers() ? "with-line-numbers" : ""}`}>
                 <Show when={showLineNumbers()}>
@@ -282,9 +301,9 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                       "font-family": getFontFamilyCSS(markdownFontFamily()),
                     }}
                   >
-                    <For each={Array.from({ length: lineCount() }, (_, i) => i + 1)}>
+                    <For each={lineNumbers()}>
                       {(num) => (
-                        <div class={`line-number ${currentLine() === num ? "active" : ""}`}>
+                        <div class="line-number" classList={{ active: currentLine() === num }}>
                           {num}
                         </div>
                       )}
@@ -295,6 +314,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                   ref={(el) => {
                     textareaRef = el;
                     el.value = content();
+                    updateLineCount();
                     setTimeout(() => {
                       el.focus();
                       el.setSelectionRange(0, 0);
@@ -313,6 +333,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                   onInput={(e) => {
                     setContent(e.currentTarget.value);
                     updateCurrentLine();
+                    updateLineCount();
                   }}
                   onScroll={syncScroll}
                   onClick={updateCurrentLine}
