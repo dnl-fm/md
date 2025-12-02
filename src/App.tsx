@@ -226,7 +226,11 @@ function App() {
 
     marked.use({ renderer });
 
-    const html = await marked.parse(md);
+    // Normalize LLM-generated characters to markdown-compatible equivalents
+    // En-dash (–) and em-dash (—) at line start → hyphen for list items
+    const normalizedMd = md.replace(/^[–—]\s/gm, "- ");
+
+    const html = await marked.parse(normalizedMd);
     setRenderedHtml(html);
   });
 
