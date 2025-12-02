@@ -1,35 +1,87 @@
+/**
+ * Application state store using SolidJS signals.
+ *
+ * This module contains all reactive state for the application.
+ * State is organized into logical groups:
+ * - Config and theme
+ * - File state
+ * - Draft state (unsaved files)
+ * - UI state
+ * - Search state
+ */
 import { createSignal } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
 import { confirm } from "../components/confirm-dialog";
 import type { AppConfig, FileInfo, ThemeColors } from "../types";
 import { DEFAULT_DARK_COLORS, DEFAULT_LIGHT_COLORS } from "../utils";
 
-// Config and theme
+// ============================================================================
+// Config and Theme State
+// ============================================================================
+
+/** Application configuration (persisted to disk) */
 const [config, setConfig] = createSignal<AppConfig>({
   theme: "dark",
   history: [],
   sidebar_collapsed: false,
 });
+
+/** Custom dark theme colors */
 const [darkColors, setDarkColors] = createSignal<ThemeColors>({ ...DEFAULT_DARK_COLORS });
+
+/** Custom light theme colors */
 const [lightColors, setLightColors] = createSignal<ThemeColors>({ ...DEFAULT_LIGHT_COLORS });
 
-// File state
+// ============================================================================
+// File State
+// ============================================================================
+
+/** Currently open file path (null if no file or viewing draft) */
 const [currentFile, setCurrentFile] = createSignal<string | null>(null);
+
+/** Current markdown content being displayed/edited */
 const [content, setContent] = createSignal<string>("");
+
+/** Original content at load time (for dirty checking) */
 const [originalContent, setOriginalContent] = createSignal<string>("");
+
+/** Rendered HTML from markdown parser */
 const [renderedHtml, setRenderedHtml] = createSignal<string>("");
+
+/** Metadata for current file (size, modified date) */
 const [fileInfo, setFileInfo] = createSignal<FileInfo | null>(null);
+
+/** Whether current file is read-only (e.g., bundled changelog) */
 const [isReadOnly, setIsReadOnly] = createSignal(false);
 
-// Draft state (unsaved new files)
+// ============================================================================
+// Draft State
+// ============================================================================
+
+/**
+ * In-memory unsaved document.
+ * Drafts are temporary and lost on app close.
+ */
 export interface Draft {
+  /** Unique identifier (e.g., "draft-1") */
   id: string;
+  /** Draft content */
   content: string;
 }
+
+/** List of active drafts */
 const [drafts, setDrafts] = createSignal<Draft[]>([]);
+
+/** Currently active draft ID (null if viewing a file) */
 const [currentDraftId, setCurrentDraftId] = createSignal<string | null>(null);
+
+/** Counter for generating unique draft IDs */
 let draftCounter = 0;
 
+/**
+ * Create a new empty draft
+ * @returns The new draft's ID
+ */
 function createDraft(): string {
   draftCounter++;
   const id = `draft-${draftCounter}`;
@@ -37,53 +89,116 @@ function createDraft(): string {
   return id;
 }
 
+/**
+ * Update a draft's content
+ * @param id - Draft ID to update
+ * @param content - New content
+ */
 function updateDraft(id: string, content: string) {
-  setDrafts(drafts().map(d => d.id === id ? { ...d, content } : d));
+  setDrafts(drafts().map((d) => (d.id === id ? { ...d, content } : d)));
 }
 
+/**
+ * Remove a draft by ID
+ * @param id - Draft ID to remove
+ */
 function removeDraft(id: string) {
-  setDrafts(drafts().filter(d => d.id !== id));
+  setDrafts(drafts().filter((d) => d.id !== id));
   if (currentDraftId() === id) {
     setCurrentDraftId(null);
   }
 }
 
+/**
+ * Get a draft by ID
+ * @param id - Draft ID to find
+ * @returns The draft or undefined if not found
+ */
 function getDraft(id: string): Draft | undefined {
-  return drafts().find(d => d.id === id);
+  return drafts().find((d) => d.id === id);
 }
 
-// UI state
+// ============================================================================
+// UI State
+// ============================================================================
+
+/** Whether sidebar is collapsed */
 const [sidebarCollapsed, setSidebarCollapsed] = createSignal(false);
+
+/** Sidebar width in pixels */
 const [sidebarWidth, setSidebarWidth] = createSignal(220);
+
+/** Whether user is resizing sidebar */
 const [isResizing, setIsResizing] = createSignal(false);
+
+/** UI font size in pixels */
 const [uiFontSize, setUiFontSize] = createSignal(14);
+
+/** Markdown content font size in pixels */
 const [markdownFontSize, setMarkdownFontSize] = createSignal(14);
+
+/** UI font family name */
 const [uiFontFamily, setUiFontFamily] = createSignal("system");
+
+/** Markdown content font family name */
 const [markdownFontFamily, setMarkdownFontFamily] = createSignal("JetBrains Mono");
+
+/** Whether settings modal is visible */
 const [showSettings, setShowSettings] = createSignal(false);
+
+/** Whether help modal is visible */
 const [showHelp, setShowHelp] = createSignal(false);
+
+/** Whether showing raw markdown (edit mode) vs rendered preview */
 const [showRawMarkdown, setShowRawMarkdown] = createSignal(false);
+
+/** Whether line numbers are shown in edit mode */
 const [showLineNumbers, setShowLineNumbers] = createSignal(true);
 
-// Search state
+// ============================================================================
+// Search State
+// ============================================================================
+
+/** Whether search bar is visible */
 const [showSearch, setShowSearch] = createSignal(false);
+
+/** Current search query string */
 const [searchQuery, setSearchQuery] = createSignal("");
+
+/** Total number of search matches in document */
 const [searchMatches, setSearchMatches] = createSignal<number>(0);
+
+/** Currently highlighted match index (1-based) */
 const [currentMatch, setCurrentMatch] = createSignal<number>(0);
 
-// Derived state
+// ============================================================================
+// Derived State
+// ============================================================================
+
+/**
+ * Whether document has unsaved changes.
+ * Only true in edit mode when content differs from original.
+ */
 const isDirty = () => showRawMarkdown() && content() !== originalContent();
 
-// Apply theme colors to CSS variables
+// ============================================================================
+// Theme Functions
+// ============================================================================
+
+/**
+ * Apply current theme colors to CSS custom properties.
+ * Uses saved colors with fallback to defaults.
+ * @param theme - Theme to apply (defaults to current config theme)
+ */
 function applyThemeColors(theme?: "dark" | "light") {
   const currentTheme = theme ?? config().theme;
   const defaults = currentTheme === "dark" ? DEFAULT_DARK_COLORS : DEFAULT_LIGHT_COLORS;
   const colors = currentTheme === "dark" ? darkColors() : lightColors();
   const root = document.documentElement;
-  
+
   // Helper to use saved color or fall back to default
   const getColor = (key: keyof ThemeColors) => colors[key] || defaults[key];
-  
+
   root.style.setProperty("--bg-primary", getColor("bg_primary"));
   root.style.setProperty("--bg-secondary", getColor("bg_secondary"));
   root.style.setProperty("--bg-elevated", getColor("bg_elevated"));
@@ -109,7 +224,10 @@ function applyThemeColors(theme?: "dark" | "light") {
   root.style.setProperty("--sidebar-active-bg", getColor("sidebar_active_bg"));
 }
 
-// Toggle theme
+/**
+ * Toggle between dark and light themes.
+ * Persists to config and updates CSS.
+ */
 async function toggleTheme() {
   const newTheme = config().theme === "dark" ? "light" : "dark";
   const newConfig = { ...config(), theme: newTheme };
@@ -126,7 +244,10 @@ async function toggleTheme() {
   await invoke("save_config", { config: newConfig });
 }
 
-// Save settings
+/**
+ * Save current settings to config file.
+ * Includes font sizes, font families, and theme colors.
+ */
 async function saveSettings() {
   const newConfig = {
     ...config(),
@@ -142,7 +263,12 @@ async function saveSettings() {
   await invoke("save_config", { config: newConfig });
 }
 
-// Update color
+/**
+ * Update a single theme color.
+ * @param theme - Which theme to update ("dark" or "light")
+ * @param key - Color key to update
+ * @param value - New color value (CSS color string)
+ */
 async function updateColor(theme: "dark" | "light", key: keyof ThemeColors, value: string) {
   if (theme === "dark") {
     setDarkColors({ ...darkColors(), [key]: value });
@@ -153,11 +279,15 @@ async function updateColor(theme: "dark" | "light", key: keyof ThemeColors, valu
   await saveSettings();
 }
 
-// Reset colors to defaults
+/**
+ * Reset a theme's colors to defaults.
+ * Shows confirmation dialog before resetting.
+ * @param theme - Which theme to reset
+ */
 async function resetColors(theme: "dark" | "light") {
   const confirmed = await confirm(`Reset ${theme} theme colors to defaults?`, "Reset Colors");
   if (!confirmed) return;
-  
+
   if (theme === "dark") {
     setDarkColors({ ...DEFAULT_DARK_COLORS });
   } else {
@@ -166,6 +296,10 @@ async function resetColors(theme: "dark" | "light") {
   applyThemeColors();
   await saveSettings();
 }
+
+// ============================================================================
+// Exports
+// ============================================================================
 
 export {
   // Config and theme

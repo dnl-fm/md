@@ -1,3 +1,13 @@
+/**
+ * Collapsible sidebar with recent files, drafts, and quick actions.
+ *
+ * Features:
+ * - Expandable/collapsible with Ctrl+B
+ * - Resizable via drag handle (double-click to auto-fit)
+ * - Shows recent files and unsaved drafts
+ * - Quick access buttons when collapsed (1-9 shortcuts)
+ * - Theme toggle, help, and settings in footer
+ */
 import { Show, For } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
 import {
@@ -18,12 +28,19 @@ import {
 } from "../stores/app-store";
 import { getFilename, clamp, calculateSidebarWidth } from "../utils";
 
+/** Props for Sidebar component */
 interface SidebarProps {
+  /** Handler to open file picker dialog */
   onOpenFile: () => void;
+  /** Handler to load a file by path */
   onLoadFile: (path: string, addToHistory?: boolean) => void;
+  /** Handler to load a draft by ID */
   onLoadDraft: (id: string) => void;
 }
 
+/**
+ * Sidebar component with file history and navigation.
+ */
 export function Sidebar(props: SidebarProps) {
   // Toggle sidebar
   async function toggleSidebar() {

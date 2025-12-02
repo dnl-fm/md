@@ -1,3 +1,11 @@
+/**
+ * File header bar showing current file info and action buttons.
+ *
+ * Displays differently for:
+ * - Saved files: path, edit/save/cancel buttons, file metadata
+ * - Drafts: "Untitled" name, edit/preview toggle, "Save As" button
+ * - Read-only files: no edit button (e.g., bundled changelog)
+ */
 import { Show } from "solid-js";
 import {
   currentFile,
@@ -12,11 +20,17 @@ import {
 } from "../stores/app-store";
 import { formatFileSize } from "../utils";
 
+/** Props for FileHeader component */
 interface FileHeaderProps {
+  /** Handler to save current file and switch to preview mode */
   onSaveAndPreview: () => void;
+  /** Handler to save draft to a new file */
   onSaveDraft?: () => void;
 }
 
+/**
+ * Header bar with file info and action buttons.
+ */
 export function FileHeader(props: FileHeaderProps) {
   return (
     <>

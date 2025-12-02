@@ -1,3 +1,12 @@
+/**
+ * Markdown viewer component with preview and edit modes.
+ *
+ * Features:
+ * - Preview mode: renders markdown as styled HTML with syntax highlighting
+ * - Edit mode: textarea with line numbers, undo/redo, smart indentation
+ * - Search: highlights matches in preview with minimap navigation
+ * - Keyboard shortcuts for editing (Tab indent, wrap selection, etc.)
+ */
 import { Show, createEffect, createMemo, createSignal, For } from "solid-js";
 import {
   content,
@@ -18,22 +27,32 @@ import { getFontFamilyCSS } from "../utils";
 import { EmptyState } from "./empty-state";
 import { SearchBar } from "./search-bar";
 
-// Undo/redo stack (module level to persist across re-renders)
+/** Undo/redo history entry */
 type HistoryEntry = { text: string; cursorPos: number };
+
+// Module-level undo/redo stacks (persist across re-renders)
 const undoStack: HistoryEntry[] = [];
 const redoStack: HistoryEntry[] = [];
 
+/** Props for MarkdownViewer component */
 interface MarkdownViewerProps {
+  /** Handler to save file and switch to preview */
   onSaveAndPreview: () => void;
+  /** Handler to save draft to new file */
   onSaveDraft?: () => void;
 }
 
-// Match position for minimap
+/** Search match position for minimap display */
 interface MatchPosition {
+  /** Match index (1-based) */
   index: number;
+  /** Vertical position as percentage of document height */
   percent: number;
 }
 
+/**
+ * Main content area showing markdown preview or editor.
+ */
 export function MarkdownViewer(props: MarkdownViewerProps) {
   let containerRef: HTMLDivElement | undefined;
   let articleRef: HTMLElement | undefined;

@@ -1,12 +1,29 @@
+/**
+ * Help modal showing keyboard shortcuts and version info.
+ *
+ * Displays:
+ * - App version with changelog link
+ * - Categorized keyboard shortcuts (General, Edit Mode, Navigation)
+ *
+ * Opens with Ctrl+H, closes with Escape or clicking outside.
+ */
 import { Show } from "solid-js";
 
+/** Props for HelpModal component */
 interface HelpModalProps {
+  /** Whether to show the modal */
   show: boolean;
+  /** App version string */
   version: string;
+  /** Callback to close the modal */
   onClose: () => void;
+  /** Callback to view the changelog */
   onViewChangelog: () => void;
 }
 
+/**
+ * Help modal with keyboard shortcuts reference.
+ */
 export function HelpModal(props: HelpModalProps) {
   return (
     <Show when={props.show}>

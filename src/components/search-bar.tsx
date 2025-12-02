@@ -1,3 +1,7 @@
+/**
+ * Search bar component for finding text in markdown content.
+ * Appears at the top of the markdown viewer when Ctrl+F is pressed.
+ */
 import { createEffect } from "solid-js";
 import {
   showSearch,
@@ -8,10 +12,19 @@ import {
   currentMatch,
 } from "../stores/app-store";
 
+/** Props for SearchBar component */
 interface SearchBarProps {
+  /** Callback to navigate between search matches */
   onNavigate: (direction: "next" | "prev") => void;
 }
 
+/**
+ * Search bar with input, match counter, and navigation buttons.
+ * Keyboard shortcuts:
+ * - Enter: next match
+ * - Shift+Enter: previous match
+ * - Escape: close search
+ */
 export function SearchBar(props: SearchBarProps) {
   let inputRef: HTMLInputElement | undefined;
 

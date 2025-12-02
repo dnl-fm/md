@@ -1,13 +1,27 @@
+/**
+ * Toast notification for new app releases.
+ *
+ * Appears in bottom-right corner when app version differs from last seen.
+ * Offers quick access to changelog or dismissal.
+ * Persists dismissal to config so notification only shows once per version.
+ */
 import { createSignal } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
 import { config, setConfig } from "../stores/app-store";
 
+/** Props for ReleaseNotification component */
 interface ReleaseNotificationProps {
+  /** New version string to display */
   version: string;
+  /** Callback when notification is dismissed */
   onDismiss: () => void;
+  /** Callback to load changelog file */
   onLoadFile: (path: string) => Promise<void>;
 }
 
+/**
+ * Release notification toast component.
+ */
 export function ReleaseNotification(props: ReleaseNotificationProps) {
   const [isLeaving, setIsLeaving] = createSignal(false);
 
