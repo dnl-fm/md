@@ -331,8 +331,12 @@ fn read_image_base64(path: &str) -> Result<String, String> {
     let bytes = fs::read(path).map_err(|e| e.to_string())?;
     let encoded = general_purpose::STANDARD.encode(&bytes);
     
-    // Determine mime type from extension
-    let mime = match std::path::Path::new(path).extension().and_then(|e| e.to_str()) {
+    // Determine mime type from extension (case-insensitive)
+    let ext = std::path::Path::new(path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_ascii_lowercase());
+    let mime = match ext.as_deref() {
         Some("png") => "image/png",
         Some("jpg") | Some("jpeg") => "image/jpeg",
         Some("gif") => "image/gif",
