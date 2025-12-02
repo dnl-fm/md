@@ -427,7 +427,20 @@ function App() {
   }
 
   // Create new untitled file
-  function newFile() {
+  async function newFile() {
+    // Check for unsaved changes in current file
+    if (isDirty()) {
+      const shouldSwitch = await confirm(
+        "You have unsaved changes that will be lost.",
+        {
+          title: "Unsaved Changes",
+          confirmLabel: "Discard",
+          cancelLabel: "Stay",
+        }
+      );
+      if (!shouldSwitch) return;
+    }
+    
     // Save current draft content before creating new
     const currentDraft = currentDraftId();
     if (currentDraft) {
