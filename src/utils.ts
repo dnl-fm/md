@@ -124,6 +124,21 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 /**
+ * Normalize markdown text for consistent parsing.
+ *
+ * LLMs often output typographic characters that aren't recognized by markdown parsers:
+ * - En-dash (–) U+2013 and em-dash (—) U+2014 instead of hyphen (-) for list items
+ *
+ * This function converts these to their ASCII equivalents at line start positions.
+ *
+ * @param md - Raw markdown string
+ * @returns Normalized markdown with ASCII list markers
+ */
+export function normalizeMarkdown(md: string): string {
+  return md.replace(/^[–—]\s/gm, "- ");
+}
+
+/**
  * Calculate estimated width for sidebar based on filenames
  */
 export function calculateSidebarWidth(history: string[]): number {

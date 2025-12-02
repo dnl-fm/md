@@ -64,6 +64,7 @@ import {
   DEFAULT_LIGHT_COLORS,
   getFontFamilyCSS,
   escapeHtml,
+  normalizeMarkdown,
   slugify,
   clamp,
 } from "./utils";
@@ -226,11 +227,7 @@ function App() {
 
     marked.use({ renderer });
 
-    // Normalize LLM-generated characters to markdown-compatible equivalents
-    // En-dash (–) and em-dash (—) at line start → hyphen for list items
-    const normalizedMd = md.replace(/^[–—]\s/gm, "- ");
-
-    const html = await marked.parse(normalizedMd);
+    const html = await marked.parse(normalizeMarkdown(md));
     setRenderedHtml(html);
   });
 
