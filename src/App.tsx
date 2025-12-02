@@ -452,8 +452,12 @@ function App() {
     // Check for unsaved changes in current file
     if (isDirty()) {
       const shouldSwitch = await confirm(
-        "You have unsaved changes. Discard and switch files?",
-        "Unsaved Changes"
+        "You have unsaved changes that will be lost.",
+        {
+          title: "Unsaved Changes",
+          confirmLabel: "Discard",
+          cancelLabel: "Stay",
+        }
       );
       if (!shouldSwitch) return;
     }
@@ -522,8 +526,12 @@ function App() {
     // Check for unsaved changes in current file
     if (isDirty()) {
       const shouldSwitch = await confirm(
-        "You have unsaved changes. Discard and switch files?",
-        "Unsaved Changes"
+        "You have unsaved changes that will be lost.",
+        {
+          title: "Unsaved Changes",
+          confirmLabel: "Discard",
+          cancelLabel: "Stay",
+        }
       );
       if (!shouldSwitch) return;
     }
@@ -593,7 +601,14 @@ function App() {
     if (draftId) {
       // Check current content (not stored draft content, as it may not be synced)
       if (content().trim()) {
-        const shouldClose = await confirm("Close without saving?", "Unsaved Changes");
+        const shouldClose = await confirm(
+          "This draft has content that will be lost.",
+          {
+            title: "Unsaved Draft",
+            confirmLabel: "Discard",
+            cancelLabel: "Keep",
+          }
+        );
         if (!shouldClose) return;
       }
       
@@ -619,7 +634,14 @@ function App() {
     if (file) {
       // Check for unsaved changes
       if (isDirty()) {
-        const shouldClose = await confirm("Close without saving?", "Unsaved Changes");
+        const shouldClose = await confirm(
+          "You have unsaved changes that will be lost.",
+          {
+            title: "Unsaved Changes",
+            confirmLabel: "Discard",
+            cancelLabel: "Keep",
+          }
+        );
         if (!shouldClose) return;
       }
       

@@ -21,18 +21,41 @@ import { createSignal } from "solid-js";
 const [isOpen, setIsOpen] = createSignal(false);
 const [message, setMessage] = createSignal("");
 const [title, setTitle] = createSignal("Confirm");
+const [confirmLabel, setConfirmLabel] = createSignal("OK");
+const [cancelLabel, setCancelLabel] = createSignal("Cancel");
 
 let resolvePromise: ((value: boolean) => void) | null = null;
+
+/** Options for confirm dialog */
+interface ConfirmOptions {
+  /** Dialog title */
+  title?: string;
+  /** Label for confirm button (default: "OK") */
+  confirmLabel?: string;
+  /** Label for cancel button (default: "Cancel") */
+  cancelLabel?: string;
+}
 
 /**
  * Show a confirmation dialog and wait for user response.
  * @param msg - Message to display in the dialog body
- * @param dialogTitle - Dialog title (default: "Confirm")
- * @returns Promise that resolves to true (OK) or false (Cancel)
+ * @param options - Dialog options (title, button labels) or just title string
+ * @returns Promise that resolves to true (confirm) or false (cancel)
  */
-export function confirm(msg: string, dialogTitle = "Confirm"): Promise<boolean> {
+export function confirm(msg: string, options?: string | ConfirmOptions): Promise<boolean> {
   setMessage(msg);
-  setTitle(dialogTitle);
+  
+  if (typeof options === "string") {
+    // Legacy: just title
+    setTitle(options);
+    setConfirmLabel("OK");
+    setCancelLabel("Cancel");
+  } else {
+    setTitle(options?.title ?? "Confirm");
+    setConfirmLabel(options?.confirmLabel ?? "OK");
+    setCancelLabel(options?.cancelLabel ?? "Cancel");
+  }
+  
   setIsOpen(true);
   
   return new Promise((resolve) => {
@@ -91,10 +114,10 @@ export function ConfirmDialog() {
           <p>{message()}</p>
           <div class="confirm-dialog-buttons">
             <button class="btn btn-small" onClick={handleCancel}>
-              Cancel
+              {cancelLabel()}
             </button>
             <button class="btn btn-small btn-confirm" onClick={handleConfirm}>
-              OK
+              {confirmLabel()}
             </button>
           </div>
         </div>
