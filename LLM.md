@@ -231,7 +231,7 @@ Press `Ctrl+P` or click the "Print" button in the file header to export the curr
 - Uses browser's native print-to-PDF functionality
 - Optimized print stylesheet (`src/styles/print.css`)
 - Preserves syntax highlighting colors in code blocks
-- Automatically converts relative image paths to embedded base64
+- Relative images are embedded as base64 during markdown rendering (works in preview and PDF)
 - Tables and code blocks wrap to fit page width
 
 **Print CSS settings:**

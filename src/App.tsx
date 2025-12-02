@@ -228,7 +228,43 @@ function App() {
 
     marked.use({ renderer });
 
-    const html = await marked.parse(normalizeMarkdown(md));
+    let html = await marked.parse(normalizeMarkdown(md));
+    
+    // Resolve relative image paths to base64 data URIs
+    const file = currentFile();
+    if (file) {
+      const fileDir = await invoke<string | null>("get_file_dir", { path: file });
+      if (fileDir) {
+        // Find all img tags with relative src
+        const imgRegex = /<img([^>]*?)src="([^"]+)"([^>]*?)>/g;
+        const replacements: { original: string; replacement: string }[] = [];
+        
+        let match;
+        while ((match = imgRegex.exec(html)) !== null) {
+          const [fullMatch, before, src, after] = match;
+          // Skip data URIs and absolute URLs
+          if (src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) {
+            continue;
+          }
+          const fullPath = src.startsWith('/') ? src : `${fileDir}/${src}`;
+          try {
+            const dataUri = await invoke<string>("read_image_base64", { path: fullPath });
+            replacements.push({
+              original: fullMatch,
+              replacement: `<img${before}src="${dataUri}"${after}>`
+            });
+          } catch (e) {
+            console.warn(`Failed to load image: ${fullPath}`, e);
+          }
+        }
+        
+        // Apply replacements
+        for (const { original, replacement } of replacements) {
+          html = html.replace(original, replacement);
+        }
+      }
+    }
+    
     setRenderedHtml(html);
   });
 
@@ -656,31 +692,7 @@ function App() {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    // Get file directory for resolving relative images
-    const file = currentFile();
-    let fileDir: string | null = null;
-    if (file) {
-      fileDir = await invoke<string | null>("get_file_dir", { path: file });
-    }
-    
-    // Resolve relative image paths to base64 data URIs
-    if (fileDir) {
-      const imgElements = document.querySelectorAll('.markdown-body img') as NodeListOf<HTMLImageElement>;
-      for (const img of imgElements) {
-        const src = img.getAttribute('src');
-        if (src && !src.startsWith('data:') && !src.startsWith('http')) {
-          const fullPath = src.startsWith('/') ? src : `${fileDir}/${src}`;
-          try {
-            const dataUri = await invoke<string>("read_image_base64", { path: fullPath });
-            img.src = dataUri;
-          } catch (e) {
-            console.warn(`Failed to load image for print: ${fullPath}`, e);
-          }
-        }
-      }
-    }
-    
-    // Trigger print dialog
+    // Trigger print dialog (images already resolved as base64 during render)
     window.print();
     
     // Restore edit mode if needed
