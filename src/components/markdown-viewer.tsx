@@ -269,10 +269,9 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
               }
             };
             
-            // Update line count only when content changes (debounced via signal)
-            const updateLineCount = () => {
+            // Full recount - only used on init, paste, undo/redo
+            const recountLines = () => {
               if (textareaRef) {
-                // Count newlines directly instead of split (faster for large files)
                 let count = 1;
                 const text = textareaRef.value;
                 for (let i = 0; i < text.length; i++) {
@@ -280,6 +279,26 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                 }
                 setLineCount(count);
               }
+            };
+            
+            // Check if backspace/delete will remove a newline
+            const willRemoveLine = (key: string): boolean => {
+              if (!textareaRef) return false;
+              const { selectionStart, selectionEnd, value } = textareaRef;
+              
+              // Selection spans multiple chars - might contain newlines
+              if (selectionStart !== selectionEnd) {
+                const selected = value.substring(selectionStart, selectionEnd);
+                return selected.includes("\n");
+              }
+              
+              if (key === "Backspace" && selectionStart > 0) {
+                return value[selectionStart - 1] === "\n";
+              }
+              if (key === "Delete" && selectionStart < value.length) {
+                return value[selectionStart] === "\n";
+              }
+              return false;
             };
             
             // Memoized line numbers array - only recreates when count changes
@@ -314,7 +333,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                   ref={(el) => {
                     textareaRef = el;
                     el.value = content();
-                    updateLineCount();
+                    recountLines();
                     setTimeout(() => {
                       el.focus();
                       el.setSelectionRange(0, 0);
@@ -333,7 +352,6 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                   onInput={(e) => {
                     setContent(e.currentTarget.value);
                     updateCurrentLine();
-                    updateLineCount();
                   }}
                   onScroll={syncScroll}
                   onClick={updateCurrentLine}
@@ -342,13 +360,27 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                       updateCurrentLine();
                     }
                   }}
+                  onPaste={() => {
+                    // Paste can add/remove multiple lines - recount after DOM update
+                    setTimeout(recountLines, 0);
+                  }}
                   onKeyDown={(e) => {
                     const textarea = e.currentTarget;
                     const start = textarea.selectionStart;
                     const end = textarea.selectionEnd;
                     const hasSelection = start !== end;
                     
-                    // Undo/Redo
+                    // Enter adds a line
+                    if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+                      setLineCount(lineCount() + 1);
+                    }
+                    
+                    // Backspace/Delete might remove a line
+                    if ((e.key === "Backspace" || e.key === "Delete") && willRemoveLine(e.key)) {
+                      setLineCount(Math.max(1, lineCount() - 1));
+                    }
+                    
+                    // Undo/Redo - recount since we don't know the change
                     if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z" || e.key === "y")) {
                       e.preventDefault();
                       if (e.key === "y" || e.shiftKey || e.key === "Z") {
@@ -356,6 +388,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
                       } else {
                         undo();
                       }
+                      recountLines();
                       return;
                     }
                     
