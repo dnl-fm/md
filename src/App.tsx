@@ -10,6 +10,7 @@ import { createHighlighter, type Highlighter } from "shiki";
 import "./styles/theme.css";
 import "./styles/markdown.css";
 import "./styles/print.css";
+import "./styles/wasm-editor.css";
 
 import type { AppConfig, FileInfo } from "./types";
 import {
@@ -82,8 +83,8 @@ import { ReleaseNotification } from "./components/release-notification";
 // Initialize marked
 const marked = new Marked();
 
-// Highlighter instance (module-level for effects)
-let highlighter: Highlighter | null = null;
+// Highlighter instance as a signal so effects re-run when it's ready
+const [highlighter, setHighlighter] = createSignal<Highlighter | null>(null);
 
 function App() {
   const [showWelcome, setShowWelcome] = createSignal(false);
@@ -94,7 +95,7 @@ function App() {
   onMount(async () => {
     try {
       logger.info("App initializing...");
-      highlighter = await createHighlighter({
+      const hl = await createHighlighter({
         themes: ["github-dark", "github-light"],
         langs: [
           "javascript",
@@ -123,6 +124,7 @@ function App() {
           "plaintext",
         ],
       });
+      setHighlighter(hl);
 
       // Load config
       const cfg = await invoke<AppConfig>("get_config");
@@ -193,6 +195,7 @@ function App() {
   // Render markdown when content changes
   createEffect(async () => {
     const md = content();
+    const hl = highlighter(); // Read signal to track dependency
 
     if (!md) {
       setRenderedHtml("");
@@ -209,9 +212,9 @@ function App() {
     const renderer = {
       code({ text, lang }: { text: string; lang?: string }): string {
         const language = lang || "plaintext";
-        if (highlighter) {
+        if (hl) {
           try {
-            const highlighted = highlighter.codeToHtml(text, { lang: language, theme });
+            const highlighted = hl.codeToHtml(text, { lang: language, theme });
             return `<div class="code-block-wrapper">${lang ? `<span class="code-block-lang">${lang}</span>` : ""}${highlighted}</div>`;
           } catch {
             return `<pre><code>${escapeHtml(text)}</code></pre>`;
