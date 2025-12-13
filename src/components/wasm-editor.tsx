@@ -26,6 +26,8 @@ import {
   markdownFontFamily,
   currentDraftId,
   currentFile,
+  scrollAnchor,
+  setScrollAnchor,
 } from "../stores/app-store";
 import { getFontFamilyCSS } from "../utils";
 
@@ -127,6 +129,9 @@ export function WasmEditor(props: WasmEditorProps) {
         updateCursorDisplay();
         updateDocHeight(); // Set initial height
         updateVisibleLines();
+        
+        // Scroll to anchor if set (from preview mode)
+        scrollToAnchor();
 
         // Auto-focus the editor
         editorRef?.focus();
@@ -265,6 +270,66 @@ export function WasmEditor(props: WasmEditorProps) {
       contentRef.scrollTop = newScroll;
       setScrollTop(newScroll);
     }
+  }
+
+  // Scroll to anchor text (used when switching from preview to edit)
+  function scrollToAnchor() {
+    const anchor = scrollAnchor();
+    if (!anchor || !wasm || !contentRef) {
+      setScrollAnchor(null);
+      return;
+    }
+
+    const text = wasm.get_content();
+    
+    // Try to find the anchor text in the document
+    // First try exact match, then try normalized (whitespace collapsed)
+    let index = text.indexOf(anchor);
+    
+    if (index === -1) {
+      // Try with normalized whitespace
+      const normalizedAnchor = anchor.replace(/\s+/g, ' ');
+      const normalizedText = text.replace(/\s+/g, ' ');
+      const normalizedIndex = normalizedText.indexOf(normalizedAnchor);
+      
+      if (normalizedIndex !== -1) {
+        // Map back to original index (approximate)
+        // Count how many chars in original text up to this normalized position
+        let origIndex = 0;
+        let normCount = 0;
+        while (origIndex < text.length && normCount < normalizedIndex) {
+          if (text[origIndex].match(/\s/)) {
+            while (origIndex < text.length && text[origIndex].match(/\s/)) {
+              origIndex++;
+            }
+            normCount++;
+          } else {
+            origIndex++;
+            normCount++;
+          }
+        }
+        index = origIndex;
+      }
+    }
+
+    if (index !== -1) {
+      // Find which line this is on
+      const linesBefore = text.substring(0, index).split('\n').length - 1;
+      const lineHeight = LINE_HEIGHT();
+      
+      // Scroll to that line (with some offset from top)
+      const scrollY = Math.max(0, linesBefore * lineHeight - 50);
+      contentRef.scrollTop = scrollY;
+      setScrollTop(scrollY);
+      
+      // Also set cursor to this position
+      wasm.set_cursor(index);
+      updateCursorDisplay();
+      updateVisibleLines();
+    }
+
+    // Clear the anchor
+    setScrollAnchor(null);
   }
 
   // Sync content to store (and update height since content changed)

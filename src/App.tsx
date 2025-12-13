@@ -60,6 +60,7 @@ import {
   updateDraft,
   removeDraft,
   getDraft,
+  setScrollAnchor,
 } from "./stores/app-store";
 import {
   DEFAULT_DARK_COLORS,
@@ -362,7 +363,8 @@ function App() {
               // Switching to preview - save if dirty
               saveAndPreview();
             } else {
-              // Switching to edit - always allowed
+              // Switching to edit - capture visible content for scroll sync
+              captureScrollAnchor();
               setShowRawMarkdown(true);
             }
           }
@@ -571,6 +573,40 @@ function App() {
       setFileInfo(null);
       setShowRawMarkdown(true);
     }
+  }
+
+  // Capture visible content anchor for scroll sync when switching to edit mode
+  function captureScrollAnchor() {
+    const article = document.querySelector('.markdown-content');
+    if (!article) {
+      setScrollAnchor(null);
+      return;
+    }
+
+    const articleRect = article.getBoundingClientRect();
+    const viewportTop = articleRect.top;
+    
+    // Find elements that could serve as anchors (headings, paragraphs, list items)
+    const anchorElements = article.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, pre, blockquote');
+    
+    for (const el of anchorElements) {
+      const rect = el.getBoundingClientRect();
+      // Find first element that's visible (top edge is in or near viewport)
+      if (rect.top >= viewportTop - 50 && rect.top < viewportTop + 200) {
+        // Get text content, clean it up for matching
+        let text = el.textContent?.trim() || '';
+        // For headings, use the full text; for others, use first ~50 chars
+        if (!el.tagName.match(/^H[1-6]$/)) {
+          text = text.substring(0, 80);
+        }
+        if (text.length > 5) {
+          setScrollAnchor(text);
+          return;
+        }
+      }
+    }
+    
+    setScrollAnchor(null);
   }
 
   // Save file and return to preview
