@@ -150,6 +150,15 @@ export function WasmEditor(props: WasmEditorProps) {
           window.removeEventListener("keydown", captureShiftTab, {
             capture: true,
           });
+        
+        // Watch for container resize to update visible lines
+        if (contentRef) {
+          const resizeObserver = new ResizeObserver(() => {
+            updateVisibleLines();
+          });
+          resizeObserver.observe(contentRef);
+          cleanupResizeObserver = () => resizeObserver.disconnect();
+        }
       });
     } catch (err) {
       console.error("WASM init error:", err);
@@ -161,9 +170,13 @@ export function WasmEditor(props: WasmEditorProps) {
 
   // Store cleanup function for Shift+Tab listener
   let cleanupShiftTab: (() => void) | null = null;
+  
+  // Store cleanup function for resize observer
+  let cleanupResizeObserver: (() => void) | null = null;
 
   onCleanup(() => {
     if (cleanupShiftTab) cleanupShiftTab();
+    if (cleanupResizeObserver) cleanupResizeObserver();
   });
 
   // Get unique key for current file/draft
