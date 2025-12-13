@@ -177,6 +177,12 @@ const [currentMatch, setCurrentMatch] = createSignal<number>(0);
  */
 const [scrollAnchor, setScrollAnchor] = createSignal<string | null>(null);
 
+/**
+ * Preview scroll anchor - line number from editor to scroll preview to.
+ * Set before switching from edit to preview mode.
+ */
+const [previewScrollLine, setPreviewScrollLine] = createSignal<number | null>(null);
+
 // ============================================================================
 // Derived State
 // ============================================================================
@@ -369,6 +375,8 @@ export {
   // Scroll sync
   scrollAnchor,
   setScrollAnchor,
+  previewScrollLine,
+  setPreviewScrollLine,
   // Draft state
   drafts,
   setDrafts,

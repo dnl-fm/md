@@ -6,7 +6,7 @@
  * - Edit mode: WASM-based editor with syntax highlighting, undo/redo
  * - Search: highlights matches in preview with minimap navigation
  */
-import { Show, createEffect, createMemo, createSignal, For } from "solid-js";
+import { Show, createEffect, createMemo, createSignal, For, createRenderEffect } from "solid-js";
 import {
   content,
   renderedHtml,
@@ -19,11 +19,13 @@ import {
   setCurrentMatch,
   searchMatches,
   currentDraftId,
+  previewScrollLine,
+  setPreviewScrollLine,
 } from "../stores/app-store";
 import { getFontFamilyCSS } from "../utils";
 import { EmptyState } from "./empty-state";
 import { SearchBar } from "./search-bar";
-import { WasmEditor } from "./wasm-editor";
+import { WasmEditor, type WasmEditorApi } from "./wasm-editor";
 
 /** Props for MarkdownViewer component */
 interface MarkdownViewerProps {
@@ -31,6 +33,8 @@ interface MarkdownViewerProps {
   onSaveAndPreview: () => void;
   /** Handler to save draft to new file */
   onSaveDraft?: () => void;
+  /** Callback to receive editor API for scroll sync */
+  onEditorApi?: (api: WasmEditorApi | null) => void;
 }
 
 /** Search match position for minimap display */
@@ -46,7 +50,8 @@ interface MatchPosition {
  */
 export function MarkdownViewer(props: MarkdownViewerProps) {
   let containerRef: HTMLDivElement | undefined;
-  let articleRef: HTMLElement | undefined;
+  // Reactive ref so effects re-run when article mounts
+  const [articleEl, setArticleEl] = createSignal<HTMLElement | null>(null);
   const [matchPositions, setMatchPositions] = createSignal<MatchPosition[]>([]);
 
   // Get highlighted HTML with search matches
@@ -102,24 +107,26 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   createEffect(() => {
     const query = searchQuery().trim();
     const matches = searchMatches();
+    const article = articleEl();
     
-    if (!query || matches === 0 || !articleRef || showRawMarkdown()) {
+    if (!query || matches === 0 || !article || showRawMarkdown()) {
       setMatchPositions([]);
       return;
     }
 
     // Delay to let DOM update with highlights
     setTimeout(() => {
-      if (!articleRef) return;
+      const el = articleEl();
+      if (!el) return;
       
-      const scrollHeight = articleRef.scrollHeight;
-      const highlights = articleRef.querySelectorAll(".search-highlight");
+      const scrollHeight = el.scrollHeight;
+      const highlights = el.querySelectorAll(".search-highlight");
       const positions: MatchPosition[] = [];
       
-      highlights.forEach((el, idx) => {
-        const rect = el.getBoundingClientRect();
-        const articleRect = articleRef!.getBoundingClientRect();
-        const scrollTop = articleRef!.scrollTop;
+      highlights.forEach((highlight, idx) => {
+        const rect = highlight.getBoundingClientRect();
+        const articleRect = el.getBoundingClientRect();
+        const scrollTop = el.scrollTop;
         
         // Calculate position relative to full document height
         const offsetTop = rect.top - articleRect.top + scrollTop;
@@ -148,6 +155,59 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
     }
   });
 
+  // Scroll to position from editor when switching to preview
+  // Uses data-line attributes on block elements for precise mapping
+  // createRenderEffect runs after DOM updates, so articleEl() will be set
+  createRenderEffect(() => {
+    const article = articleEl();
+    const targetLine = previewScrollLine();
+    
+    console.log('[scroll-sync][preview][render] article?', !!article, 'pendingLine', targetLine);
+    
+    if (!article || targetLine === null) return;
+    
+    // Defer one tick so layout is stable
+    requestAnimationFrame(() => {
+      scrollPreviewToLine(article, targetLine);
+      setPreviewScrollLine(null);
+    });
+  });
+
+  function scrollPreviewToLine(article: HTMLElement, targetLine: number) {
+    console.log('[scroll-sync][preview] scrolling to line:', targetLine);
+
+    // Find element with data-line closest to (but not exceeding) targetLine
+    const elementsWithLine = article.querySelectorAll('[data-line]');
+    let bestMatch: Element | null = null;
+    let bestLine = -1;
+
+    for (const el of elementsWithLine) {
+      const line = parseInt((el as HTMLElement).dataset.line ?? '', 10);
+      if (!isNaN(line) && line <= targetLine && line > bestLine) {
+        bestLine = line;
+        bestMatch = el;
+      }
+    }
+
+    if (bestMatch) {
+      console.log('[scroll-sync][preview] found element at line:', bestLine, bestMatch.tagName);
+      bestMatch.scrollIntoView({ behavior: 'instant', block: 'start' });
+      // Offset slightly from top
+      if (containerRef) {
+        containerRef.scrollTop = Math.max(0, containerRef.scrollTop - 20);
+      }
+    } else {
+      // Fallback: proportional scroll
+      console.log('[scroll-sync][preview] no data-line element found, using proportional');
+      const rawContent = content();
+      if (rawContent && containerRef) {
+        const totalLines = rawContent.split('\n').length;
+        const proportion = targetLine / totalLines;
+        containerRef.scrollTop = proportion * article.scrollHeight;
+      }
+    }
+  }
+
   function navigateMatch(direction: "next" | "prev") {
     const total = document.querySelectorAll(".search-highlight").length;
     if (total === 0) return;
@@ -173,11 +233,12 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
           <WasmEditor
             onSaveAndPreview={props.onSaveAndPreview}
             onSaveDraft={props.onSaveDraft}
+            onApi={props.onEditorApi}
           />
         </Show>
         <Show when={!showRawMarkdown()}>
           <article
-            ref={articleRef}
+            ref={setArticleEl}
             class="markdown-content markdown-body"
             innerHTML={highlightedHtml()}
             style={{

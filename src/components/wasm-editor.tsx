@@ -44,9 +44,15 @@ interface HighlightedLine {
   spans: Span[];
 }
 
+/** API exposed by WasmEditor for parent to query state */
+export interface WasmEditorApi {
+  getTopVisibleLine: () => number;
+}
+
 interface WasmEditorProps {
   onSaveAndPreview: () => void;
   onSaveDraft?: () => void;
+  onApi?: (api: WasmEditorApi) => void;
 }
 
 export function WasmEditor(props: WasmEditorProps) {
@@ -184,6 +190,16 @@ export function WasmEditor(props: WasmEditorProps) {
     if (cleanupResizeObserver) cleanupResizeObserver();
   });
 
+  // Expose API for parent to query editor state (e.g., for scroll sync)
+  function getTopVisibleLine(): number {
+    if (!contentRef) return 0;
+    const lineHeight = LINE_HEIGHT();
+    return Math.floor(contentRef.scrollTop / lineHeight);
+  }
+
+  // Register API with parent
+  props.onApi?.({ getTopVisibleLine });
+
   // Get unique key for current file/draft
   function getFileKey(): string {
     return currentDraftId() ?? currentFile() ?? "";
@@ -272,61 +288,52 @@ export function WasmEditor(props: WasmEditorProps) {
     }
   }
 
-  // Scroll to anchor text (used when switching from preview to edit)
+  // Scroll to line number (used when switching from preview to edit)
+  // Anchor is now a line number string from data-line attribute
   function scrollToAnchor() {
     const anchor = scrollAnchor();
+    console.log('[scroll-sync][editor] anchor (line):', anchor);
+    
     if (!anchor || !wasm || !contentRef) {
+      console.log('[scroll-sync][editor] Missing:', { anchor: !!anchor, wasm: !!wasm, contentRef: !!contentRef });
       setScrollAnchor(null);
       return;
     }
 
-    const text = wasm.get_content();
-    
-    // Try to find the anchor text in the document
-    // First try exact match, then try normalized (whitespace collapsed)
-    let index = text.indexOf(anchor);
-    
-    if (index === -1) {
-      // Try with normalized whitespace
-      const normalizedAnchor = anchor.replace(/\s+/g, ' ');
-      const normalizedText = text.replace(/\s+/g, ' ');
-      const normalizedIndex = normalizedText.indexOf(normalizedAnchor);
-      
-      if (normalizedIndex !== -1) {
-        // Map back to original index (approximate)
-        // Count how many chars in original text up to this normalized position
-        let origIndex = 0;
-        let normCount = 0;
-        while (origIndex < text.length && normCount < normalizedIndex) {
-          if (text[origIndex].match(/\s/)) {
-            while (origIndex < text.length && text[origIndex].match(/\s/)) {
-              origIndex++;
-            }
-            normCount++;
-          } else {
-            origIndex++;
-            normCount++;
-          }
-        }
-        index = origIndex;
-      }
+    const targetLine = parseInt(anchor, 10);
+    if (isNaN(targetLine)) {
+      console.warn('[scroll-sync][editor] Invalid line number:', anchor);
+      setScrollAnchor(null);
+      return;
     }
 
-    if (index !== -1) {
-      // Find which line this is on
-      const linesBefore = text.substring(0, index).split('\n').length - 1;
-      const lineHeight = LINE_HEIGHT();
-      
-      // Scroll to that line (with some offset from top)
-      const scrollY = Math.max(0, linesBefore * lineHeight - 50);
-      contentRef.scrollTop = scrollY;
-      setScrollTop(scrollY);
-      
-      // Also set cursor to this position
-      wasm.set_cursor(index);
-      updateCursorDisplay();
-      updateVisibleLines();
-    }
+    console.log('[scroll-sync][editor] scrolling to line:', targetLine);
+
+    // Wait for editor layout to be ready
+    queueMicrotask(() => {
+      requestAnimationFrame(() => {
+        if (!contentRef || !wasm) return;
+        
+        const lineHeight = LINE_HEIGHT();
+        const scrollY = Math.max(0, targetLine * lineHeight - 50);
+        
+        console.log('[scroll-sync][editor] scroll:', { 
+          targetLine,
+          targetScrollY: scrollY,
+          scrollHeight: contentRef.scrollHeight
+        });
+        
+        contentRef.scrollTop = scrollY;
+        setScrollTop(scrollY);
+        
+        // Set cursor to start of the target line
+        const lineStart = wasm.get_line_start(targetLine);
+        wasm.set_cursor(lineStart);
+        
+        updateCursorDisplay();
+        updateVisibleLines();
+      });
+    });
 
     // Clear the anchor
     setScrollAnchor(null);
