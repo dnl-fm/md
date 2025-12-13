@@ -358,13 +358,13 @@ function App() {
         case " ":
           e.preventDefault();
           if (!isReadOnly()) {
-            setShowRawMarkdown(!showRawMarkdown());
-          }
-          break;
-        case "e":
-          e.preventDefault();
-          if (!isDirty() && !isReadOnly()) {
-            setShowRawMarkdown(!showRawMarkdown());
+            if (showRawMarkdown()) {
+              // Switching to preview - save if dirty
+              saveAndPreview();
+            } else {
+              // Switching to edit - always allowed
+              setShowRawMarkdown(true);
+            }
           }
           break;
         case "f": {
