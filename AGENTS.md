@@ -2,7 +2,7 @@
 
 Fast, lightweight Markdown viewer with live preview, edit mode, file watching, and theming.
 
-**Stack:** Tauri 2 (Rust), SolidJS (NOT React), TypeScript, Vite, Bun, Shiki, marked
+**Stack:** Tauri 2 (Rust), SolidJS (NOT React), TypeScript, Vite, Bun, Shiki, MarkdownIt
 
 **Flow:** `SolidJS UI → Tauri invoke() → Rust backend → File I/O`
 

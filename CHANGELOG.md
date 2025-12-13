@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2025-12-13
+
+### Added
+- **Language-aware syntax highlighting**: Code blocks now have per-language highlighting for 16+ languages
+  - SQL, JavaScript/TypeScript, PHP, Python, Rust, Go, Bash, JSON
+  - HTML/XML/SVG, CSS/SCSS/SASS, YAML, TOML, C/C++, Java/Kotlin, Ruby, Docker
+- **Editor ↔ Preview scroll sync**: Position preserved when switching modes
+  - `data-line` attributes injected into rendered markdown
+  - Editor API exposes `getTopVisibleLine()` for coordination
+- **MarkdownIt integration**: Replaced marked with markdown-it for better extensibility
+
+### Changed
+- Markdown rendering now uses MarkdownIt with Shiki-based syntax highlighting
+- Code fence language detection normalized to lowercase for consistent highlighting
+
 ## [0.7.0] - 2025-12-13
 
 ### Added

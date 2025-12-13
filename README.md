@@ -25,7 +25,8 @@
 
 - **Live Preview** - Real-time markdown rendering with GitHub-flavored markdown support
 - **Syntax Highlighting** - Code blocks with beautiful syntax highlighting powered by Shiki
-- **Edit Mode** - Edit markdown directly in the app with toggleable line numbers
+- **Edit Mode** - WASM-powered editor with language-aware syntax highlighting for 16+ languages
+- **Scroll Sync** - Position preserved when switching between edit and preview modes
 - **In-Document Search** - Find text with Ctrl+F, visual minimap for match locations
 - **Draft Tabs** - Create untitled drafts with Ctrl+N, auto-numbered for easy access
 - **Themes** - Dark and light themes with fully customizable colors
@@ -135,7 +136,7 @@ Configuration is stored in:
 - **[Tauri 2](https://tauri.app/)** - Native app framework
 - **[SolidJS](https://www.solidjs.com/)** - Reactive UI framework
 - **[Shiki](https://shiki.matsu.io/)** - Syntax highlighting
-- **[marked](https://marked.js.org/)** - Markdown parser
+- **[markdown-it](https://github.com/markdown-it/markdown-it)** - Markdown parser
 - **[Vite](https://vitejs.dev/)** - Build tool
 
 ## License
