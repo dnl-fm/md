@@ -147,7 +147,7 @@ fn highlight_line(content: &str, in_code_block: &mut bool, code_lang: &mut Strin
             // Start of code block
             *in_code_block = true;
             let trimmed = content.trim_start();
-            *code_lang = trimmed[3..].trim().to_string();
+            *code_lang = trimmed[3..].trim().to_lowercase();
             spans.push(Span {
                 text: content.to_string(),
                 style: "code-fence".to_string(),
@@ -156,13 +156,9 @@ fn highlight_line(content: &str, in_code_block: &mut bool, code_lang: &mut Strin
         return spans;
     }
 
-    // Inside code block - don't parse markdown
+    // Inside code block - apply language-specific syntax highlighting
     if *in_code_block {
-        spans.push(Span {
-            text: content.to_string(),
-            style: "code-block".to_string(),
-        });
-        return spans;
+        return highlight_code(content, code_lang);
     }
 
     // Empty line
@@ -409,6 +405,1005 @@ fn parse_inline(text: &str) -> Vec<Span> {
     }
 
     spans
+}
+
+// ============================================================================
+// Language-specific Syntax Highlighting
+// ============================================================================
+
+/// Main entry point for code highlighting - dispatches to language-specific highlighters
+fn highlight_code(content: &str, lang: &str) -> Vec<Span> {
+    match lang {
+        "sql" => highlight_sql(content),
+        "js" | "javascript" | "ts" | "typescript" | "jsx" | "tsx" => highlight_js(content),
+        "php" => highlight_php(content),
+        "python" | "py" => highlight_python(content),
+        "rust" | "rs" => highlight_rust(content),
+        "go" | "golang" => highlight_go(content),
+        "bash" | "sh" | "shell" | "zsh" => highlight_bash(content),
+        "json" => highlight_json(content),
+        "html" | "xml" | "svg" => highlight_html(content),
+        "css" | "scss" | "sass" => highlight_css(content),
+        "yaml" | "yml" => highlight_yaml(content),
+        "toml" => highlight_toml(content),
+        "c" | "cpp" | "c++" | "h" | "hpp" => highlight_c(content),
+        "java" | "kotlin" | "kt" => highlight_java(content),
+        "ruby" | "rb" => highlight_ruby(content),
+        "dockerfile" | "docker" => highlight_docker(content),
+        _ => vec![Span {
+            text: content.to_string(),
+            style: "code-block".to_string(),
+        }],
+    }
+}
+
+/// Tokenize a line of code into spans based on patterns
+fn tokenize_code(content: &str, keywords: &[&str], types: &[&str], builtins: &[&str], 
+                 comment_start: &str, _string_chars: &[char], supports_single_quote: bool) -> Vec<Span> {
+    let mut spans = Vec::new();
+    let chars: Vec<char> = content.chars().collect();
+    let mut i = 0;
+    let mut current = String::new();
+
+    // Check for single-line comment
+    if !comment_start.is_empty() && content.trim_start().starts_with(comment_start) {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+
+    while i < chars.len() {
+        // String literals (double quotes)
+        if chars[i] == '"' {
+            if !current.is_empty() {
+                spans.extend(classify_word(&current, keywords, types, builtins));
+                current.clear();
+            }
+            let mut string_content = String::from("\"");
+            i += 1;
+            while i < chars.len() && chars[i] != '"' {
+                if chars[i] == '\\' && i + 1 < chars.len() {
+                    string_content.push(chars[i]);
+                    i += 1;
+                    string_content.push(chars[i]);
+                } else {
+                    string_content.push(chars[i]);
+                }
+                i += 1;
+            }
+            if i < chars.len() {
+                string_content.push('"');
+                i += 1;
+            }
+            spans.push(Span {
+                text: string_content,
+                style: "code-string".to_string(),
+            });
+            continue;
+        }
+
+        // String literals (single quotes)
+        if supports_single_quote && chars[i] == '\'' {
+            if !current.is_empty() {
+                spans.extend(classify_word(&current, keywords, types, builtins));
+                current.clear();
+            }
+            let mut string_content = String::from("'");
+            i += 1;
+            while i < chars.len() && chars[i] != '\'' {
+                if chars[i] == '\\' && i + 1 < chars.len() {
+                    string_content.push(chars[i]);
+                    i += 1;
+                    string_content.push(chars[i]);
+                } else {
+                    string_content.push(chars[i]);
+                }
+                i += 1;
+            }
+            if i < chars.len() {
+                string_content.push('\'');
+                i += 1;
+            }
+            spans.push(Span {
+                text: string_content,
+                style: "code-string".to_string(),
+            });
+            continue;
+        }
+
+        // Numbers
+        if chars[i].is_ascii_digit() && (current.is_empty() || !current.chars().last().unwrap_or(' ').is_alphanumeric()) {
+            if !current.is_empty() {
+                spans.extend(classify_word(&current, keywords, types, builtins));
+                current.clear();
+            }
+            let mut num = String::new();
+            while i < chars.len() && (chars[i].is_ascii_digit() || chars[i] == '.' || chars[i] == 'x' || chars[i] == 'X' 
+                   || (chars[i].is_ascii_hexdigit() && num.starts_with("0x"))) {
+                num.push(chars[i]);
+                i += 1;
+            }
+            spans.push(Span {
+                text: num,
+                style: "code-number".to_string(),
+            });
+            continue;
+        }
+
+        // Word boundaries
+        if chars[i].is_alphanumeric() || chars[i] == '_' || chars[i] == '$' {
+            current.push(chars[i]);
+        } else {
+            if !current.is_empty() {
+                spans.extend(classify_word(&current, keywords, types, builtins));
+                current.clear();
+            }
+            // Operators and punctuation
+            let style = match chars[i] {
+                '(' | ')' | '[' | ']' | '{' | '}' => "code-bracket",
+                '=' | '+' | '-' | '*' | '/' | '%' | '<' | '>' | '!' | '&' | '|' | '^' | '~' => "code-operator",
+                ';' | ',' | '.' | ':' => "code-punctuation",
+                _ => "code-block",
+            };
+            spans.push(Span {
+                text: chars[i].to_string(),
+                style: style.to_string(),
+            });
+        }
+        i += 1;
+    }
+
+    if !current.is_empty() {
+        spans.extend(classify_word(&current, keywords, types, builtins));
+    }
+
+    // If no spans, return empty code-block
+    if spans.is_empty() {
+        spans.push(Span {
+            text: content.to_string(),
+            style: "code-block".to_string(),
+        });
+    }
+
+    spans
+}
+
+/// Classify a word as keyword, type, builtin, or regular code
+fn classify_word(word: &str, keywords: &[&str], types: &[&str], builtins: &[&str]) -> Vec<Span> {
+    let style = if keywords.iter().any(|k| k.eq_ignore_ascii_case(word)) {
+        "code-keyword"
+    } else if types.iter().any(|t| t.eq_ignore_ascii_case(word)) {
+        "code-type"
+    } else if builtins.iter().any(|b| b.eq_ignore_ascii_case(word)) {
+        "code-builtin"
+    } else {
+        "code-block"
+    };
+    
+    vec![Span {
+        text: word.to_string(),
+        style: style.to_string(),
+    }]
+}
+
+// SQL Highlighting
+fn highlight_sql(content: &str) -> Vec<Span> {
+    let keywords = [
+        "SELECT", "FROM", "WHERE", "AND", "OR", "NOT", "IN", "IS", "NULL", "LIKE",
+        "ORDER", "BY", "GROUP", "HAVING", "LIMIT", "OFFSET", "JOIN", "LEFT", "RIGHT",
+        "INNER", "OUTER", "ON", "AS", "DISTINCT", "ALL", "UNION", "INTERSECT", "EXCEPT",
+        "INSERT", "INTO", "VALUES", "UPDATE", "SET", "DELETE", "CREATE", "ALTER", "DROP",
+        "TABLE", "INDEX", "VIEW", "DATABASE", "SCHEMA", "IF", "EXISTS", "PRIMARY", "KEY",
+        "FOREIGN", "REFERENCES", "CONSTRAINT", "DEFAULT", "AUTO_INCREMENT", "UNIQUE",
+        "CHECK", "CASCADE", "RESTRICT", "TRIGGER", "PROCEDURE", "FUNCTION", "RETURN",
+        "BEGIN", "END", "COMMIT", "ROLLBACK", "TRANSACTION", "CASE", "WHEN", "THEN", "ELSE",
+        "ASC", "DESC", "NULLS", "FIRST", "LAST", "BETWEEN", "WITH", "RECURSIVE", "OVER",
+        "PARTITION", "WINDOW", "ROWS", "RANGE", "UNBOUNDED", "PRECEDING", "FOLLOWING", "CURRENT",
+    ];
+    let types = [
+        "INT", "INTEGER", "BIGINT", "SMALLINT", "TINYINT", "FLOAT", "DOUBLE", "DECIMAL",
+        "NUMERIC", "REAL", "VARCHAR", "CHAR", "TEXT", "BLOB", "BOOLEAN", "BOOL", "DATE",
+        "TIME", "DATETIME", "TIMESTAMP", "YEAR", "JSON", "UUID", "SERIAL", "MONEY",
+    ];
+    let builtins = [
+        "COUNT", "SUM", "AVG", "MIN", "MAX", "COALESCE", "NULLIF", "CAST", "CONVERT",
+        "CONCAT", "SUBSTRING", "TRIM", "UPPER", "LOWER", "LENGTH", "REPLACE", "NOW",
+        "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "EXTRACT", "DATE_FORMAT",
+        "DATEDIFF", "DATEADD", "YEAR", "MONTH", "DAY", "HOUR", "MINUTE", "SECOND",
+        "ROW_NUMBER", "RANK", "DENSE_RANK", "NTILE", "LAG", "LEAD", "FIRST_VALUE",
+        "LAST_VALUE", "ROUND", "FLOOR", "CEIL", "ABS", "MOD", "POWER", "SQRT",
+        "QUARTER",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "--", &['"', '\''], true)
+}
+
+// JavaScript/TypeScript Highlighting
+fn highlight_js(content: &str) -> Vec<Span> {
+    // Check for // comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("//") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let keywords = [
+        "const", "let", "var", "function", "return", "if", "else", "for", "while", "do",
+        "switch", "case", "break", "continue", "default", "try", "catch", "finally",
+        "throw", "new", "delete", "typeof", "instanceof", "in", "of", "class", "extends",
+        "constructor", "super", "this", "static", "get", "set", "async", "await", "yield",
+        "import", "export", "from", "as", "default", "null", "undefined", "true", "false",
+        "void", "with", "debugger", "enum", "implements", "interface", "package", "private",
+        "protected", "public", "abstract", "declare", "type", "namespace", "module", "readonly",
+    ];
+    let types = [
+        "string", "number", "boolean", "object", "symbol", "bigint", "any", "unknown",
+        "never", "void", "Array", "Object", "String", "Number", "Boolean", "Function",
+        "Promise", "Map", "Set", "WeakMap", "WeakSet", "Date", "RegExp", "Error",
+    ];
+    let builtins = [
+        "console", "window", "document", "JSON", "Math", "parseInt", "parseFloat",
+        "isNaN", "isFinite", "encodeURI", "decodeURI", "setTimeout", "setInterval",
+        "clearTimeout", "clearInterval", "fetch", "alert", "confirm", "prompt",
+        "require", "module", "exports", "process", "Buffer", "global", "__dirname", "__filename",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "//", &['"', '\'', '`'], true)
+}
+
+// PHP Highlighting
+fn highlight_php(content: &str) -> Vec<Span> {
+    // Check for // or # comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("//") || trimmed.starts_with("#") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let keywords = [
+        "if", "else", "elseif", "endif", "while", "endwhile", "for", "endfor", "foreach",
+        "endforeach", "switch", "case", "break", "continue", "default", "return", "function",
+        "class", "extends", "implements", "interface", "trait", "use", "namespace", "new",
+        "public", "private", "protected", "static", "final", "abstract", "const", "var",
+        "global", "try", "catch", "finally", "throw", "instanceof", "clone", "echo", "print",
+        "include", "require", "include_once", "require_once", "true", "false", "null",
+        "and", "or", "xor", "as", "match", "fn", "readonly", "enum",
+    ];
+    let types = [
+        "int", "float", "string", "bool", "array", "object", "callable", "iterable",
+        "void", "mixed", "never", "self", "parent", "static",
+    ];
+    let builtins = [
+        "array", "isset", "unset", "empty", "die", "exit", "list", "eval", "count",
+        "strlen", "strpos", "substr", "str_replace", "explode", "implode", "trim",
+        "strtolower", "strtoupper", "array_map", "array_filter", "array_merge",
+        "json_encode", "json_decode", "var_dump", "print_r", "sprintf", "preg_match",
+        "file_get_contents", "file_put_contents", "date", "time", "strtotime",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "//", &['"', '\''], true)
+}
+
+// Python Highlighting
+fn highlight_python(content: &str) -> Vec<Span> {
+    // Check for # comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("#") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let keywords = [
+        "def", "class", "if", "elif", "else", "for", "while", "try", "except", "finally",
+        "with", "as", "import", "from", "return", "yield", "raise", "pass", "break",
+        "continue", "lambda", "and", "or", "not", "in", "is", "True", "False", "None",
+        "global", "nonlocal", "assert", "del", "async", "await", "match", "case",
+    ];
+    let types = [
+        "int", "float", "str", "bool", "list", "dict", "tuple", "set", "frozenset",
+        "bytes", "bytearray", "complex", "type", "object", "None",
+    ];
+    let builtins = [
+        "print", "len", "range", "enumerate", "zip", "map", "filter", "sorted", "reversed",
+        "open", "input", "type", "isinstance", "hasattr", "getattr", "setattr", "dir",
+        "vars", "id", "repr", "str", "int", "float", "list", "dict", "set", "tuple",
+        "sum", "min", "max", "abs", "round", "pow", "divmod", "all", "any", "iter", "next",
+        "super", "classmethod", "staticmethod", "property", "self", "cls",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "#", &['"', '\''], true)
+}
+
+// Rust Highlighting
+fn highlight_rust(content: &str) -> Vec<Span> {
+    // Check for // comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("//") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let keywords = [
+        "fn", "let", "mut", "const", "static", "if", "else", "match", "for", "while",
+        "loop", "break", "continue", "return", "struct", "enum", "impl", "trait", "type",
+        "use", "mod", "pub", "crate", "self", "super", "where", "as", "in", "ref", "move",
+        "async", "await", "dyn", "unsafe", "extern", "true", "false",
+    ];
+    let types = [
+        "i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128",
+        "usize", "f32", "f64", "bool", "char", "str", "String", "Vec", "Box", "Rc", "Arc",
+        "Option", "Result", "Some", "None", "Ok", "Err", "Self",
+    ];
+    let builtins = [
+        "println", "print", "format", "panic", "assert", "assert_eq", "assert_ne",
+        "dbg", "todo", "unimplemented", "unreachable", "vec", "include_str", "include_bytes",
+        "env", "cfg", "derive", "Default", "Clone", "Copy", "Debug", "Display",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "//", &['"'], false)
+}
+
+// Go Highlighting
+fn highlight_go(content: &str) -> Vec<Span> {
+    // Check for // comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("//") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let keywords = [
+        "func", "var", "const", "type", "struct", "interface", "map", "chan", "if", "else",
+        "for", "range", "switch", "case", "default", "break", "continue", "return", "go",
+        "defer", "select", "fallthrough", "goto", "package", "import", "true", "false", "nil",
+    ];
+    let types = [
+        "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32",
+        "uint64", "uintptr", "float32", "float64", "complex64", "complex128", "byte",
+        "rune", "string", "bool", "error", "any",
+    ];
+    let builtins = [
+        "make", "new", "len", "cap", "append", "copy", "delete", "close", "panic",
+        "recover", "print", "println", "complex", "real", "imag", "fmt", "log", "os",
+        "io", "strings", "strconv", "time", "context", "sync", "errors",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "//", &['"', '\'', '`'], true)
+}
+
+// Bash/Shell Highlighting
+fn highlight_bash(content: &str) -> Vec<Span> {
+    // Check for # comments (but not #!)
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("#") && !trimmed.starts_with("#!") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let keywords = [
+        "if", "then", "else", "elif", "fi", "for", "while", "do", "done", "case", "esac",
+        "in", "function", "return", "local", "export", "source", "alias", "unalias",
+        "set", "unset", "shift", "exit", "break", "continue", "true", "false",
+    ];
+    let types: [&str; 0] = [];
+    let builtins = [
+        "echo", "printf", "read", "cd", "pwd", "ls", "cat", "grep", "sed", "awk", "cut",
+        "sort", "uniq", "wc", "head", "tail", "find", "xargs", "mkdir", "rm", "cp", "mv",
+        "chmod", "chown", "test", "expr", "eval", "exec", "trap", "wait", "kill",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "#", &['"', '\''], true)
+}
+
+// JSON Highlighting
+fn highlight_json(content: &str) -> Vec<Span> {
+    let mut spans = Vec::new();
+    let chars: Vec<char> = content.chars().collect();
+    let mut i = 0;
+
+    while i < chars.len() {
+        // Strings (keys and values)
+        if chars[i] == '"' {
+            let mut string_content = String::from("\"");
+            i += 1;
+            while i < chars.len() && chars[i] != '"' {
+                if chars[i] == '\\' && i + 1 < chars.len() {
+                    string_content.push(chars[i]);
+                    i += 1;
+                    string_content.push(chars[i]);
+                } else {
+                    string_content.push(chars[i]);
+                }
+                i += 1;
+            }
+            if i < chars.len() {
+                string_content.push('"');
+                i += 1;
+            }
+            // Check if it's a key (followed by :)
+            let is_key = chars.iter().skip(i).take_while(|c| c.is_whitespace()).count() 
+                + i < chars.len() && chars.get(i + chars.iter().skip(i).take_while(|c| c.is_whitespace()).count()) == Some(&':');
+            spans.push(Span {
+                text: string_content,
+                style: if is_key { "code-property".to_string() } else { "code-string".to_string() },
+            });
+            continue;
+        }
+
+        // Numbers
+        if chars[i].is_ascii_digit() || (chars[i] == '-' && i + 1 < chars.len() && chars[i + 1].is_ascii_digit()) {
+            let mut num = String::new();
+            if chars[i] == '-' {
+                num.push(chars[i]);
+                i += 1;
+            }
+            while i < chars.len() && (chars[i].is_ascii_digit() || chars[i] == '.' || chars[i] == 'e' || chars[i] == 'E' || chars[i] == '+' || chars[i] == '-') {
+                num.push(chars[i]);
+                i += 1;
+            }
+            spans.push(Span {
+                text: num,
+                style: "code-number".to_string(),
+            });
+            continue;
+        }
+
+        // Keywords: true, false, null
+        if chars[i].is_alphabetic() {
+            let mut word = String::new();
+            while i < chars.len() && chars[i].is_alphabetic() {
+                word.push(chars[i]);
+                i += 1;
+            }
+            let style = match word.as_str() {
+                "true" | "false" => "code-keyword",
+                "null" => "code-builtin",
+                _ => "code-block",
+            };
+            spans.push(Span {
+                text: word,
+                style: style.to_string(),
+            });
+            continue;
+        }
+
+        // Brackets and punctuation
+        let style = match chars[i] {
+            '{' | '}' | '[' | ']' => "code-bracket",
+            ':' | ',' => "code-punctuation",
+            _ => "code-block",
+        };
+        spans.push(Span {
+            text: chars[i].to_string(),
+            style: style.to_string(),
+        });
+        i += 1;
+    }
+
+    if spans.is_empty() {
+        spans.push(Span {
+            text: content.to_string(),
+            style: "code-block".to_string(),
+        });
+    }
+
+    spans
+}
+
+// HTML/XML Highlighting
+fn highlight_html(content: &str) -> Vec<Span> {
+    let mut spans = Vec::new();
+    let chars: Vec<char> = content.chars().collect();
+    let mut i = 0;
+
+    // Check for HTML comment
+    if content.trim_start().starts_with("<!--") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+
+    while i < chars.len() {
+        // Tags
+        if chars[i] == '<' {
+            let mut tag = String::from("<");
+            i += 1;
+            
+            // Closing tag slash or !DOCTYPE
+            if i < chars.len() && (chars[i] == '/' || chars[i] == '!') {
+                tag.push(chars[i]);
+                i += 1;
+            }
+            
+            // Tag name
+            let mut tag_name = String::new();
+            while i < chars.len() && (chars[i].is_alphanumeric() || chars[i] == '-' || chars[i] == '_') {
+                tag_name.push(chars[i]);
+                i += 1;
+            }
+            
+            if !tag_name.is_empty() {
+                spans.push(Span {
+                    text: tag,
+                    style: "code-bracket".to_string(),
+                });
+                spans.push(Span {
+                    text: tag_name,
+                    style: "code-keyword".to_string(),
+                });
+            } else {
+                spans.push(Span {
+                    text: tag,
+                    style: "code-bracket".to_string(),
+                });
+            }
+            
+            // Attributes until >
+            while i < chars.len() && chars[i] != '>' {
+                if chars[i] == '"' {
+                    let mut attr_val = String::from("\"");
+                    i += 1;
+                    while i < chars.len() && chars[i] != '"' {
+                        attr_val.push(chars[i]);
+                        i += 1;
+                    }
+                    if i < chars.len() {
+                        attr_val.push('"');
+                        i += 1;
+                    }
+                    spans.push(Span {
+                        text: attr_val,
+                        style: "code-string".to_string(),
+                    });
+                } else if chars[i].is_alphabetic() || chars[i] == '-' || chars[i] == '_' {
+                    let mut attr_name = String::new();
+                    while i < chars.len() && (chars[i].is_alphanumeric() || chars[i] == '-' || chars[i] == '_') {
+                        attr_name.push(chars[i]);
+                        i += 1;
+                    }
+                    spans.push(Span {
+                        text: attr_name,
+                        style: "code-property".to_string(),
+                    });
+                } else {
+                    spans.push(Span {
+                        text: chars[i].to_string(),
+                        style: "code-block".to_string(),
+                    });
+                    i += 1;
+                }
+            }
+            
+            // Closing >
+            if i < chars.len() && chars[i] == '>' {
+                spans.push(Span {
+                    text: ">".to_string(),
+                    style: "code-bracket".to_string(),
+                });
+                i += 1;
+            }
+            continue;
+        }
+
+        // Regular text content
+        let mut text = String::new();
+        while i < chars.len() && chars[i] != '<' {
+            text.push(chars[i]);
+            i += 1;
+        }
+        if !text.is_empty() {
+            spans.push(Span {
+                text,
+                style: "code-block".to_string(),
+            });
+        }
+    }
+
+    if spans.is_empty() {
+        spans.push(Span {
+            text: content.to_string(),
+            style: "code-block".to_string(),
+        });
+    }
+
+    spans
+}
+
+// CSS Highlighting
+fn highlight_css(content: &str) -> Vec<Span> {
+    // Check for comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("/*") || trimmed.starts_with("//") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let mut spans = Vec::new();
+    let chars: Vec<char> = content.chars().collect();
+    let mut i = 0;
+
+    while i < chars.len() {
+        // Property values with units or colors
+        if chars[i] == '#' {
+            let mut color = String::from("#");
+            i += 1;
+            while i < chars.len() && chars[i].is_ascii_hexdigit() {
+                color.push(chars[i]);
+                i += 1;
+            }
+            spans.push(Span {
+                text: color,
+                style: "code-number".to_string(),
+            });
+            continue;
+        }
+
+        // Strings
+        if chars[i] == '"' || chars[i] == '\'' {
+            let quote = chars[i];
+            let mut string_content = String::from(chars[i]);
+            i += 1;
+            while i < chars.len() && chars[i] != quote {
+                string_content.push(chars[i]);
+                i += 1;
+            }
+            if i < chars.len() {
+                string_content.push(quote);
+                i += 1;
+            }
+            spans.push(Span {
+                text: string_content,
+                style: "code-string".to_string(),
+            });
+            continue;
+        }
+
+        // Numbers with units
+        if chars[i].is_ascii_digit() || (chars[i] == '.' && i + 1 < chars.len() && chars[i + 1].is_ascii_digit()) {
+            let mut num = String::new();
+            while i < chars.len() && (chars[i].is_ascii_digit() || chars[i] == '.') {
+                num.push(chars[i]);
+                i += 1;
+            }
+            // Include units like px, em, rem, %, etc.
+            while i < chars.len() && chars[i].is_alphabetic() {
+                num.push(chars[i]);
+                i += 1;
+            }
+            spans.push(Span {
+                text: num,
+                style: "code-number".to_string(),
+            });
+            continue;
+        }
+
+        // Words (properties, values, selectors)
+        if chars[i].is_alphabetic() || chars[i] == '-' || chars[i] == '_' || chars[i] == '@' || chars[i] == '.' {
+            let mut word = String::new();
+            while i < chars.len() && (chars[i].is_alphanumeric() || chars[i] == '-' || chars[i] == '_') {
+                word.push(chars[i]);
+                i += 1;
+            }
+            // Check if followed by colon (property) or is a pseudo-class/at-rule
+            let style = if word.starts_with('@') {
+                "code-keyword"
+            } else if i < chars.len() && chars[i] == ':' {
+                "code-property"
+            } else if word.starts_with('.') {
+                "code-type"
+            } else {
+                "code-block"
+            };
+            spans.push(Span {
+                text: word,
+                style: style.to_string(),
+            });
+            continue;
+        }
+
+        // Brackets and punctuation
+        let style = match chars[i] {
+            '{' | '}' | '(' | ')' | '[' | ']' => "code-bracket",
+            ':' | ';' | ',' => "code-punctuation",
+            _ => "code-block",
+        };
+        spans.push(Span {
+            text: chars[i].to_string(),
+            style: style.to_string(),
+        });
+        i += 1;
+    }
+
+    if spans.is_empty() {
+        spans.push(Span {
+            text: content.to_string(),
+            style: "code-block".to_string(),
+        });
+    }
+
+    spans
+}
+
+// YAML Highlighting
+fn highlight_yaml(content: &str) -> Vec<Span> {
+    // Check for comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("#") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let mut spans = Vec::new();
+    let chars: Vec<char> = content.chars().collect();
+    let mut i = 0;
+    
+    // Leading whitespace
+    while i < chars.len() && chars[i].is_whitespace() {
+        spans.push(Span {
+            text: chars[i].to_string(),
+            style: "code-block".to_string(),
+        });
+        i += 1;
+    }
+    
+    // List marker
+    if i < chars.len() && chars[i] == '-' && (i + 1 >= chars.len() || chars[i + 1].is_whitespace()) {
+        spans.push(Span {
+            text: "-".to_string(),
+            style: "code-keyword".to_string(),
+        });
+        i += 1;
+        while i < chars.len() && chars[i].is_whitespace() {
+            spans.push(Span {
+                text: chars[i].to_string(),
+                style: "code-block".to_string(),
+            });
+            i += 1;
+        }
+    }
+    
+    // Key: value
+    let mut key = String::new();
+    while i < chars.len() && chars[i] != ':' && chars[i] != '#' {
+        key.push(chars[i]);
+        i += 1;
+    }
+    
+    if i < chars.len() && chars[i] == ':' {
+        if !key.is_empty() {
+            spans.push(Span {
+                text: key,
+                style: "code-property".to_string(),
+            });
+        }
+        spans.push(Span {
+            text: ":".to_string(),
+            style: "code-punctuation".to_string(),
+        });
+        i += 1;
+        
+        // Value
+        let remaining: String = chars[i..].iter().collect();
+        let remaining_trimmed = remaining.trim();
+        
+        if remaining_trimmed.starts_with('"') || remaining_trimmed.starts_with('\'') {
+            // String value - highlight as string
+            spans.push(Span {
+                text: remaining,
+                style: "code-string".to_string(),
+            });
+        } else if remaining_trimmed == "true" || remaining_trimmed == "false" {
+            spans.push(Span {
+                text: remaining,
+                style: "code-keyword".to_string(),
+            });
+        } else if remaining_trimmed == "null" || remaining_trimmed == "~" {
+            spans.push(Span {
+                text: remaining,
+                style: "code-builtin".to_string(),
+            });
+        } else if remaining_trimmed.parse::<f64>().is_ok() {
+            spans.push(Span {
+                text: remaining,
+                style: "code-number".to_string(),
+            });
+        } else {
+            spans.push(Span {
+                text: remaining,
+                style: "code-block".to_string(),
+            });
+        }
+    } else {
+        // No colon found, could be a comment or plain text
+        if !key.is_empty() {
+            spans.push(Span {
+                text: key,
+                style: "code-block".to_string(),
+            });
+        }
+        if i < chars.len() {
+            spans.push(Span {
+                text: chars[i..].iter().collect(),
+                style: "code-comment".to_string(),
+            });
+        }
+    }
+
+    if spans.is_empty() {
+        spans.push(Span {
+            text: content.to_string(),
+            style: "code-block".to_string(),
+        });
+    }
+
+    spans
+}
+
+// TOML Highlighting
+fn highlight_toml(content: &str) -> Vec<Span> {
+    // Check for comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("#") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    // Section headers [section]
+    if trimmed.starts_with("[") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-keyword".to_string(),
+        }];
+    }
+    
+    let keywords: [&str; 0] = [];
+    let types = ["true", "false"];
+    let builtins: [&str; 0] = [];
+    tokenize_code(content, &keywords, &types, &builtins, "#", &['"', '\''], true)
+}
+
+// C/C++ Highlighting
+fn highlight_c(content: &str) -> Vec<Span> {
+    // Check for // comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("//") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    // Preprocessor directives
+    if trimmed.starts_with("#") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-builtin".to_string(),
+        }];
+    }
+    
+    let keywords = [
+        "if", "else", "for", "while", "do", "switch", "case", "default", "break", "continue",
+        "return", "goto", "struct", "union", "enum", "typedef", "sizeof", "static", "extern",
+        "const", "volatile", "register", "auto", "inline", "restrict", "class", "public",
+        "private", "protected", "virtual", "override", "final", "new", "delete", "try",
+        "catch", "throw", "template", "typename", "namespace", "using", "true", "false",
+        "nullptr", "this", "operator", "friend", "explicit", "mutable", "constexpr",
+    ];
+    let types = [
+        "void", "int", "char", "short", "long", "float", "double", "signed", "unsigned",
+        "bool", "size_t", "ssize_t", "ptrdiff_t", "int8_t", "int16_t", "int32_t", "int64_t",
+        "uint8_t", "uint16_t", "uint32_t", "uint64_t", "string", "vector", "map", "set",
+        "array", "list", "deque", "queue", "stack", "pair", "tuple", "unique_ptr", "shared_ptr",
+    ];
+    let builtins = [
+        "printf", "scanf", "malloc", "free", "realloc", "calloc", "memcpy", "memset",
+        "strlen", "strcpy", "strcmp", "strcat", "fopen", "fclose", "fread", "fwrite",
+        "fprintf", "fscanf", "cout", "cin", "endl", "std", "NULL",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "//", &['"'], false)
+}
+
+// Java/Kotlin Highlighting
+fn highlight_java(content: &str) -> Vec<Span> {
+    // Check for // comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("//") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let keywords = [
+        "if", "else", "for", "while", "do", "switch", "case", "default", "break", "continue",
+        "return", "class", "interface", "extends", "implements", "new", "this", "super",
+        "public", "private", "protected", "static", "final", "abstract", "native", "synchronized",
+        "volatile", "transient", "try", "catch", "finally", "throw", "throws", "import", "package",
+        "instanceof", "assert", "enum", "true", "false", "null", "void", "var", "val", "fun",
+        "when", "object", "companion", "data", "sealed", "lateinit", "by", "lazy", "suspend",
+    ];
+    let types = [
+        "int", "long", "short", "byte", "float", "double", "char", "boolean", "Integer",
+        "Long", "Short", "Byte", "Float", "Double", "Character", "Boolean", "String",
+        "Object", "Class", "List", "ArrayList", "Map", "HashMap", "Set", "HashSet",
+        "Array", "Collection", "Iterable", "Iterator", "Exception", "Throwable", "Any", "Unit",
+    ];
+    let builtins = [
+        "System", "out", "println", "print", "printf", "String", "Math", "Arrays", "Collections",
+        "Objects", "Optional", "Stream", "Collectors", "Thread", "Runnable", "Callable",
+        "listOf", "mapOf", "setOf", "arrayOf", "mutableListOf", "mutableMapOf",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "//", &['"'], false)
+}
+
+// Ruby Highlighting
+fn highlight_ruby(content: &str) -> Vec<Span> {
+    // Check for # comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("#") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let keywords = [
+        "def", "end", "class", "module", "if", "elsif", "else", "unless", "case", "when",
+        "while", "until", "for", "do", "begin", "rescue", "ensure", "raise", "return",
+        "yield", "break", "next", "redo", "retry", "and", "or", "not", "in", "then",
+        "self", "super", "true", "false", "nil", "alias", "defined?", "require", "require_relative",
+        "include", "extend", "prepend", "attr_reader", "attr_writer", "attr_accessor",
+        "public", "private", "protected", "lambda", "proc",
+    ];
+    let types = [
+        "String", "Integer", "Float", "Array", "Hash", "Symbol", "Proc", "Lambda",
+        "Class", "Module", "Object", "NilClass", "TrueClass", "FalseClass", "Numeric",
+        "Range", "Regexp", "Time", "Date", "DateTime", "File", "IO", "Exception",
+    ];
+    let builtins = [
+        "puts", "print", "p", "gets", "chomp", "to_s", "to_i", "to_f", "to_a", "to_h",
+        "length", "size", "count", "empty?", "nil?", "each", "map", "select", "reject",
+        "reduce", "inject", "find", "any?", "all?", "none?", "sort", "reverse", "join",
+        "split", "strip", "upcase", "downcase", "capitalize", "gsub", "sub", "match",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "#", &['"', '\''], true)
+}
+
+// Dockerfile Highlighting
+fn highlight_docker(content: &str) -> Vec<Span> {
+    // Check for # comments
+    let trimmed = content.trim_start();
+    if trimmed.starts_with("#") {
+        return vec![Span {
+            text: content.to_string(),
+            style: "code-comment".to_string(),
+        }];
+    }
+    
+    let keywords = [
+        "FROM", "AS", "RUN", "CMD", "LABEL", "MAINTAINER", "EXPOSE", "ENV", "ADD", "COPY",
+        "ENTRYPOINT", "VOLUME", "USER", "WORKDIR", "ARG", "ONBUILD", "STOPSIGNAL",
+        "HEALTHCHECK", "SHELL",
+    ];
+    let types: [&str; 0] = [];
+    let builtins = [
+        "apt-get", "yum", "apk", "pip", "npm", "yarn", "go", "cargo", "make", "cmake",
+        "install", "update", "upgrade", "clean", "rm", "mkdir", "chmod", "chown",
+    ];
+    tokenize_code(content, &keywords, &types, &builtins, "#", &['"', '\''], true)
 }
 
 #[wasm_bindgen]

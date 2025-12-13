@@ -210,6 +210,58 @@
   font-size: 0.9em;
 }
 
+/* Syntax Highlighting for Code Blocks */
+.wasm-code-keyword {
+  color: #c678dd;
+  background: var(--bg-code);
+}
+
+.wasm-code-type {
+  color: #e5c07b;
+  background: var(--bg-code);
+}
+
+.wasm-code-builtin {
+  color: #61afef;
+  background: var(--bg-code);
+}
+
+.wasm-code-string {
+  color: #98c379;
+  background: var(--bg-code);
+}
+
+.wasm-code-number {
+  color: #d19a66;
+  background: var(--bg-code);
+}
+
+.wasm-code-comment {
+  color: #5c6370;
+  font-style: italic;
+  background: var(--bg-code);
+}
+
+.wasm-code-property {
+  color: #e06c75;
+  background: var(--bg-code);
+}
+
+.wasm-code-operator {
+  color: #56b6c2;
+  background: var(--bg-code);
+}
+
+.wasm-code-bracket {
+  color: #abb2bf;
+  background: var(--bg-code);
+}
+
+.wasm-code-punctuation {
+  color: #abb2bf;
+  background: var(--bg-code);
+}
+
 /* Text formatting */
 .wasm-bold {
   font-weight: 700;
@@ -265,4 +317,45 @@
 
 [data-theme="light"] .wasm-cursor {
   background: #007acc;
+}
+
+/* Light theme syntax highlighting */
+[data-theme="light"] .wasm-code-keyword {
+  color: #a626a4;
+}
+
+[data-theme="light"] .wasm-code-type {
+  color: #c18401;
+}
+
+[data-theme="light"] .wasm-code-builtin {
+  color: #4078f2;
+}
+
+[data-theme="light"] .wasm-code-string {
+  color: #50a14f;
+}
+
+[data-theme="light"] .wasm-code-number {
+  color: #986801;
+}
+
+[data-theme="light"] .wasm-code-comment {
+  color: #a0a1a7;
+}
+
+[data-theme="light"] .wasm-code-property {
+  color: #e45649;
+}
+
+[data-theme="light"] .wasm-code-operator {
+  color: #0184bc;
+}
+
+[data-theme="light"] .wasm-code-bracket {
+  color: #383a42;
+}
+
+[data-theme="light"] .wasm-code-punctuation {
+  color: #383a42;
 }
