@@ -271,23 +271,37 @@ function App() {
     setRenderedHtml(html);
   });
 
-  // Load most recent file that exists (last in list = most recently opened)
-  async function loadMostRecentFile(history: string[]) {
-    for (const path of [...history].reverse()) {
+  // Validate all history files exist, remove any that don't
+  async function validateHistory(history: string[]): Promise<void> {
+    let changed = false;
+    for (const path of history) {
       try {
         const exists = await invoke<boolean>("file_exists", { path });
-        if (exists) {
-          await loadFile(path, false);
-          return;
-        } else {
+        if (!exists) {
           await invoke("remove_from_history", { path });
+          changed = true;
         }
       } catch {
         await invoke("remove_from_history", { path });
+        changed = true;
       }
     }
-    const cfg = await invoke<AppConfig>("get_config");
-    setConfig(cfg);
+    if (changed) {
+      const cfg = await invoke<AppConfig>("get_config");
+      setConfig(cfg);
+    }
+  }
+
+  // Load most recent file that exists (last in list = most recently opened)
+  async function loadMostRecentFile(history: string[]) {
+    // First validate all history entries
+    await validateHistory(history);
+    
+    // Now load the most recent (history is already cleaned)
+    const cleanedHistory = config().history;
+    if (cleanedHistory.length > 0) {
+      await loadFile(cleanedHistory[cleanedHistory.length - 1], false);
+    }
   }
 
   // Keyboard shortcut handler
@@ -603,6 +617,22 @@ function App() {
   async function loadFile(path: string, addToHistory: boolean = true) {
     // Don't reload the same file
     if (currentFile() === path) return;
+    
+    // Check if file still exists (might have been deleted externally)
+    try {
+      const exists = await invoke<boolean>("file_exists", { path });
+      if (!exists) {
+        // Remove from history and update config
+        await invoke("remove_from_history", { path });
+        const cfg = await invoke<AppConfig>("get_config");
+        setConfig(cfg);
+        logger.warn(`File no longer exists: ${path}`);
+        return;
+      }
+    } catch (e) {
+      logger.error(`Failed to check file existence: ${e}`);
+      return;
+    }
     
     // Check for unsaved changes in current file
     const dirty = isDirty();
