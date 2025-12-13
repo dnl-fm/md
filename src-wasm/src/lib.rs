@@ -1428,7 +1428,7 @@ pub fn get_highlighted_lines(start: usize, count: usize) -> JsValue {
                     code_lang.clear();
                 } else {
                     in_code_block = true;
-                    code_lang = trimmed[3..].trim().to_string();
+                    code_lang = trimmed[3..].trim().to_lowercase();
                 }
             }
         }

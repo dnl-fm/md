@@ -412,21 +412,17 @@ function App() {
           // Debounce rapid mode switches (prevent double-firing)
           const now = Date.now();
           if (now - lastModeSwitchTime < 300) {
-            console.log('[scroll-sync][keydown] Ctrl+Space debounced');
             break;
           }
           lastModeSwitchTime = now;
           
-          console.log('[scroll-sync][keydown] Ctrl+Space pressed, isReadOnly:', isReadOnly(), 'showRawMarkdown:', showRawMarkdown());
           if (!isReadOnly()) {
             if (showRawMarkdown()) {
               // Switching to preview - save if dirty
               saveAndPreview();
             } else {
               // Switching to edit - capture visible content for scroll sync
-              console.log('[scroll-sync][keydown] About to capture anchor...');
               captureScrollAnchor();
-              console.log('[scroll-sync][keydown] Anchor after capture:', scrollAnchor());
               setShowRawMarkdown(true);
             }
           }
@@ -644,14 +640,7 @@ function App() {
     const scrollContainer = document.querySelector('.markdown-container') as HTMLElement | null;
     const markdownContent = document.querySelector('.markdown-content') as HTMLElement | null;
     
-    console.log('[scroll-sync][capture] starting...', {
-      hasContainer: !!scrollContainer,
-      hasContent: !!markdownContent,
-      totalDataLineElements: document.querySelectorAll('[data-line]').length
-    });
-    
     if (!scrollContainer || !markdownContent) {
-      console.log('[scroll-sync][capture] missing elements');
       setScrollAnchor(null);
       return;
     }
@@ -663,15 +652,7 @@ function App() {
     const visibleTop = Math.max(containerRect.top, 0);
     const visibleBottom = Math.min(containerRect.bottom, window.innerHeight);
     
-    console.log('[scroll-sync][capture] rects', {
-      containerTop: containerRect.top,
-      visibleTop,
-      visibleBottom,
-      scrollTop: scrollContainer.scrollTop
-    });
-    
     if (visibleBottom <= visibleTop + 50) {
-      console.log('[scroll-sync][capture] container not sufficiently visible');
       setScrollAnchor(null);
       return;
     }
@@ -680,19 +661,9 @@ function App() {
     const x = contentRect.left + Math.min(60, contentRect.width / 2);
     const y = visibleTop + 30;
 
-    console.log('[scroll-sync][capture] probing at', { x, y });
-
     const hit = document.elementFromPoint(x, y) as HTMLElement | null;
     
-    console.log('[scroll-sync][capture] hit', { 
-      tag: hit?.tagName, 
-      class: hit?.className,
-      dataLine: (hit as HTMLElement)?.dataset?.line,
-      isInContent: hit ? markdownContent.contains(hit) : false
-    });
-    
     if (!hit || (!markdownContent.contains(hit) && hit !== markdownContent)) {
-      console.log('[scroll-sync][capture] hit outside markdown content');
       setScrollAnchor(null);
       return;
     }
@@ -701,7 +672,6 @@ function App() {
     const blockWithLine = hit.closest('[data-line]') as HTMLElement | null;
     if (blockWithLine && blockWithLine !== markdownContent) {
       const line = blockWithLine.dataset.line;
-      console.log('[scroll-sync][capture] SUCCESS found data-line:', line, blockWithLine.tagName);
       setScrollAnchor(line ?? null);
       return;
     }
@@ -714,7 +684,6 @@ function App() {
       // Element is visible if its top is in the visible area
       if (rect.top >= visibleTop - 50 && rect.top < visibleBottom) {
         const line = (el as HTMLElement).dataset.line;
-        console.log('[scroll-sync][capture] SUCCESS found first visible data-line:', line, el.tagName);
         setScrollAnchor(line ?? null);
         return;
       }
@@ -722,13 +691,8 @@ function App() {
 
     // Fallback: walk up to any block and use its data-line or search siblings
     const block = hit.closest('h1,h2,h3,h4,h5,h6,p,li,pre,blockquote,table,div') as HTMLElement | null;
-    console.log('[scroll-sync][capture] no direct data-line, checking block', { 
-      blockTag: block?.tagName,
-      blockDataLine: block?.dataset.line 
-    });
     
     if (block?.dataset.line) {
-      console.log('[scroll-sync][capture] block has data-line:', block.dataset.line);
       setScrollAnchor(block.dataset.line);
       return;
     }
@@ -737,14 +701,12 @@ function App() {
     let el: Element | null = block || hit;
     while (el) {
       if ((el as HTMLElement).dataset?.line) {
-        console.log('[scroll-sync][capture] found prev sibling with data-line:', (el as HTMLElement).dataset.line);
         setScrollAnchor((el as HTMLElement).dataset.line ?? null);
         return;
       }
       el = el.previousElementSibling;
     }
 
-    console.log('[scroll-sync][capture] no data-line found');
     setScrollAnchor(null);
   }
 
@@ -754,14 +716,12 @@ function App() {
     if (editorApi) {
       const line = editorApi.getTopVisibleLine();
       const anchor = scrollAnchor();
-      console.log('[scroll-sync][edit→preview] capturing line:', line, 'scrollAnchor:', anchor);
       
       // If editor reports line 0 but we have a pending scrollAnchor,
       // the editor hasn't scrolled yet - use the anchor instead
       if (line === 0 && anchor) {
         const anchorLine = parseInt(anchor, 10);
         if (!isNaN(anchorLine) && anchorLine > 0) {
-          console.log('[scroll-sync][edit→preview] using scrollAnchor instead:', anchorLine);
           setPreviewScrollLine(anchorLine);
         } else {
           setPreviewScrollLine(line);

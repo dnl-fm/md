@@ -162,8 +162,6 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
     const article = articleEl();
     const targetLine = previewScrollLine();
     
-    console.log('[scroll-sync][preview][render] article?', !!article, 'pendingLine', targetLine);
-    
     if (!article || targetLine === null) return;
     
     // Defer one tick so layout is stable
@@ -174,8 +172,6 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   });
 
   function scrollPreviewToLine(article: HTMLElement, targetLine: number) {
-    console.log('[scroll-sync][preview] scrolling to line:', targetLine);
-
     // Find element with data-line closest to (but not exceeding) targetLine
     const elementsWithLine = article.querySelectorAll('[data-line]');
     let bestMatch: Element | null = null;
@@ -190,7 +186,6 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
     }
 
     if (bestMatch) {
-      console.log('[scroll-sync][preview] found element at line:', bestLine, bestMatch.tagName);
       bestMatch.scrollIntoView({ behavior: 'instant', block: 'start' });
       // Offset slightly from top
       if (containerRef) {
@@ -198,7 +193,6 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
       }
     } else {
       // Fallback: proportional scroll
-      console.log('[scroll-sync][preview] no data-line element found, using proportional');
       const rawContent = content();
       if (rawContent && containerRef) {
         const totalLines = rawContent.split('\n').length;

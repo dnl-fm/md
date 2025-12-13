@@ -142,6 +142,9 @@ export function WasmEditor(props: WasmEditorProps) {
         // Auto-focus the editor
         editorRef?.focus();
 
+        // Register API with parent after initialization
+        props.onApi?.({ getTopVisibleLine });
+
         // Capture Shift+Tab before browser does (for reverse focus navigation)
         // Must use window-level capture to intercept before browser handles it
         const captureShiftTab = (e: KeyboardEvent) => {
@@ -197,8 +200,7 @@ export function WasmEditor(props: WasmEditorProps) {
     return Math.floor(contentRef.scrollTop / lineHeight);
   }
 
-  // Register API with parent
-  props.onApi?.({ getTopVisibleLine });
+
 
   // Get unique key for current file/draft
   function getFileKey(): string {
@@ -292,22 +294,17 @@ export function WasmEditor(props: WasmEditorProps) {
   // Anchor is now a line number string from data-line attribute
   function scrollToAnchor() {
     const anchor = scrollAnchor();
-    console.log('[scroll-sync][editor] anchor (line):', anchor);
     
     if (!anchor || !wasm || !contentRef) {
-      console.log('[scroll-sync][editor] Missing:', { anchor: !!anchor, wasm: !!wasm, contentRef: !!contentRef });
       setScrollAnchor(null);
       return;
     }
 
     const targetLine = parseInt(anchor, 10);
     if (isNaN(targetLine)) {
-      console.warn('[scroll-sync][editor] Invalid line number:', anchor);
       setScrollAnchor(null);
       return;
     }
-
-    console.log('[scroll-sync][editor] scrolling to line:', targetLine);
 
     // Wait for editor layout to be ready
     queueMicrotask(() => {
@@ -316,12 +313,6 @@ export function WasmEditor(props: WasmEditorProps) {
         
         const lineHeight = LINE_HEIGHT();
         const scrollY = Math.max(0, targetLine * lineHeight - 50);
-        
-        console.log('[scroll-sync][editor] scroll:', { 
-          targetLine,
-          targetScrollY: scrollY,
-          scrollHeight: contentRef.scrollHeight
-        });
         
         contentRef.scrollTop = scrollY;
         setScrollTop(scrollY);
