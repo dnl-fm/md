@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2025-12-13
+
+### Added
+- **WASM-based editor**: New Rust/WebAssembly editor replacing textarea
+  - Ropey-backed text buffer for O(log n) edits on large documents
+  - Built-in markdown syntax highlighting (headings, code, bold, links, lists)
+  - Virtual scrolling for performance with large files
+  - Cursor and selection management in WASM
+  - Undo/redo stacks managed in Rust
+- History validation: Non-existent files automatically removed from sidebar on startup
+- File existence check before loading (handles external file deletion)
+
+### Changed
+- Editor now uses `translate3d` + `will-change: transform` for virtual scroll (fixes WebView scrollbar bug)
+- Keyboard shortcuts now case-insensitive
+- Clipboard operations now have proper error handling
+
+### Fixed
+- Scrollbar disappearing during scroll in Tauri WebView (compositor bug workaround)
+- Cursor missing after clicking into document
+- Scrollbar drag not working (was intercepted by click handler)
+- EOL cursor positioning in `line_col_to_offset`
+
 ## [0.6.0] - 2025-12-02
 
 ### Added
