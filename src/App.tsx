@@ -4,7 +4,7 @@ import { logger } from "./logger";
 import { listen } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { confirm } from "./components/confirm-dialog";
-import { Marked } from "marked";
+import MarkdownIt from "markdown-it";
 import { createHighlighter, type Highlighter } from "shiki";
 
 import "./styles/theme.css";
@@ -60,6 +60,9 @@ import {
   updateDraft,
   removeDraft,
   getDraft,
+  scrollAnchor,
+  setScrollAnchor,
+  setPreviewScrollLine,
 } from "./stores/app-store";
 import {
   DEFAULT_DARK_COLORS,
@@ -74,14 +77,14 @@ import {
 import { Sidebar } from "./components/sidebar";
 import { FileHeader } from "./components/file-header";
 import { MarkdownViewer } from "./components/markdown-viewer";
+import type { WasmEditorApi } from "./components/wasm-editor";
 import { SettingsModal } from "./components/settings-modal";
 import { ConfirmDialog } from "./components/confirm-dialog";
 import { WelcomeModal } from "./components/welcome-modal";
 import { HelpModal } from "./components/help-modal";
 import { ReleaseNotification } from "./components/release-notification";
 
-// Initialize marked
-const marked = new Marked();
+// Marked is instantiated per-render to avoid stacking extensions
 
 // Highlighter instance as a signal so effects re-run when it's ready
 const [highlighter, setHighlighter] = createSignal<Highlighter | null>(null);
@@ -90,6 +93,12 @@ function App() {
   const [showWelcome, setShowWelcome] = createSignal(false);
   const [showReleaseNotification, setShowReleaseNotification] = createSignal(false);
   const [appVersion, setAppVersion] = createSignal("");
+  
+  // Editor API for scroll sync (set when editor mounts, cleared when unmounts)
+  let editorApi: WasmEditorApi | null = null;
+  
+  // Debounce for mode switching (prevent rapid Ctrl+Space double-firing)
+  let lastModeSwitchTime = 0;
 
   // Initialize highlighter and config
   onMount(async () => {
@@ -193,45 +202,86 @@ function App() {
   });
 
   // Render markdown when content changes
+  // Uses markdown-it with data-line attributes for scroll sync
   createEffect(async () => {
-    const md = content();
+    const mdContent = content();
     const hl = highlighter(); // Read signal to track dependency
 
-    if (!md) {
+    if (!mdContent) {
       setRenderedHtml("");
       return;
     }
 
     const theme = config().theme === "dark" ? "github-dark" : "github-light";
-
-    marked.setOptions({
-      gfm: true,
-      breaks: false,
+    const normalizedMd = normalizeMarkdown(mdContent);
+    
+    // Create markdown-it instance
+    const md = new MarkdownIt({
+      html: true,
+      linkify: true,
+      typographer: false,
     });
+    
+    // Block token types that should get data-line attributes
+    const blockOpenTypes = new Set([
+      "heading_open",
+      "paragraph_open",
+      "blockquote_open",
+      "bullet_list_open",
+      "ordered_list_open",
+      "list_item_open",
+      "fence",
+      "code_block",
+      "table_open",
+      "hr",
+    ]);
 
-    const renderer = {
-      code({ text, lang }: { text: string; lang?: string }): string {
-        const language = lang || "plaintext";
-        if (hl) {
-          try {
-            const highlighted = hl.codeToHtml(text, { lang: language, theme });
-            return `<div class="code-block-wrapper">${lang ? `<span class="code-block-lang">${lang}</span>` : ""}${highlighted}</div>`;
-          } catch {
-            return `<pre><code>${escapeHtml(text)}</code></pre>`;
-          }
-        }
-        return `<pre><code class="language-${language}">${escapeHtml(text)}</code></pre>`;
-      },
-      heading({ tokens, depth }: { tokens: { raw: string }[]; depth: number }): string {
-        const text = tokens.map((t) => t.raw).join("");
-        const slug = slugify(text);
-        return `<h${depth} id="${slug}">${text}</h${depth}>`;
-      },
+    // Store original renderToken
+    const defaultRenderToken = md.renderer.renderToken.bind(md.renderer);
+    
+    // Override renderToken to add data-line attributes
+    md.renderer.renderToken = function(tokens, idx, options) {
+      const token = tokens[idx];
+      if (blockOpenTypes.has(token.type) && token.map) {
+        // token.map is [startLine, endLine] (0-based)
+        token.attrSet("data-line", String(token.map[0]));
+      }
+      return defaultRenderToken(tokens, idx, options);
     };
 
-    marked.use({ renderer });
+    // Custom fence renderer for syntax highlighting with shiki
+    md.renderer.rules.fence = function(tokens, idx) {
+      const token = tokens[idx];
+      const code = token.content;
+      const lang = token.info || "plaintext";
+      const lineAttr = token.map ? ` data-line="${token.map[0]}"` : '';
+      
+      if (hl) {
+        try {
+          const highlighted = hl.codeToHtml(code, { lang, theme });
+          return `<div class="code-block-wrapper"${lineAttr}>${lang ? `<span class="code-block-lang">${lang}</span>` : ""}${highlighted}</div>`;
+        } catch {
+          return `<pre${lineAttr}><code>${escapeHtml(code)}</code></pre>`;
+        }
+      }
+      return `<pre${lineAttr}><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
+    };
 
-    let html = await marked.parse(normalizeMarkdown(md));
+    // Custom heading renderer to add id for linking
+    md.renderer.rules.heading_open = function(tokens, idx, options, _env, self) {
+      const token = tokens[idx];
+      // Get heading text from next token
+      const contentToken = tokens[idx + 1];
+      const text = contentToken?.content || "";
+      const slug = slugify(text);
+      token.attrSet("id", slug);
+      if (token.map) {
+        token.attrSet("data-line", String(token.map[0]));
+      }
+      return self.renderToken(tokens, idx, options);
+    };
+
+    let html = md.render(normalizedMd);
     
     // Resolve relative image paths to base64 data URIs
     const file = currentFile();
@@ -355,18 +405,29 @@ function App() {
           e.preventDefault();
           changeFontSize(0);
           break;
-        case " ":
+        case " ": {
           e.preventDefault();
+          e.stopPropagation();
+          
+          // Debounce rapid mode switches (prevent double-firing)
+          const now = Date.now();
+          if (now - lastModeSwitchTime < 300) {
+            break;
+          }
+          lastModeSwitchTime = now;
+          
           if (!isReadOnly()) {
-            setShowRawMarkdown(!showRawMarkdown());
+            if (showRawMarkdown()) {
+              // Switching to preview - save if dirty
+              saveAndPreview();
+            } else {
+              // Switching to edit - capture visible content for scroll sync
+              captureScrollAnchor();
+              setShowRawMarkdown(true);
+            }
           }
           break;
-        case "e":
-          e.preventDefault();
-          if (!isDirty() && !isReadOnly()) {
-            setShowRawMarkdown(!showRawMarkdown());
-          }
-          break;
+        }
         case "f": {
           e.preventDefault();
           if (!showRawMarkdown()) {
@@ -573,8 +634,103 @@ function App() {
     }
   }
 
+  // Capture visible content anchor for scroll sync when switching to edit mode
+  // Uses data-line attributes injected during markdown rendering
+  function captureScrollAnchor() {
+    const scrollContainer = document.querySelector('.markdown-container') as HTMLElement | null;
+    const markdownContent = document.querySelector('.markdown-content') as HTMLElement | null;
+    
+    if (!scrollContainer || !markdownContent) {
+      setScrollAnchor(null);
+      return;
+    }
+
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const contentRect = markdownContent.getBoundingClientRect();
+
+    // The visible area is the intersection of the scroll container and window
+    const visibleTop = Math.max(containerRect.top, 0);
+    const visibleBottom = Math.min(containerRect.bottom, window.innerHeight);
+    
+    if (visibleBottom <= visibleTop + 50) {
+      setScrollAnchor(null);
+      return;
+    }
+
+    // Probe point: 30px below the visible top of the scroll container
+    const x = contentRect.left + Math.min(60, contentRect.width / 2);
+    const y = visibleTop + 30;
+
+    const hit = document.elementFromPoint(x, y) as HTMLElement | null;
+    
+    if (!hit || (!markdownContent.contains(hit) && hit !== markdownContent)) {
+      setScrollAnchor(null);
+      return;
+    }
+
+    // Find nearest element with data-line attribute
+    const blockWithLine = hit.closest('[data-line]') as HTMLElement | null;
+    if (blockWithLine && blockWithLine !== markdownContent) {
+      const line = blockWithLine.dataset.line;
+      setScrollAnchor(line ?? null);
+      return;
+    }
+
+    // If we hit the article container or empty space, find first visible element with data-line
+    // This handles cases where there's margin/padding at the scroll position
+    const allWithLine = markdownContent.querySelectorAll('[data-line]');
+    for (const el of allWithLine) {
+      const rect = el.getBoundingClientRect();
+      // Element is visible if its top is in the visible area
+      if (rect.top >= visibleTop - 50 && rect.top < visibleBottom) {
+        const line = (el as HTMLElement).dataset.line;
+        setScrollAnchor(line ?? null);
+        return;
+      }
+    }
+
+    // Fallback: walk up to any block and use its data-line or search siblings
+    const block = hit.closest('h1,h2,h3,h4,h5,h6,p,li,pre,blockquote,table,div') as HTMLElement | null;
+    
+    if (block?.dataset.line) {
+      setScrollAnchor(block.dataset.line);
+      return;
+    }
+
+    // Last resort: find previous sibling with data-line
+    let el: Element | null = block || hit;
+    while (el) {
+      if ((el as HTMLElement).dataset?.line) {
+        setScrollAnchor((el as HTMLElement).dataset.line ?? null);
+        return;
+      }
+      el = el.previousElementSibling;
+    }
+
+    setScrollAnchor(null);
+  }
+
   // Save file and return to preview
   async function saveAndPreview() {
+    // Capture scroll position BEFORE switching modes
+    if (editorApi) {
+      const line = editorApi.getTopVisibleLine();
+      const anchor = scrollAnchor();
+      
+      // If editor reports line 0 but we have a pending scrollAnchor,
+      // the editor hasn't scrolled yet - use the anchor instead
+      if (line === 0 && anchor) {
+        const anchorLine = parseInt(anchor, 10);
+        if (!isNaN(anchorLine) && anchorLine > 0) {
+          setPreviewScrollLine(anchorLine);
+        } else {
+          setPreviewScrollLine(line);
+        }
+      } else {
+        setPreviewScrollLine(line);
+      }
+    }
+    
     const file = currentFile();
     if (file && isDirty()) {
       // Save existing file
@@ -832,7 +988,11 @@ function App() {
 
       <main class="main-content">
         <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} onPrint={printDocument} />
-        <MarkdownViewer onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} />
+        <MarkdownViewer 
+          onSaveAndPreview={saveAndPreview} 
+          onSaveDraft={saveDraftToFile}
+          onEditorApi={(api) => { editorApi = api; }}
+        />
       </main>
 
       <SettingsModal />

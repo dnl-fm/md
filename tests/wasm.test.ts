@@ -81,7 +81,9 @@ describe("WASM Editor", () => {
       wasm.reset_highlighting_state();
       const lines = wasm.get_highlighted_lines(0, 3);
       expect(lines[0].spans[0].style).toBe("code-fence");
-      expect(lines[1].spans[0].style).toBe("code-block");
+      // Line 1 should have syntax highlighting - "const" is a keyword
+      expect(lines[1].spans[0].style).toBe("code-keyword");
+      expect(lines[1].spans[0].text).toBe("const");
       expect(lines[2].spans[0].style).toBe("code-fence");
     });
 

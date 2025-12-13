@@ -171,6 +171,18 @@ const [searchMatches, setSearchMatches] = createSignal<number>(0);
 /** Currently highlighted match index (1-based) */
 const [currentMatch, setCurrentMatch] = createSignal<number>(0);
 
+/** 
+ * Scroll anchor for syncing position between preview and edit modes.
+ * Stores text content to search for when switching modes.
+ */
+const [scrollAnchor, setScrollAnchor] = createSignal<string | null>(null);
+
+/**
+ * Preview scroll anchor - line number from editor to scroll preview to.
+ * Set before switching from edit to preview mode.
+ */
+const [previewScrollLine, setPreviewScrollLine] = createSignal<number | null>(null);
+
 // ============================================================================
 // Derived State
 // ============================================================================
@@ -360,6 +372,11 @@ export {
   setSearchMatches,
   currentMatch,
   setCurrentMatch,
+  // Scroll sync
+  scrollAnchor,
+  setScrollAnchor,
+  previewScrollLine,
+  setPreviewScrollLine,
   // Draft state
   drafts,
   setDrafts,

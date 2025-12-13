@@ -26,6 +26,8 @@ import {
   markdownFontFamily,
   currentDraftId,
   currentFile,
+  scrollAnchor,
+  setScrollAnchor,
 } from "../stores/app-store";
 import { getFontFamilyCSS } from "../utils";
 
@@ -42,9 +44,15 @@ interface HighlightedLine {
   spans: Span[];
 }
 
+/** API exposed by WasmEditor for parent to query state */
+export interface WasmEditorApi {
+  getTopVisibleLine: () => number;
+}
+
 interface WasmEditorProps {
   onSaveAndPreview: () => void;
   onSaveDraft?: () => void;
+  onApi?: (api: WasmEditorApi) => void;
 }
 
 export function WasmEditor(props: WasmEditorProps) {
@@ -127,9 +135,15 @@ export function WasmEditor(props: WasmEditorProps) {
         updateCursorDisplay();
         updateDocHeight(); // Set initial height
         updateVisibleLines();
+        
+        // Scroll to anchor if set (from preview mode)
+        scrollToAnchor();
 
         // Auto-focus the editor
         editorRef?.focus();
+
+        // Register API with parent after initialization
+        props.onApi?.({ getTopVisibleLine });
 
         // Capture Shift+Tab before browser does (for reverse focus navigation)
         // Must use window-level capture to intercept before browser handles it
@@ -150,6 +164,15 @@ export function WasmEditor(props: WasmEditorProps) {
           window.removeEventListener("keydown", captureShiftTab, {
             capture: true,
           });
+        
+        // Watch for container resize to update visible lines
+        if (contentRef) {
+          const resizeObserver = new ResizeObserver(() => {
+            updateVisibleLines();
+          });
+          resizeObserver.observe(contentRef);
+          cleanupResizeObserver = () => resizeObserver.disconnect();
+        }
       });
     } catch (err) {
       console.error("WASM init error:", err);
@@ -161,10 +184,23 @@ export function WasmEditor(props: WasmEditorProps) {
 
   // Store cleanup function for Shift+Tab listener
   let cleanupShiftTab: (() => void) | null = null;
+  
+  // Store cleanup function for resize observer
+  let cleanupResizeObserver: (() => void) | null = null;
 
   onCleanup(() => {
     if (cleanupShiftTab) cleanupShiftTab();
+    if (cleanupResizeObserver) cleanupResizeObserver();
   });
+
+  // Expose API for parent to query editor state (e.g., for scroll sync)
+  function getTopVisibleLine(): number {
+    if (!contentRef) return 0;
+    const lineHeight = LINE_HEIGHT();
+    return Math.floor(contentRef.scrollTop / lineHeight);
+  }
+
+
 
   // Get unique key for current file/draft
   function getFileKey(): string {
@@ -252,6 +288,46 @@ export function WasmEditor(props: WasmEditorProps) {
       contentRef.scrollTop = newScroll;
       setScrollTop(newScroll);
     }
+  }
+
+  // Scroll to line number (used when switching from preview to edit)
+  // Anchor is now a line number string from data-line attribute
+  function scrollToAnchor() {
+    const anchor = scrollAnchor();
+    
+    if (!anchor || !wasm || !contentRef) {
+      setScrollAnchor(null);
+      return;
+    }
+
+    const targetLine = parseInt(anchor, 10);
+    if (isNaN(targetLine)) {
+      setScrollAnchor(null);
+      return;
+    }
+
+    // Wait for editor layout to be ready
+    queueMicrotask(() => {
+      requestAnimationFrame(() => {
+        if (!contentRef || !wasm) return;
+        
+        const lineHeight = LINE_HEIGHT();
+        const scrollY = Math.max(0, targetLine * lineHeight - 50);
+        
+        contentRef.scrollTop = scrollY;
+        setScrollTop(scrollY);
+        
+        // Set cursor to start of the target line
+        const lineStart = wasm.get_line_start(targetLine);
+        wasm.set_cursor(lineStart);
+        
+        updateCursorDisplay();
+        updateVisibleLines();
+      });
+    });
+
+    // Clear the anchor
+    setScrollAnchor(null);
   }
 
   // Sync content to store (and update height since content changed)
