@@ -7,6 +7,7 @@ use wasm_bindgen::prelude::*;
 // Phase 1: Basic WASM Integration
 // ============================================================================
 
+/// Test function to verify WASM module is loaded correctly.
 #[wasm_bindgen]
 pub fn hello() -> String {
     "WASM works!".to_string()
@@ -24,6 +25,7 @@ thread_local! {
     static REDO_STACK: RefCell<Vec<(String, usize)>> = RefCell::new(Vec::new());
 }
 
+/// Set the entire buffer content, replacing any existing text.
 #[wasm_bindgen]
 pub fn set_content(text: &str) {
     BUFFER.with(|b| {
@@ -31,11 +33,13 @@ pub fn set_content(text: &str) {
     });
 }
 
+/// Get the entire buffer content as a string.
 #[wasm_bindgen]
 pub fn get_content() -> String {
     BUFFER.with(|b| b.borrow().to_string())
 }
 
+/// Insert text at the specified character position.
 #[wasm_bindgen]
 pub fn insert_at(pos: usize, text: &str) {
     BUFFER.with(|b| {
@@ -45,6 +49,7 @@ pub fn insert_at(pos: usize, text: &str) {
     });
 }
 
+/// Delete text between start and end character positions.
 #[wasm_bindgen]
 pub fn delete_range(start: usize, end: usize) {
     BUFFER.with(|b| {
@@ -57,16 +62,19 @@ pub fn delete_range(start: usize, end: usize) {
     });
 }
 
+/// Get the total number of lines in the buffer.
 #[wasm_bindgen]
 pub fn line_count() -> usize {
     BUFFER.with(|b| b.borrow().len_lines())
 }
 
+/// Get the total number of characters in the buffer.
 #[wasm_bindgen]
 pub fn char_count() -> usize {
     BUFFER.with(|b| b.borrow().len_chars())
 }
 
+/// Get the content of a specific line by index (0-based).
 #[wasm_bindgen]
 pub fn get_line(idx: usize) -> String {
     BUFFER.with(|b| {
@@ -83,12 +91,17 @@ pub fn get_line(idx: usize) -> String {
 // Phase 3: Line Rendering
 // ============================================================================
 
+/// A single line with its line number and content.
 #[derive(Serialize)]
 pub struct Line {
+    /// 1-based line number
     pub num: usize,
+    /// Line content without trailing newline
     pub content: String,
 }
 
+/// Get a range of lines for virtualized rendering.
+/// Returns lines from `start` index for `count` lines.
 #[wasm_bindgen]
 pub fn get_visible_lines(start: usize, count: usize) -> JsValue {
     BUFFER.with(|b| {
@@ -112,15 +125,21 @@ pub fn get_visible_lines(start: usize, count: usize) -> JsValue {
 // Phase 5: Syntax Highlighting (regex-based for MVP)
 // ============================================================================
 
+/// A text span with syntax highlighting style.
 #[derive(Serialize, Clone)]
 pub struct Span {
+    /// The text content of this span
     pub text: String,
+    /// CSS class name for styling (e.g., "heading", "code", "bold")
     pub style: String,
 }
 
+/// A line with syntax-highlighted spans.
 #[derive(Serialize)]
 pub struct HighlightedLine {
+    /// 1-based line number
     pub num: usize,
+    /// Syntax-highlighted spans for this line
     pub spans: Vec<Span>,
 }
 
@@ -1406,6 +1425,8 @@ fn highlight_docker(content: &str) -> Vec<Span> {
     tokenize_code(content, &keywords, &types, &builtins, "#", &['"', '\''], true)
 }
 
+/// Get syntax-highlighted lines for virtualized rendering.
+/// Tracks code block state across the document for accurate highlighting.
 #[wasm_bindgen]
 pub fn get_highlighted_lines(start: usize, count: usize) -> JsValue {
     BUFFER.with(|b| {
@@ -1445,7 +1466,7 @@ pub fn get_highlighted_lines(start: usize, count: usize) -> JsValue {
     })
 }
 
-// Reset code block tracking (call when loading new content)
+/// Reset code block tracking state. Call when loading new content.
 #[wasm_bindgen]
 pub fn reset_highlighting_state() {
     IN_CODE_BLOCK.with(|f| *f.borrow_mut() = false);
@@ -1456,6 +1477,7 @@ pub fn reset_highlighting_state() {
 // Phase 6: Cursor & Selection
 // ============================================================================
 
+/// Set cursor position (clamped to buffer length).
 #[wasm_bindgen]
 pub fn set_cursor(pos: usize) {
     CURSOR.with(|c| {
@@ -1466,18 +1488,24 @@ pub fn set_cursor(pos: usize) {
     });
 }
 
+/// Get current cursor position as character offset.
 #[wasm_bindgen]
 pub fn get_cursor() -> usize {
     CURSOR.with(|c| *c.borrow())
 }
 
+/// Cursor position with line, column, and offset.
 #[derive(Serialize)]
 pub struct CursorPosition {
+    /// 0-based line number
     pub line: usize,
+    /// 0-based column number
     pub col: usize,
+    /// Character offset from start of buffer
     pub offset: usize,
 }
 
+/// Get cursor position as line, column, and offset.
 #[wasm_bindgen]
 pub fn get_cursor_position() -> JsValue {
     BUFFER.with(|b| {
@@ -1500,6 +1528,7 @@ pub fn get_cursor_position() -> JsValue {
     })
 }
 
+/// Set selection range (start and end are normalized and clamped).
 #[wasm_bindgen]
 pub fn set_selection(start: usize, end: usize) {
     SELECTION.with(|s| {
@@ -1512,6 +1541,7 @@ pub fn set_selection(start: usize, end: usize) {
     });
 }
 
+/// Clear the current selection.
 #[wasm_bindgen]
 pub fn clear_selection() {
     SELECTION.with(|s| {
@@ -1519,11 +1549,13 @@ pub fn clear_selection() {
     });
 }
 
+/// Get current selection as (start, end) tuple or null.
 #[wasm_bindgen]
 pub fn get_selection() -> JsValue {
     SELECTION.with(|s| serde_wasm_bindgen::to_value(&*s.borrow()).unwrap_or(JsValue::NULL))
 }
 
+/// Get the text content of the current selection, if any.
 #[wasm_bindgen]
 pub fn get_selected_text() -> Option<String> {
     SELECTION.with(|s| {
@@ -1538,7 +1570,7 @@ pub fn get_selected_text() -> Option<String> {
     })
 }
 
-// Convert line/column to character offset
+/// Convert line and column to character offset.
 #[wasm_bindgen]
 pub fn line_col_to_offset(line: usize, col: usize) -> usize {
     BUFFER.with(|b| {
@@ -1560,6 +1592,7 @@ pub fn line_col_to_offset(line: usize, col: usize) -> usize {
 
 const MAX_UNDO_STACK: usize = 100;
 
+/// Save current state to undo stack. Clears redo stack.
 #[wasm_bindgen]
 pub fn save_undo_state() {
     let content = get_content();
@@ -1577,6 +1610,7 @@ pub fn save_undo_state() {
     REDO_STACK.with(|redo| redo.borrow_mut().clear());
 }
 
+/// Undo last change. Returns true if undo was performed.
 #[wasm_bindgen]
 pub fn undo() -> bool {
     UNDO_STACK.with(|undo| {
@@ -1597,6 +1631,7 @@ pub fn undo() -> bool {
     })
 }
 
+/// Redo last undone change. Returns true if redo was performed.
 #[wasm_bindgen]
 pub fn redo() -> bool {
     REDO_STACK.with(|redo| {
@@ -1617,16 +1652,19 @@ pub fn redo() -> bool {
     })
 }
 
+/// Check if undo is available.
 #[wasm_bindgen]
 pub fn can_undo() -> bool {
     UNDO_STACK.with(|undo| !undo.borrow().is_empty())
 }
 
+/// Check if redo is available.
 #[wasm_bindgen]
 pub fn can_redo() -> bool {
     REDO_STACK.with(|redo| !redo.borrow().is_empty())
 }
 
+/// Clear both undo and redo stacks.
 #[wasm_bindgen]
 pub fn clear_undo_redo() {
     UNDO_STACK.with(|undo| undo.borrow_mut().clear());
