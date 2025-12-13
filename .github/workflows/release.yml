@@ -19,6 +19,15 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Build WASM module
+        run: cd src-wasm && wasm-pack build --target web --out-dir ../src/wasm-pkg
+
       - name: Install dependencies
         run: bun install
 
