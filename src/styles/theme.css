@@ -652,6 +652,9 @@ body {
 .markdown-container {
     flex: 1;
     overflow-y: auto;
+}
+
+.markdown-container.preview-mode {
     padding: 20px;
 }
 

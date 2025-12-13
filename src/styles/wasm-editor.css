@@ -8,6 +8,7 @@
   height: 100%;
   width: 100%;
   position: relative;
+  min-height: 0; /* Allow flex children to shrink for proper scrolling */
 }
 
 .wasm-error {
@@ -19,21 +20,10 @@
   margin: 20px;
 }
 
-/* Hidden input for paste - positioned off-screen */
-.wasm-paste-input {
-  position: absolute;
-  top: -9999px;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .wasm-editor {
   display: flex;
   flex: 1;
-  overflow: hidden;
+  min-height: 0; /* Allow flex child to shrink and scroll properly */
   background: var(--bg-primary);
   outline: none;
 }
@@ -55,6 +45,7 @@
   border-right: 1px solid var(--border-color);
   overflow: hidden;
   user-select: none;
+  padding: 16px 0 16px 16px;
 }
 
 .wasm-gutter-content {
@@ -66,6 +57,7 @@
   top: 0;
   left: 0;
   right: 0;
+  will-change: transform;
 }
 
 .wasm-line-number {
@@ -86,14 +78,16 @@
 /* Editor content area */
 .wasm-content {
   flex: 1;
-  overflow: auto;
+  min-height: 0; /* Critical: allows flex item to shrink below content size for scrolling */
+  overflow-y: scroll;
+  overflow-x: auto;
+  scrollbar-gutter: stable; /* Reduce scrollbar appear/disappear churn */
   cursor: text;
-  padding: 0 16px;
+  padding: 16px;
 }
 
 .wasm-content-inner {
   position: relative;
-  min-height: 100%;
 }
 
 .wasm-lines {
@@ -101,6 +95,7 @@
   top: 0;
   left: 0;
   right: 0;
+  will-change: transform;
 }
 
 .wasm-line {
@@ -128,11 +123,15 @@
   background: var(--accent-color, #61afef);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.1s ease;
 }
 
 .wasm-cursor.visible {
-  opacity: 1;
+  animation: cursor-blink 1.06s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
 }
 
 /* Selection highlighting */

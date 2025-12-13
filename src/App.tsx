@@ -470,10 +470,10 @@ function App() {
     await invoke("save_config", { config: newConfig });
   }
 
-  // Refocus the editor textarea (used after dialogs)
+  // Refocus the editor (used after dialogs)
   function focusEditor() {
-    const textarea = document.querySelector(".markdown-editor") as HTMLTextAreaElement;
-    textarea?.focus();
+    const editor = document.querySelector(".wasm-editor") as HTMLElement;
+    editor?.focus();
   }
 
   // Create new untitled file

@@ -166,7 +166,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   }
 
   return (
-    <div class="markdown-container" ref={containerRef}>
+    <div class={`markdown-container ${showRawMarkdown() ? '' : 'preview-mode'}`} ref={containerRef}>
       <SearchBar onNavigate={navigateMatch} />
       <Show when={content() || showRawMarkdown() || currentDraftId()} fallback={<EmptyState />}>
         <Show when={showRawMarkdown()}>

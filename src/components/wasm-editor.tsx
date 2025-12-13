@@ -9,7 +9,15 @@
  *
  * Direct keyboard handling - no hidden textarea as source of truth.
  */
-import { Show, createSignal, onMount, onCleanup, For, createEffect, batch } from "solid-js";
+import {
+  Show,
+  createSignal,
+  onMount,
+  onCleanup,
+  For,
+  createEffect,
+  batch,
+} from "solid-js";
 import {
   content,
   setContent,
@@ -48,13 +56,15 @@ export function WasmEditor(props: WasmEditorProps) {
   const [lines, setLines] = createSignal<HighlightedLine[]>([]);
   const [cursorLine, setCursorLine] = createSignal(0);
   const [cursorCol, setCursorCol] = createSignal(0);
-  const [cursorVisible, setCursorVisible] = createSignal(true);
+
   const [scrollTop, setScrollTop] = createSignal(0);
   const [error, setError] = createSignal<string | null>(null);
   const [isFocused, setIsFocused] = createSignal(false);
 
   // Selection anchor - where selection started (doesn't change during shift+arrow)
-  const [selectionAnchor, setSelectionAnchor] = createSignal<number | null>(null);
+  const [selectionAnchor, setSelectionAnchor] = createSignal<number | null>(
+    null,
+  );
   // Visual selection bounds for rendering
   const [selStart, setSelStart] = createSignal<number | null>(null);
   const [selEnd, setSelEnd] = createSignal<number | null>(null);
@@ -62,13 +72,34 @@ export function WasmEditor(props: WasmEditorProps) {
   // Track last loaded file/draft to detect changes
   let lastFileKey: string | null = null;
 
+  // Cached document height - updated when content changes
+  const [docHeight, setDocHeight] = createSignal(500);
+
   // Line metrics
   const LINE_HEIGHT = () => markdownFontSize() * 1.6;
   const CHAR_WIDTH = () => markdownFontSize() * 0.6;
   const VISIBLE_BUFFER = 10;
+  const CONTENT_PADDING = 16; // Must match .wasm-content padding in CSS
 
-  // Cursor blink interval
-  let blinkInterval: number | undefined;
+  // Convert mouse event to line/col position
+  function getLineColFromMouseEvent(e: MouseEvent): { line: number; col: number } | null {
+    if (!contentRef || !wasm) return null;
+    
+    const rect = contentRef.getBoundingClientRect();
+    const x = e.clientX - rect.left + contentRef.scrollLeft - CONTENT_PADDING;
+    const y = e.clientY - rect.top + contentRef.scrollTop - CONTENT_PADDING;
+
+    const clickedLine = Math.floor(y / LINE_HEIGHT());
+    const clickedCol = Math.round(x / CHAR_WIDTH());
+
+    const lineCount = wasm.line_count();
+    const line = Math.max(0, Math.min(clickedLine, lineCount - 1));
+    const lineContent = wasm.get_line(line);
+    const maxCol = Math.max(0, lineContent.length - (lineContent.endsWith("\n") ? 1 : 0));
+    const col = Math.max(0, Math.min(clickedCol, maxCol));
+
+    return { line, col };
+  }
 
   // Initialize WASM
   onMount(async () => {
@@ -94,6 +125,7 @@ export function WasmEditor(props: WasmEditorProps) {
       // Wait for next frame to ensure DOM is ready
       requestAnimationFrame(() => {
         updateCursorDisplay();
+        updateDocHeight(); // Set initial height
         updateVisibleLines();
 
         // Auto-focus the editor
@@ -102,7 +134,11 @@ export function WasmEditor(props: WasmEditorProps) {
         // Capture Shift+Tab before browser does (for reverse focus navigation)
         // Must use window-level capture to intercept before browser handles it
         const captureShiftTab = (e: KeyboardEvent) => {
-          if ((e.key === "Tab" || e.code === "Tab") && e.shiftKey && isFocused()) {
+          if (
+            (e.key === "Tab" || e.code === "Tab") &&
+            e.shiftKey &&
+            isFocused()
+          ) {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
@@ -110,18 +146,16 @@ export function WasmEditor(props: WasmEditorProps) {
           }
         };
         window.addEventListener("keydown", captureShiftTab, { capture: true });
-        cleanupShiftTab = () => window.removeEventListener("keydown", captureShiftTab, { capture: true });
+        cleanupShiftTab = () =>
+          window.removeEventListener("keydown", captureShiftTab, {
+            capture: true,
+          });
       });
-
-      // Start cursor blink - use a ref to avoid re-renders
-      blinkInterval = window.setInterval(() => {
-        if (isFocused() && editorRef) {
-          setCursorVisible((v) => !v);
-        }
-      }, 530);
     } catch (err) {
       console.error("WASM init error:", err);
-      setError(err instanceof Error ? err.message : "Failed to load WASM module");
+      setError(
+        err instanceof Error ? err.message : "Failed to load WASM module",
+      );
     }
   });
 
@@ -129,7 +163,6 @@ export function WasmEditor(props: WasmEditorProps) {
   let cleanupShiftTab: (() => void) | null = null;
 
   onCleanup(() => {
-    if (blinkInterval) clearInterval(blinkInterval);
     if (cleanupShiftTab) cleanupShiftTab();
   });
 
@@ -160,6 +193,7 @@ export function WasmEditor(props: WasmEditorProps) {
       });
 
       updateCursorDisplay();
+      updateDocHeight(); // Update height for new content
       updateVisibleLines();
     }
   });
@@ -172,21 +206,32 @@ export function WasmEditor(props: WasmEditorProps) {
     const lineHeight = LINE_HEIGHT();
     const scrollOffset = scrollTop();
 
-    const startLine = Math.max(0, Math.floor(scrollOffset / lineHeight) - VISIBLE_BUFFER);
-    const visibleCount = Math.ceil(viewportHeight / lineHeight) + VISIBLE_BUFFER * 2;
+    const startLine = Math.max(
+      0,
+      Math.floor(scrollOffset / lineHeight) - VISIBLE_BUFFER,
+    );
+    const visibleCount =
+      Math.ceil(viewportHeight / lineHeight) + VISIBLE_BUFFER * 2;
 
-    const highlighted = wasm.get_highlighted_lines(startLine, visibleCount) as HighlightedLine[];
+    const highlighted = wasm.get_highlighted_lines(
+      startLine,
+      visibleCount,
+    ) as HighlightedLine[];
     setLines(highlighted);
+    // Don't update height on scroll - only on content changes
   }
 
   // Update cursor position display
   function updateCursorDisplay() {
     if (!wasm) return;
-    const pos = wasm.get_cursor_position() as { line: number; col: number; offset: number };
+    const pos = wasm.get_cursor_position() as {
+      line: number;
+      col: number;
+      offset: number;
+    };
     batch(() => {
       setCursorLine(pos.line);
       setCursorCol(pos.col);
-      setCursorVisible(true);
     });
   }
 
@@ -209,21 +254,24 @@ export function WasmEditor(props: WasmEditorProps) {
     }
   }
 
-  // Sync content to store
+  // Sync content to store (and update height since content changed)
   function syncToStore() {
     if (!wasm) return;
     setContent(wasm.get_content());
+    updateDocHeight();
   }
 
   // Handle scroll
   function handleScroll(e: Event) {
     const target = e.target as HTMLDivElement;
-    setScrollTop(target.scrollTop);
+    const newScrollTop = target.scrollTop;
 
+    // Sync gutter scroll
     if (gutterRef) {
-      gutterRef.scrollTop = target.scrollTop;
+      gutterRef.scrollTop = newScrollTop;
     }
-
+    
+    setScrollTop(newScrollTop);
     updateVisibleLines();
   }
 
@@ -305,20 +353,22 @@ export function WasmEditor(props: WasmEditorProps) {
 
     // Check if all lines already have this prefix (for toggle)
     const prefixWithSpace = prefix + " ";
-    const allHavePrefix = lines.every(line => line.startsWith(prefixWithSpace));
+    const allHavePrefix = lines.every((line) =>
+      line.startsWith(prefixWithSpace),
+    );
 
     let newLines: string[];
     let deltaTotal = 0;
 
     if (allHavePrefix) {
       // Remove prefix from all lines
-      newLines = lines.map(line => {
+      newLines = lines.map((line) => {
         deltaTotal -= prefixWithSpace.length;
         return line.substring(prefixWithSpace.length);
       });
     } else {
       // Add prefix to all lines (remove existing list markers first)
-      newLines = lines.map(line => {
+      newLines = lines.map((line) => {
         // Remove existing list markers if present
         const trimmed = line.replace(/^(\s*)[-*+>]\s?/, "$1");
         const diff = line.length - trimmed.length;
@@ -329,7 +379,8 @@ export function WasmEditor(props: WasmEditorProps) {
 
     // Replace the text
     const newText = newLines.join("\n");
-    const fullText = text.substring(0, firstLineStart) + newText + text.substring(rangeEnd);
+    const fullText =
+      text.substring(0, firstLineStart) + newText + text.substring(rangeEnd);
     wasm.set_content(fullText);
 
     // Update selection
@@ -348,7 +399,7 @@ export function WasmEditor(props: WasmEditorProps) {
   // Handle Tab/Shift+Tab (called from capture phase listener for Shift+Tab)
   function handleTabKey(dedent: boolean) {
     if (!wasm || !isReady()) return;
-    
+
     wasm.save_undo_state();
 
     const start = selStart();
@@ -359,14 +410,14 @@ export function WasmEditor(props: WasmEditorProps) {
       // Multi-line indent/dedent
       const text = wasm.get_content();
       const firstLineStart = text.lastIndexOf("\n", start - 1) + 1;
-      
+
       // Don't include a line if cursor is at its very beginning (column 0)
       // Check if end is right after a newline (at start of a line)
       let adjustedEnd = end;
       if (end > 0 && text[end - 1] === "\n") {
         adjustedEnd = end - 1; // Move back to previous line
       }
-      
+
       const lastLineEnd = text.indexOf("\n", adjustedEnd);
       const rangeEnd = lastLineEnd === -1 ? text.length : lastLineEnd;
 
@@ -380,7 +431,13 @@ export function WasmEditor(props: WasmEditorProps) {
       if (dedent) {
         // Dedent: remove up to 2 spaces from each line
         newLines = lines.map((line, i) => {
-          const spaces = line.startsWith("  ") ? 2 : line.startsWith("\t") ? 1 : line.startsWith(" ") ? 1 : 0;
+          const spaces = line.startsWith("  ")
+            ? 2
+            : line.startsWith("\t")
+              ? 1
+              : line.startsWith(" ")
+                ? 1
+                : 0;
           if (i === 0) deltaFirst = -spaces;
           deltaTotal -= spaces;
           return line.substring(spaces);
@@ -396,7 +453,8 @@ export function WasmEditor(props: WasmEditorProps) {
 
       // Replace the text
       const newText = newLines.join("\n");
-      const fullText = text.substring(0, firstLineStart) + newText + text.substring(rangeEnd);
+      const fullText =
+        text.substring(0, firstLineStart) + newText + text.substring(rangeEnd);
       wasm.set_content(fullText);
 
       // Update selection
@@ -410,7 +468,7 @@ export function WasmEditor(props: WasmEditorProps) {
       const pos = wasm.get_cursor_position() as { line: number; col: number };
       const lineStart = wasm.get_line_start(pos.line);
       const text = wasm.get_content();
-      
+
       let removed = 0;
       if (text.substring(lineStart, lineStart + 2) === "  ") {
         removed = 2;
@@ -445,7 +503,6 @@ export function WasmEditor(props: WasmEditorProps) {
     const cursor = wasm.get_cursor();
 
     // Reset cursor blink on any key
-    setCursorVisible(true);
 
     // === Modifier shortcuts ===
 
@@ -475,7 +532,10 @@ export function WasmEditor(props: WasmEditorProps) {
     }
 
     // Redo: Ctrl+Y or Ctrl+Shift+Z
-    if (isCtrl && (e.key === "y" || (e.key === "z" && isShift) || e.key === "Z")) {
+    if (
+      isCtrl &&
+      (e.key === "y" || (e.key === "z" && isShift) || e.key === "Z")
+    ) {
       e.preventDefault();
       if (wasm.redo()) {
         clearSelection();
@@ -819,15 +879,16 @@ export function WasmEditor(props: WasmEditorProps) {
 
     // === Character input ===
     if (e.key.length === 1 && !isCtrl && !e.altKey) {
-      const hasSelection = selStart() !== null && selEnd() !== null && selStart() !== selEnd();
-      
+      const hasSelection =
+        selStart() !== null && selEnd() !== null && selStart() !== selEnd();
+
       if (hasSelection) {
         const start = selStart()!;
         const end = selEnd()!;
         const text = wasm.get_content();
         const selectedText = text.substring(start, end);
         const isMultiLine = selectedText.includes("\n");
-        
+
         // Line prefixes for multi-line selection: -, *, +, >
         const linePrefixes = ["-", "*", "+", ">"];
         if (isMultiLine && linePrefixes.includes(e.key)) {
@@ -835,9 +896,23 @@ export function WasmEditor(props: WasmEditorProps) {
           handleLinePrefix(e.key);
           return;
         }
-        
+
         // Wrap characters for selection
-        const wrapChars = ['"', "'", '`', '(', ')', '[', ']', '{', '}', '<', '>', '*', '_'];
+        const wrapChars = [
+          '"',
+          "'",
+          "`",
+          "(",
+          ")",
+          "[",
+          "]",
+          "{",
+          "}",
+          "<",
+          ">",
+          "*",
+          "_",
+        ];
         if (wrapChars.includes(e.key)) {
           e.preventDefault();
           handleWrapSelection(e.key);
@@ -882,61 +957,88 @@ export function WasmEditor(props: WasmEditorProps) {
 
   // Wrap pairs for surrounding text
   const wrapPairs: Record<string, string> = {
-    '"': '"', "'": "'", '`': '`',
-    '(': ')', '[': ']', '{': '}', '<': '>',
-    '*': '*', '_': '_',
+    '"': '"',
+    "'": "'",
+    "`": "`",
+    "(": ")",
+    "[": "]",
+    "{": "}",
+    "<": ">",
+    "*": "*",
+    _: "_",
   };
-  
+
   // Reverse lookup: closing char → opening char
   const closingToOpening: Record<string, string> = {
-    '"': '"', "'": "'", '`': '`',
-    ')': '(', ']': '[', '}': '{', '>': '<',
-    '*': '*', '_': '_',
+    '"': '"',
+    "'": "'",
+    "`": "`",
+    ")": "(",
+    "]": "[",
+    "}": "{",
+    ">": "<",
+    "*": "*",
+    _: "_",
   };
 
   // Handle wrap/unwrap selection with matching characters
   function handleWrapSelection(key: string): boolean {
     if (!wasm) return false;
-    
+
     const start = selStart();
     const end = selEnd();
     if (start === null || end === null || start === end) return false;
-    
+
     const openChar = wrapPairs[key] ? key : closingToOpening[key];
     const closeChar = wrapPairs[openChar];
     if (!openChar || !closeChar) return false;
-    
+
     wasm.save_undo_state();
     const text = wasm.get_content();
-    
+
     // Check if already wrapped
     const charBefore = start > 0 ? text[start - 1] : "";
     const charAfter = end < text.length ? text[end] : "";
-    
+
     // Check if wrapped with any pair
-    const isWrappedWithSame = charBefore === openChar && charAfter === closeChar;
-    const existingOpenChar = closingToOpening[charAfter] === charBefore ? charBefore : null;
-    
+    const isWrappedWithSame =
+      charBefore === openChar && charAfter === closeChar;
+    const existingOpenChar =
+      closingToOpening[charAfter] === charBefore ? charBefore : null;
+
     if (isWrappedWithSame) {
       // Same wrap char → remove wrapping
-      const newText = text.substring(0, start - 1) + text.substring(start, end) + text.substring(end + 1);
+      const newText =
+        text.substring(0, start - 1) +
+        text.substring(start, end) +
+        text.substring(end + 1);
       wasm.set_content(newText);
       updateSelection(start - 1, end - 1);
       wasm.set_cursor(end - 1);
     } else if (existingOpenChar && wrapPairs[existingOpenChar]) {
       // Different wrap char → replace wrapping
-      const newText = text.substring(0, start - 1) + openChar + text.substring(start, end) + closeChar + text.substring(end + 1);
+      const newText =
+        text.substring(0, start - 1) +
+        openChar +
+        text.substring(start, end) +
+        closeChar +
+        text.substring(end + 1);
       wasm.set_content(newText);
       updateSelection(start, end);
       wasm.set_cursor(end);
     } else {
       // No wrapping → add wrapping
-      const newText = text.substring(0, start) + openChar + text.substring(start, end) + closeChar + text.substring(end);
+      const newText =
+        text.substring(0, start) +
+        openChar +
+        text.substring(start, end) +
+        closeChar +
+        text.substring(end);
       wasm.set_content(newText);
       updateSelection(start + 1, end + 1);
       wasm.set_cursor(end + 1);
     }
-    
+
     updateCursorDisplay();
     updateVisibleLines();
     syncToStore();
@@ -948,7 +1050,7 @@ export function WasmEditor(props: WasmEditorProps) {
     if (!wasm) return null;
     const text = wasm.get_content();
     if (pos >= text.length) return null;
-    
+
     // Check if we're on a word character
     if (!/\w/.test(text[pos])) {
       // Try one position back
@@ -958,42 +1060,38 @@ export function WasmEditor(props: WasmEditorProps) {
         return null;
       }
     }
-    
+
     let start = pos;
     let end = pos;
-    
+
     // Expand left
     while (start > 0 && /\w/.test(text[start - 1])) start--;
     // Expand right
     while (end < text.length && /\w/.test(text[end])) end++;
-    
+
     return { start, end };
   }
 
   // Handle double-click to select word
   function handleDoubleClick(e: MouseEvent) {
-    if (!contentRef || !wasm) return;
+    if (!wasm) return;
     e.preventDefault();
-    
-    // Ensure editor keeps focus
     editorRef?.focus();
-    
-    const rect = contentRef.getBoundingClientRect();
-    const x = e.clientX - rect.left + contentRef.scrollLeft;
-    const y = e.clientY - rect.top + contentRef.scrollTop;
-    
-    const clickedLine = Math.floor(y / LINE_HEIGHT());
-    const clickedCol = Math.round(x / CHAR_WIDTH());
-    
-    const lineCount = wasm.line_count();
-    const line = Math.max(0, Math.min(clickedLine, lineCount - 1));
-    const lineContent = wasm.get_line(line);
-    const maxCol = Math.max(0, lineContent.length - (lineContent.endsWith("\n") ? 1 : 0));
-    const col = Math.max(0, Math.min(clickedCol, maxCol));
-    
-    const clickPos = wasm.line_col_to_offset(line, col);
+
+    // Sync scroll position from DOM before processing click
+    if (contentRef) {
+      const currentScrollTop = contentRef.scrollTop;
+      if (currentScrollTop !== scrollTop()) {
+        setScrollTop(currentScrollTop);
+      }
+    }
+
+    const pos = getLineColFromMouseEvent(e);
+    if (!pos) return;
+
+    const clickPos = wasm.line_col_to_offset(pos.line, pos.col);
     const word = findWordAt(clickPos);
-    
+
     if (word) {
       updateSelection(word.start, word.end);
       wasm.set_cursor(word.end);
@@ -1004,30 +1102,40 @@ export function WasmEditor(props: WasmEditorProps) {
 
   // Handle mouse click
   function handleMouseDown(e: MouseEvent) {
-    if (!contentRef || !wasm) return;
-    
+    if (!wasm || !contentRef) return;
+
+    // Ignore clicks on scrollbar - let browser handle those natively
+    const rect = contentRef.getBoundingClientRect();
+    const isOnScrollbar = e.clientX > rect.right - 20 || e.clientY > rect.bottom - 20;
+    if (isOnScrollbar) return;
+
     // Double-click handled separately
     if (e.detail === 2) {
       handleDoubleClick(e);
       return;
     }
-    
-    editorRef?.focus();
 
-    const rect = contentRef.getBoundingClientRect();
-    const x = e.clientX - rect.left + contentRef.scrollLeft;
-    const y = e.clientY - rect.top + contentRef.scrollTop;
+    // Prevent default to stop browser from changing focus away from editorRef
+    e.preventDefault();
 
-    const clickedLine = Math.floor(y / LINE_HEIGHT());
-    const clickedCol = Math.round(x / CHAR_WIDTH());
+    // Ensure editor has focus for cursor visibility
+    if (document.activeElement !== editorRef) {
+      editorRef?.focus();
+    }
 
-    const lineCount = wasm.line_count();
-    const line = Math.max(0, Math.min(clickedLine, lineCount - 1));
-    const lineContent = wasm.get_line(line);
-    const maxCol = Math.max(0, lineContent.length - (lineContent.endsWith("\n") ? 1 : 0));
-    const col = Math.max(0, Math.min(clickedCol, maxCol));
+    // Sync scroll position from DOM before processing click
+    // This ensures scrollTop signal is current after mouse wheel scrolling
+    if (contentRef) {
+      const currentScrollTop = contentRef.scrollTop;
+      if (currentScrollTop !== scrollTop()) {
+        setScrollTop(currentScrollTop);
+      }
+    }
 
-    const newPos = wasm.line_col_to_offset(line, col);
+    const pos = getLineColFromMouseEvent(e);
+    if (!pos) return;
+
+    const newPos = wasm.line_col_to_offset(pos.line, pos.col);
 
     if (e.shiftKey && selectionAnchor() !== null) {
       updateSelection(selectionAnchor()!, newPos);
@@ -1046,17 +1154,12 @@ export function WasmEditor(props: WasmEditorProps) {
       const startPos = newPos;
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (!wasm || !contentRef) return;
-        const mx = moveEvent.clientX - rect.left + contentRef.scrollLeft;
-        const my = moveEvent.clientY - rect.top + contentRef.scrollTop;
-        const dragLine = Math.max(0, Math.min(Math.floor(my / LINE_HEIGHT()), wasm.line_count() - 1));
-        const dragLineContent = wasm.get_line(dragLine);
-        const dragMaxCol = Math.max(0, dragLineContent.length - (dragLineContent.endsWith("\n") ? 1 : 0));
-        const dragCol = Math.max(0, Math.min(Math.round(mx / CHAR_WIDTH()), dragMaxCol));
-        const dragPos = wasm.line_col_to_offset(dragLine, dragCol);
-
-        updateSelection(startPos, dragPos);
-        wasm.set_cursor(dragPos);
+        const dragPos = getLineColFromMouseEvent(moveEvent);
+        if (!dragPos || !wasm) return;
+        
+        const offset = wasm.line_col_to_offset(dragPos.line, dragPos.col);
+        updateSelection(startPos, offset);
+        wasm.set_cursor(offset);
         updateCursorDisplay();
         updateVisibleLines();
       };
@@ -1074,7 +1177,6 @@ export function WasmEditor(props: WasmEditorProps) {
   // Focus handlers
   function handleFocus() {
     setIsFocused(true);
-    setCursorVisible(true);
   }
 
   function handleBlur() {
@@ -1089,10 +1191,13 @@ export function WasmEditor(props: WasmEditorProps) {
       .join(" ");
   }
 
-  // Total document height
-  function totalHeight(): number {
-    if (!wasm || !isReady()) return 500;
-    return Math.max(wasm.line_count() * LINE_HEIGHT(), 100);
+  // Update document height - call when content changes
+  function updateDocHeight() {
+    if (!wasm || !isReady()) return;
+    const lineCount = wasm.line_count();
+    const lineHeight = LINE_HEIGHT();
+    const height = Math.max(lineCount * lineHeight + CONTENT_PADDING * 2 + 50, 100);
+    setDocHeight(height);
   }
 
   // Starting line offset for virtual scroll
@@ -1109,7 +1214,11 @@ export function WasmEditor(props: WasmEditorProps) {
     if (start === null || end === null || !wasm) {
       return (
         <For each={line.spans}>
-          {(span) => <span class={getSpanClass(span.style)}>{span.text || "\u00A0"}</span>}
+          {(span) => (
+            <span class={getSpanClass(span.style)}>
+              {span.text || "\u00A0"}
+            </span>
+          )}
         </For>
       );
     }
@@ -1120,7 +1229,11 @@ export function WasmEditor(props: WasmEditorProps) {
     if (end <= lineStart || start >= lineEnd) {
       return (
         <For each={line.spans}>
-          {(span) => <span class={getSpanClass(span.style)}>{span.text || "\u00A0"}</span>}
+          {(span) => (
+            <span class={getSpanClass(span.style)}>
+              {span.text || "\u00A0"}
+            </span>
+          )}
         </For>
       );
     }
@@ -1142,7 +1255,11 @@ export function WasmEditor(props: WasmEditorProps) {
         const selEndInSpan = Math.min(span.text.length, end - spanStart);
 
         if (selStartInSpan > 0) {
-          result.push({ text: span.text.substring(0, selStartInSpan), style: span.style, selected: false });
+          result.push({
+            text: span.text.substring(0, selStartInSpan),
+            style: span.style,
+            selected: false,
+          });
         }
         result.push({
           text: span.text.substring(selStartInSpan, selEndInSpan),
@@ -1150,7 +1267,11 @@ export function WasmEditor(props: WasmEditorProps) {
           selected: true,
         });
         if (selEndInSpan < span.text.length) {
-          result.push({ text: span.text.substring(selEndInSpan), style: span.style, selected: false });
+          result.push({
+            text: span.text.substring(selEndInSpan),
+            style: span.style,
+            selected: false,
+          });
         }
       }
 
@@ -1160,7 +1281,9 @@ export function WasmEditor(props: WasmEditorProps) {
     return (
       <For each={result}>
         {(part) => (
-          <span class={`${getSpanClass(part.style)} ${part.selected ? "wasm-selected" : ""}`}>
+          <span
+            class={`${getSpanClass(part.style)} ${part.selected ? "wasm-selected" : ""}`}
+          >
             {part.text || "\u00A0"}
           </span>
         )}
@@ -1199,10 +1322,15 @@ export function WasmEditor(props: WasmEditorProps) {
                 "font-family": getFontFamilyCSS(markdownFontFamily()),
               }}
             >
-              <div class="wasm-gutter-content" style={{ height: `${totalHeight()}px` }}>
+              <div
+                class="wasm-gutter-content"
+                style={{ height: `${docHeight()}px` }}
+              >
                 <div
                   class="wasm-gutter-lines"
-                  style={{ transform: `translateY(${startLineOffset() * LINE_HEIGHT()}px)` }}
+                  style={{
+                    transform: `translate3d(0, ${startLineOffset() * LINE_HEIGHT()}px, 0)`,
+                  }}
                 >
                   <For each={lines()}>
                     {(line) => (
@@ -1227,26 +1355,36 @@ export function WasmEditor(props: WasmEditorProps) {
             onScroll={handleScroll}
             onMouseDown={handleMouseDown}
           >
-            <div class="wasm-content-inner" style={{ height: `${totalHeight()}px` }}>
+            <div
+              class="wasm-content-inner"
+              style={{ height: `${docHeight()}px` }}
+            >
               <div
                 class="wasm-lines"
-                style={{ transform: `translateY(${startLineOffset() * LINE_HEIGHT()}px)` }}
+                style={{
+                  transform: `translate3d(0, ${startLineOffset() * LINE_HEIGHT()}px, 0)`,
+                }}
               >
                 <For each={lines()}>
                   {(line) => (
                     <div
                       class="wasm-line"
                       classList={{ active: cursorLine() === line.num - 1 }}
-                      style={{ height: `${LINE_HEIGHT()}px`, "line-height": `${LINE_HEIGHT()}px` }}
+                      style={{
+                        height: `${LINE_HEIGHT()}px`,
+                        "line-height": `${LINE_HEIGHT()}px`,
+                      }}
                     >
                       {renderLineContent(line)}
-                      {line.spans.length === 0 && <span class="wasm-text">&nbsp;</span>}
+                      {line.spans.length === 0 && (
+                        <span class="wasm-text">&nbsp;</span>
+                      )}
 
                       {/* Cursor */}
                       <Show when={cursorLine() === line.num - 1 && isFocused()}>
                         <span
                           class="wasm-cursor"
-                          classList={{ visible: cursorVisible() }}
+                          classList={{ visible: isFocused() }}
                           style={{ left: `${cursorCol() * CHAR_WIDTH()}px` }}
                         />
                       </Show>

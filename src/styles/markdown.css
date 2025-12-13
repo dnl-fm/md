@@ -357,16 +357,4 @@
     font-weight: 600;
 }
 
-.markdown-editor {
-    flex: 1;
-    height: 100%;
-    background: var(--bg-primary);
-    border: none;
-    outline: none;
-    resize: none;
-    color: var(--text-primary);
-    line-height: 1.5;
-    padding: 16px;
-    white-space: pre;
-    overflow-x: auto;
-}
+/* Old textarea editor styles removed - using wasm-editor now */
