@@ -501,13 +501,15 @@ export function WasmEditor(props: WasmEditorProps) {
     const isCtrl = e.ctrlKey || e.metaKey;
     const isShift = e.shiftKey;
     const cursor = wasm.get_cursor();
+    // Normalize key to lowercase for case-insensitive shortcut matching
+    const key = e.key.toLowerCase();
 
     // Reset cursor blink on any key
 
     // === Modifier shortcuts ===
 
     // Save: Ctrl+S
-    if (isCtrl && e.key === "s") {
+    if (isCtrl && key === "s") {
       e.preventDefault();
       syncToStore();
       if (currentDraftId()) {
@@ -519,7 +521,7 @@ export function WasmEditor(props: WasmEditorProps) {
     }
 
     // Undo: Ctrl+Z
-    if (isCtrl && e.key === "z" && !isShift) {
+    if (isCtrl && key === "z" && !isShift) {
       e.preventDefault();
       if (wasm.undo()) {
         clearSelection();
@@ -532,10 +534,7 @@ export function WasmEditor(props: WasmEditorProps) {
     }
 
     // Redo: Ctrl+Y or Ctrl+Shift+Z
-    if (
-      isCtrl &&
-      (e.key === "y" || (e.key === "z" && isShift) || e.key === "Z")
-    ) {
+    if (isCtrl && (key === "y" || (key === "z" && isShift))) {
       e.preventDefault();
       if (wasm.redo()) {
         clearSelection();
@@ -548,7 +547,7 @@ export function WasmEditor(props: WasmEditorProps) {
     }
 
     // Select all: Ctrl+A
-    if (isCtrl && e.key === "a") {
+    if (isCtrl && key === "a") {
       e.preventDefault();
       const len = wasm.char_count();
       updateSelection(0, len);
@@ -559,7 +558,7 @@ export function WasmEditor(props: WasmEditorProps) {
     }
 
     // Select word at cursor: Ctrl+D
-    if (isCtrl && e.key === "d") {
+    if (isCtrl && key === "d") {
       e.preventDefault();
       const word = findWordAt(cursor);
       if (word) {
@@ -572,32 +571,38 @@ export function WasmEditor(props: WasmEditorProps) {
     }
 
     // Copy: Ctrl+C
-    if (isCtrl && e.key === "c") {
+    if (isCtrl && key === "c") {
       const selected = getSelectedText();
       if (selected) {
         e.preventDefault();
-        navigator.clipboard.writeText(selected);
+        navigator.clipboard.writeText(selected).catch((err) => {
+          console.error("Failed to copy to clipboard:", err);
+        });
       }
       return;
     }
 
     // Cut: Ctrl+X
-    if (isCtrl && e.key === "x") {
+    if (isCtrl && key === "x") {
       const selected = getSelectedText();
       if (selected) {
         e.preventDefault();
-        navigator.clipboard.writeText(selected);
-        wasm.save_undo_state();
-        deleteSelection();
-        updateCursorDisplay();
-        updateVisibleLines();
-        syncToStore();
+        navigator.clipboard.writeText(selected).then(() => {
+          if (!wasm) return;
+          wasm.save_undo_state();
+          deleteSelection();
+          updateCursorDisplay();
+          updateVisibleLines();
+          syncToStore();
+        }).catch((err) => {
+          console.error("Failed to cut to clipboard:", err);
+        });
       }
       return;
     }
 
     // Paste: Ctrl+V
-    if (isCtrl && e.key === "v") {
+    if (isCtrl && key === "v") {
       e.preventDefault();
       navigator.clipboard.readText().then((text) => {
         if (!wasm || !text) return;
@@ -610,6 +615,8 @@ export function WasmEditor(props: WasmEditorProps) {
         updateVisibleLines();
         syncToStore();
         scrollToCursor();
+      }).catch((err) => {
+        console.error("Failed to read from clipboard:", err);
       });
       return;
     }

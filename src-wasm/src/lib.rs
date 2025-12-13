@@ -104,7 +104,7 @@ pub fn get_visible_lines(start: usize, count: usize) -> JsValue {
             })
             .collect();
 
-        serde_wasm_bindgen::to_value(&lines).unwrap()
+        serde_wasm_bindgen::to_value(&lines).unwrap_or(JsValue::NULL)
     })
 }
 
@@ -446,7 +446,7 @@ pub fn get_highlighted_lines(start: usize, count: usize) -> JsValue {
             })
             .collect();
 
-        serde_wasm_bindgen::to_value(&lines).unwrap()
+        serde_wasm_bindgen::to_value(&lines).unwrap_or(JsValue::NULL)
     })
 }
 
@@ -500,7 +500,7 @@ pub fn get_cursor_position() -> JsValue {
                 col,
                 offset: cursor,
             })
-            .unwrap()
+            .unwrap_or(JsValue::NULL)
         })
     })
 }
@@ -526,7 +526,7 @@ pub fn clear_selection() {
 
 #[wasm_bindgen]
 pub fn get_selection() -> JsValue {
-    SELECTION.with(|s| serde_wasm_bindgen::to_value(&*s.borrow()).unwrap())
+    SELECTION.with(|s| serde_wasm_bindgen::to_value(&*s.borrow()).unwrap_or(JsValue::NULL))
 }
 
 #[wasm_bindgen]
@@ -552,8 +552,10 @@ pub fn line_col_to_offset(line: usize, col: usize) -> usize {
             return rope.len_chars();
         }
         let line_start = rope.line_to_char(line);
-        let line_len = rope.line(line).len_chars();
-        line_start + col.min(line_len.saturating_sub(1))
+        let line_content = rope.line(line).to_string();
+        // Allow positioning at EOL: exclude newline from length but allow cursor after last char
+        let line_len_without_newline = line_content.trim_end_matches('\n').len();
+        line_start + col.min(line_len_without_newline)
     })
 }
 
