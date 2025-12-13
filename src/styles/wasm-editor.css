@@ -1,0 +1,268 @@
+/* ============================================================================
+   WASM Editor Styles
+   ============================================================================ */
+
+.wasm-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  min-height: 0; /* Allow flex children to shrink for proper scrolling */
+}
+
+.wasm-error {
+  padding: 20px;
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+  margin: 20px;
+}
+
+.wasm-editor {
+  display: flex;
+  flex: 1;
+  min-height: 0; /* Allow flex child to shrink and scroll properly */
+  background: var(--bg-primary);
+  outline: none;
+}
+
+.wasm-editor:focus {
+  outline: none;
+}
+
+.wasm-editor.with-line-numbers .wasm-gutter {
+  display: block;
+}
+
+/* Line numbers gutter */
+.wasm-gutter {
+  display: none;
+  width: 50px;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  overflow: hidden;
+  user-select: none;
+  padding: 16px 0 16px 16px;
+}
+
+.wasm-gutter-content {
+  position: relative;
+}
+
+.wasm-gutter-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.wasm-line-number {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 12px;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  transition: opacity 0.1s ease;
+}
+
+.wasm-line-number.active {
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+/* Editor content area */
+.wasm-content {
+  flex: 1;
+  min-height: 0; /* Critical: allows flex item to shrink below content size for scrolling */
+  overflow-y: scroll;
+  overflow-x: auto;
+  scrollbar-gutter: stable; /* Reduce scrollbar appear/disappear churn */
+  cursor: text;
+  padding: 16px;
+}
+
+.wasm-content-inner {
+  position: relative;
+}
+
+.wasm-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.wasm-line {
+  position: relative;
+  display: flex;
+  align-items: center;
+  white-space: pre;
+  min-height: 1.6em;
+}
+
+.wasm-line.active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="light"] .wasm-line.active {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* Cursor */
+.wasm-cursor {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--accent-color, #61afef);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wasm-cursor.visible {
+  animation: cursor-blink 1.06s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+/* Selection highlighting */
+.wasm-selected {
+  background: rgba(97, 175, 239, 0.3);
+}
+
+[data-theme="light"] .wasm-selected {
+  background: rgba(0, 122, 204, 0.2);
+}
+
+/* Status bar */
+.wasm-status {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+/* ============================================================================
+   Syntax Highlighting Styles
+   ============================================================================ */
+
+.wasm-text {
+  color: var(--text-primary);
+}
+
+/* Headings */
+.wasm-heading {
+  color: var(--text-heading);
+  font-weight: 600;
+}
+
+.wasm-h1 {
+  font-size: 1.3em;
+}
+
+.wasm-h2 {
+  font-size: 1.2em;
+}
+
+.wasm-h3 {
+  font-size: 1.1em;
+}
+
+.wasm-h4,
+.wasm-h5,
+.wasm-h6 {
+  font-size: 1em;
+}
+
+/* Code */
+.wasm-code-fence {
+  color: var(--text-secondary);
+  background: var(--bg-code);
+  padding: 0 4px;
+  border-radius: 2px;
+}
+
+.wasm-code-block {
+  color: #abb2bf;
+  background: var(--bg-code);
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  padding: 0 4px;
+}
+
+.wasm-inline-code {
+  color: #e06c75;
+  background: var(--bg-code);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.9em;
+}
+
+/* Text formatting */
+.wasm-bold {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.wasm-italic {
+  font-style: italic;
+  color: var(--text-primary);
+}
+
+/* Links */
+.wasm-link {
+  color: var(--text-link);
+  text-decoration: underline;
+}
+
+/* Blockquote */
+.wasm-blockquote {
+  color: var(--text-secondary);
+  border-left: 3px solid var(--border-color);
+  padding-left: 12px;
+  font-style: italic;
+}
+
+/* Lists */
+.wasm-list-marker {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+/* Tables */
+.wasm-table {
+  color: var(--text-primary);
+}
+
+/* Horizontal rule */
+.wasm-hr {
+  color: var(--text-secondary);
+}
+
+/* ============================================================================
+   Theme-specific overrides
+   ============================================================================ */
+
+[data-theme="light"] .wasm-code-block {
+  color: #383a42;
+}
+
+[data-theme="light"] .wasm-inline-code {
+  color: #e45649;
+}
+
+[data-theme="light"] .wasm-cursor {
+  background: #007acc;
+}

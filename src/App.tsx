@@ -10,6 +10,7 @@ import { createHighlighter, type Highlighter } from "shiki";
 import "./styles/theme.css";
 import "./styles/markdown.css";
 import "./styles/print.css";
+import "./styles/wasm-editor.css";
 
 import type { AppConfig, FileInfo } from "./types";
 import {
@@ -82,8 +83,8 @@ import { ReleaseNotification } from "./components/release-notification";
 // Initialize marked
 const marked = new Marked();
 
-// Highlighter instance (module-level for effects)
-let highlighter: Highlighter | null = null;
+// Highlighter instance as a signal so effects re-run when it's ready
+const [highlighter, setHighlighter] = createSignal<Highlighter | null>(null);
 
 function App() {
   const [showWelcome, setShowWelcome] = createSignal(false);
@@ -94,7 +95,7 @@ function App() {
   onMount(async () => {
     try {
       logger.info("App initializing...");
-      highlighter = await createHighlighter({
+      const hl = await createHighlighter({
         themes: ["github-dark", "github-light"],
         langs: [
           "javascript",
@@ -123,6 +124,7 @@ function App() {
           "plaintext",
         ],
       });
+      setHighlighter(hl);
 
       // Load config
       const cfg = await invoke<AppConfig>("get_config");
@@ -193,6 +195,7 @@ function App() {
   // Render markdown when content changes
   createEffect(async () => {
     const md = content();
+    const hl = highlighter(); // Read signal to track dependency
 
     if (!md) {
       setRenderedHtml("");
@@ -209,9 +212,9 @@ function App() {
     const renderer = {
       code({ text, lang }: { text: string; lang?: string }): string {
         const language = lang || "plaintext";
-        if (highlighter) {
+        if (hl) {
           try {
-            const highlighted = highlighter.codeToHtml(text, { lang: language, theme });
+            const highlighted = hl.codeToHtml(text, { lang: language, theme });
             return `<div class="code-block-wrapper">${lang ? `<span class="code-block-lang">${lang}</span>` : ""}${highlighted}</div>`;
           } catch {
             return `<pre><code>${escapeHtml(text)}</code></pre>`;
@@ -268,23 +271,37 @@ function App() {
     setRenderedHtml(html);
   });
 
-  // Load most recent file that exists (last in list = most recently opened)
-  async function loadMostRecentFile(history: string[]) {
-    for (const path of [...history].reverse()) {
+  // Validate all history files exist, remove any that don't
+  async function validateHistory(history: string[]): Promise<void> {
+    let changed = false;
+    for (const path of history) {
       try {
         const exists = await invoke<boolean>("file_exists", { path });
-        if (exists) {
-          await loadFile(path, false);
-          return;
-        } else {
+        if (!exists) {
           await invoke("remove_from_history", { path });
+          changed = true;
         }
       } catch {
         await invoke("remove_from_history", { path });
+        changed = true;
       }
     }
-    const cfg = await invoke<AppConfig>("get_config");
-    setConfig(cfg);
+    if (changed) {
+      const cfg = await invoke<AppConfig>("get_config");
+      setConfig(cfg);
+    }
+  }
+
+  // Load most recent file that exists (last in list = most recently opened)
+  async function loadMostRecentFile(history: string[]) {
+    // First validate all history entries
+    await validateHistory(history);
+    
+    // Now load the most recent (history is already cleaned)
+    const cleanedHistory = config().history;
+    if (cleanedHistory.length > 0) {
+      await loadFile(cleanedHistory[cleanedHistory.length - 1], false);
+    }
   }
 
   // Keyboard shortcut handler
@@ -467,10 +484,10 @@ function App() {
     await invoke("save_config", { config: newConfig });
   }
 
-  // Refocus the editor textarea (used after dialogs)
+  // Refocus the editor (used after dialogs)
   function focusEditor() {
-    const textarea = document.querySelector(".markdown-editor") as HTMLTextAreaElement;
-    textarea?.focus();
+    const editor = document.querySelector(".wasm-editor") as HTMLElement;
+    editor?.focus();
   }
 
   // Create new untitled file
@@ -600,6 +617,22 @@ function App() {
   async function loadFile(path: string, addToHistory: boolean = true) {
     // Don't reload the same file
     if (currentFile() === path) return;
+    
+    // Check if file still exists (might have been deleted externally)
+    try {
+      const exists = await invoke<boolean>("file_exists", { path });
+      if (!exists) {
+        // Remove from history and update config
+        await invoke("remove_from_history", { path });
+        const cfg = await invoke<AppConfig>("get_config");
+        setConfig(cfg);
+        logger.warn(`File no longer exists: ${path}`);
+        return;
+      }
+    } catch (e) {
+      logger.error(`Failed to check file existence: ${e}`);
+      return;
+    }
     
     // Check for unsaved changes in current file
     const dirty = isDirty();

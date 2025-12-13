@@ -17,6 +17,15 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Build WASM module
+        run: cd src-wasm && wasm-pack build --target web --out-dir ../src/wasm-pkg
+
       - name: Install dependencies
         run: bun install
 
@@ -39,6 +48,9 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
       - name: Install dependencies (Ubuntu)
         run: |
           sudo apt-get update
@@ -46,6 +58,9 @@ jobs:
 
       - name: Install frontend dependencies
         run: bun install
+
+      - name: Build WASM module
+        run: bun run build:wasm
 
       - name: Build frontend
         run: bunx vite build
