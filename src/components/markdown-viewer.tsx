@@ -57,6 +57,9 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   const [matchPositions, setMatchPositions] = createSignal<MatchPosition[]>([]);
   const [mermaidSvgs, setMermaidSvgs] = createSignal<Map<number, string>>(new Map());
   const [mermaidHeights, setMermaidHeights] = createSignal<Map<number, number>>(new Map());
+  
+  // Cache rendered SVGs by content+theme to avoid re-rendering on file switch
+  const mermaidCache = new Map<string, { svg: string; height: number }>();
 
   // Render mermaid diagrams progressively - each pops in when ready
   createEffect(() => {
@@ -81,6 +84,8 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
     // Render all diagrams in background, then swap all at once (no flicker)
     const renderAll = async () => {
       const newSvgs = new Map<number, string>();
+      const newHeights = new Map<number, number>();
+      let needsRender = false;
       
       for (let index = 0; index < matches.length; index++) {
         const match = matches[index];
@@ -91,12 +96,22 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
           .replace(/&lt;/g, '<')
           .replace(/&gt;/g, '>');
         
+        // Check cache first
+        const cacheKey = `${theme}:${decoded}`;
+        const cached = mermaidCache.get(cacheKey);
+        if (cached) {
+          newSvgs.set(index, cached.svg);
+          newHeights.set(index, cached.height);
+          continue;
+        }
+        
+        needsRender = true;
         try {
           const id = `mermaid-${theme}-${index}-${Date.now()}`;
           const { svg } = await mermaid.render(id, decoded);
           newSvgs.set(index, svg);
           
-          // Extract and store height for future re-renders
+          // Extract height
           let height = 0;
           const heightMatch = svg.match(/height="([\d.]+)/);
           if (heightMatch) {
@@ -108,18 +123,26 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
               height = parseFloat(viewBoxMatch[1]);
             }
           }
-          setMermaidHeights(prev => new Map(prev).set(index, height || 100));
+          height = height || 100;
+          newHeights.set(index, height);
+          
+          // Cache for future use
+          mermaidCache.set(cacheKey, { svg, height });
         } catch (err) {
           console.error('Mermaid error:', err);
           newSvgs.set(index, `<pre class="mermaid-error">Error: ${err}</pre>`);
+          newHeights.set(index, 100);
         }
         
-        // Yield to keep UI responsive
-        await new Promise(r => requestAnimationFrame(r));
+        // Yield to keep UI responsive (only when actually rendering)
+        if (needsRender) {
+          await new Promise(r => requestAnimationFrame(r));
+        }
       }
       
       // Swap all at once
       setMermaidSvgs(newSvgs);
+      setMermaidHeights(newHeights);
     };
     
     renderAll();
