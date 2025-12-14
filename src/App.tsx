@@ -567,15 +567,16 @@ function App() {
       }
     }
     if (e.key === "Escape") {
-      if (showPageOverview()) {
-        setShowPageOverview(false);
-      } else if (showSearch()) {
-        setShowSearch(false);
-        setSearchQuery("");
-      } else if (showSettings()) {
+      // Close in reverse order: last opened first (LIFO)
+      if (showSettings()) {
         setShowSettings(false);
       } else if (showHelp()) {
         setShowHelp(false);
+      } else if (showSearch()) {
+        setShowSearch(false);
+        setSearchQuery("");
+      } else if (showPageOverview()) {
+        setShowPageOverview(false);
       } else if (showRawMarkdown()) {
         setContent(originalContent());
         setShowRawMarkdown(false);
