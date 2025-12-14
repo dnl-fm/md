@@ -2,11 +2,13 @@
 
 Fast, lightweight Markdown viewer with live preview, edit mode, file watching, and theming.
 
-**Stack:** Tauri 2 (Rust), SolidJS (NOT React), TypeScript, Vite, Bun, Shiki, MarkdownIt
+**Stack:** Tauri 2 (Rust), SolidJS (NOT React), TypeScript, Vite, Bun, Shiki, MarkdownIt, Mermaid
 
 **Flow:** `SolidJS UI → Tauri invoke() → Rust backend → File I/O`
 
 **Decisions:** Desktop-first (Tauri) · Signals for state (SolidJS) · WASM for heavy lifting · Single instance
+
+**Features:** Live preview · Edit mode · Mermaid diagrams · Theme-aware rendering · TOC panel · Print/PDF
 
 ---
 
@@ -105,6 +107,7 @@ make version       # Show versions across files
 | `Ctrl+S` | Save (edit mode) |
 | `Ctrl+Space` | Toggle edit mode |
 | `Ctrl+F` | Search |
+| `Ctrl+G` | Table of contents |
 | `Ctrl+P` | Print/PDF |
 | `Ctrl+T` | Toggle theme |
 | `Ctrl+B` | Toggle sidebar |

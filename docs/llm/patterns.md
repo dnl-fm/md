@@ -93,3 +93,25 @@ On app startup, if `config.last_seen_version` differs from the current app versi
 2. **File watcher debounce**: 100ms delay to prevent rapid-fire updates
 3. **Shiki initialization**: Async highlighter setup, renders without highlighting until ready
 4. **Splash screen**: CSS-based in `index.html`, hidden via `window.hideSplash()`
+5. **Mermaid caching**: SVGs cached by content+theme hash for instant theme switching
+
+---
+
+## Feature Flags
+
+### Page Previews (DISABLED)
+
+**Flag:** `ENABLE_PAGE_PREVIEWS` in `src/components/page-overview-modal.tsx`
+
+**Status:** `false` - Only TOC is shown in the page overview panel.
+
+**Background:** Attempted to generate page thumbnails using:
+1. `html2canvas` / `modern-screenshot` - Too slow (~170ms/page), blocked UI
+2. `html2pdf.js` + `pdfjs-dist` - Fast (~32ms/page) but scroll positions don't match
+
+**Issue:** PDF pagination reflows content differently than HTML. Clicking a page thumbnail scrolled to the wrong position in the markdown. The PDF's page breaks don't correlate with the original HTML scroll positions.
+
+**Future fix options:**
+- Use DOM-based capture with better yielding
+- Accept approximate positions
+- Calculate positions from PDF metadata

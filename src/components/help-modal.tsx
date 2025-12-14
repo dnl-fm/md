@@ -111,6 +111,9 @@ export function HelpModal(props: HelpModalProps) {
                     <kbd>Ctrl+F</kbd> Search
                   </div>
                   <div class="shortcut">
+                    <kbd>Ctrl+G</kbd> Table of contents
+                  </div>
+                  <div class="shortcut">
                     <kbd>Ctrl+B</kbd> Toggle sidebar
                   </div>
                   <div class="shortcut">

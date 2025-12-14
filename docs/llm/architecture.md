@@ -97,3 +97,37 @@ Key CSS variables:
 - `--btn-*` for button colors
 - `--draft-*` for draft styling
 - `--sidebar-active-bg` for active sidebar item
+
+---
+
+## Mermaid Diagrams
+
+Mermaid diagrams are rendered with theme-aware colors derived from the app's theme.
+
+**Implementation** (`src/mermaid-theme.ts` + `src/components/markdown-viewer.tsx`):
+1. Theme colors extracted from `darkColors()` / `lightColors()` signals
+2. Converted to Mermaid theme variables via `getMermaidThemeVariables()`
+3. Diagrams rendered async with caching by content+theme
+4. Placeholder with spinner shown while rendering
+5. Height preserved to prevent layout shifts
+
+**Theme mapping:**
+- Background: `--bg-primary` → `primaryColor`, `secondaryColor`
+- Text: `--text-primary` → `primaryTextColor`
+- Lines/borders: `--border-color` → `lineColor`
+- Accent: `--accent-color` → highlights
+
+---
+
+## Table of Contents (TOC)
+
+The page overview panel (`Ctrl+G`) shows a navigable table of contents.
+
+**Implementation** (`src/components/page-overview-modal.tsx`):
+- Extracts all h1-h6 headings from rendered content
+- Calculates scroll positions for each heading
+- Highlights current heading based on scroll position
+- Click to navigate with smooth scroll + flash animation
+
+**Feature flag:**
+Page thumbnail previews are disabled (`ENABLE_PAGE_PREVIEWS = false`) due to scroll position mapping issues between PDF pagination and HTML content. The html2pdf.js + pdfjs-dist approach was tested but page positions didn't correlate accurately with the markdown scroll position.
