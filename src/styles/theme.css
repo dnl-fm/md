@@ -1350,7 +1350,7 @@ body {
 .toc-list {
     flex: 1;
     overflow-y: auto;
-    padding: 12px 0;
+    padding: 12px 8px;
 }
 
 .toc-item {
