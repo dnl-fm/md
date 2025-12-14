@@ -359,8 +359,9 @@ fn get_file_dir(path: &str) -> Option<String> {
 #[tauri::command]
 fn get_changelog_path(app: AppHandle) -> Result<String, String> {
     // Try resource directory first (production)
+    // Resources with "../" prefix are bundled under "_up_/" directory
     if let Ok(resource_dir) = app.path().resource_dir() {
-        let resource_path = resource_dir.join("CHANGELOG.md");
+        let resource_path = resource_dir.join("_up_/CHANGELOG.md");
         if resource_path.exists() {
             return resource_path.to_str()
                 .map(|s| s.to_string())
