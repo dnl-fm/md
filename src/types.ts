@@ -23,6 +23,8 @@ export interface ThemeColors {
   text_heading: string;
   /** Link text color */
   text_link: string;
+  /** Code block text color (plaintext) */
+  text_code: string;
   /** Border color for dividers and inputs */
   border_color: string;
   /** Code block border color */
@@ -49,6 +51,26 @@ export interface ThemeColors {
   draft_border: string;
   /** Active sidebar item background */
   sidebar_active_bg: string;
+  /** Mermaid diagram node background */
+  mermaid_node_bg: string;
+  /** Mermaid diagram node border */
+  mermaid_node_border: string;
+  /** Mermaid diagram text color */
+  mermaid_node_text: string;
+  /** Mermaid diagram line/arrow color */
+  mermaid_line: string;
+  /** Mermaid diagram cluster/subgraph background */
+  mermaid_cluster_bg: string;
+  /** Mermaid diagram cluster border */
+  mermaid_cluster_border: string;
+  /** Mermaid diagram note/label background */
+  mermaid_note_bg: string;
+  /** Mermaid diagram note/label border */
+  mermaid_note_border: string;
+  /** Mermaid ER table odd row background */
+  mermaid_row_odd: string;
+  /** Mermaid ER table even row background */
+  mermaid_row_even: string;
 }
 
 /**

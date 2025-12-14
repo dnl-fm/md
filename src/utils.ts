@@ -1,29 +1,41 @@
 import type { ThemeColors } from "./types";
 
 export const DEFAULT_DARK_COLORS: ThemeColors = {
-  bg_primary: "#1e1e1e",
-  bg_secondary: "#181818",
-  bg_elevated: "#2a2a2a",
-  bg_code: "#2a2a2a",
-  bg_inline_code: "#3a3d42",
-  bg_icon: "#2a2a2a",
-  text_primary: "#d4d4d4",
-  text_secondary: "#858585",
-  text_heading: "#f0f0f0",
-  text_link: "#64a0ff",
-  border_color: "#3c3c3c",
-  code_border: "#4a4a4a",
-  accent_color: "#61afef",
-  table_header_bg: "#323237",
-  table_row_odd: "#1e1e1e",
-  table_row_even: "#252528",
-  table_row_hover: "#2a2a2d",
-  btn_edit_active: "#a96dd6",
-  btn_save: "#3b82f6",
-  draft_bg: "#5c4d1a",
+  bg_primary: "#22272e",       // Balanced dark, not too dark
+  bg_secondary: "#1c2128",     // Slightly darker for sidebar
+  bg_elevated: "#2d333b",      // Elevated surfaces
+  bg_code: "#2d333b",          // Code blocks
+  bg_inline_code: "#363d47",   // Inline code
+  bg_icon: "#2d333b",          // Icon backgrounds
+  text_primary: "#adbac7",     // Soft primary text
+  text_secondary: "#768390",   // Muted secondary text
+  text_heading: "#cdd9e5",     // Slightly brighter headings
+  text_link: "#539bf5",        // Blue links
+  text_code: "#adbac7",        // Code block text (plaintext)
+  border_color: "#373e47",     // Subtle borders
+  code_border: "#444c56",      // Code block borders
+  accent_color: "#539bf5",     // Blue accent
+  table_header_bg: "#2d333b",  // Table header
+  table_row_odd: "#22272e",    // Table odd rows
+  table_row_even: "#2d333b",   // Table even rows
+  table_row_hover: "#373e47",  // Table hover
+  btn_edit_active: "#a371f7",  // Purple for edit
+  btn_save: "#539bf5",         // Blue save
+  draft_bg: "#3d3000",         // Draft indicator
   draft_bg_active: "#7a6620",
   draft_border: "#4a4a4a",
   sidebar_active_bg: "#3a3a3a",
+  // Mermaid diagram colors
+  mermaid_node_bg: "#2d333b",
+  mermaid_node_border: "#4a6a7a",
+  mermaid_node_text: "#adbac7",
+  mermaid_line: "#5a6a7a",
+  mermaid_cluster_bg: "#262c33",
+  mermaid_cluster_border: "#4a5a6a",
+  mermaid_note_bg: "#3a3a4a",
+  mermaid_note_border: "#5a5a7a",
+  mermaid_row_odd: "#262c33",
+  mermaid_row_even: "#2d333b",
 };
 
 export const DEFAULT_LIGHT_COLORS: ThemeColors = {
@@ -37,6 +49,7 @@ export const DEFAULT_LIGHT_COLORS: ThemeColors = {
   text_secondary: "#666666",
   text_heading: "#141414",
   text_link: "#0066cc",
+  text_code: "#242424",        // Code block text (plaintext)
   border_color: "#d0d0d0",
   code_border: "#c0c0c0",
   accent_color: "#007acc",
@@ -50,6 +63,17 @@ export const DEFAULT_LIGHT_COLORS: ThemeColors = {
   draft_bg_active: "#ffe065",
   draft_border: "#cccccc",
   sidebar_active_bg: "#fff7d9",
+  // Mermaid diagram colors
+  mermaid_node_bg: "#ffffff",
+  mermaid_node_border: "#c8e1ff",
+  mermaid_node_text: "#24292f",
+  mermaid_line: "#8b949e",
+  mermaid_cluster_bg: "#f6f8fa",
+  mermaid_cluster_border: "#c8e1ff",
+  mermaid_note_bg: "#fff8c5",
+  mermaid_note_border: "#d4a72c",
+  mermaid_row_odd: "#f6f8fa",
+  mermaid_row_even: "#ffffff",
 };
 
 export const FONT_OPTIONS = [
