@@ -7,6 +7,7 @@
  * - Search: highlights matches in preview with minimap navigation
  */
 import { Show, createEffect, createMemo, createSignal, For, createRenderEffect } from "solid-js";
+import mermaid from "mermaid";
 import {
   content,
   renderedHtml,
@@ -21,6 +22,7 @@ import {
   currentDraftId,
   previewScrollLine,
   setPreviewScrollLine,
+  config,
 } from "../stores/app-store";
 import { getFontFamilyCSS } from "../utils";
 import { EmptyState } from "./empty-state";
@@ -53,28 +55,88 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   // Reactive ref so effects re-run when article mounts
   const [articleEl, setArticleEl] = createSignal<HTMLElement | null>(null);
   const [matchPositions, setMatchPositions] = createSignal<MatchPosition[]>([]);
+  const [mermaidSvgs, setMermaidSvgs] = createSignal<Map<string, string>>(new Map());
 
-  // Get highlighted HTML with search matches
+  // Render mermaid diagrams and store SVGs
+  createEffect(() => {
+    const html = renderedHtml();
+    const theme = config().theme;
+    if (!html) return;
+    
+    // Extract mermaid code from data attributes
+    const regex = /data-mermaid="([^"]+)"/g;
+    const matches = [...html.matchAll(regex)];
+    if (matches.length === 0) {
+      setMermaidSvgs(new Map());
+      return;
+    }
+    
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: theme === 'dark' ? 'dark' : 'default',
+      securityLevel: 'loose',
+    });
+    
+    const renderAll = async () => {
+      const svgMap = new Map<string, string>();
+      for (let i = 0; i < matches.length; i++) {
+        const encoded = matches[i][1];
+        const decoded = encoded
+          .replace(/&quot;/g, '"')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>');
+        try {
+          const id = `mermaid-render-${i}`;
+          const { svg } = await mermaid.render(id, decoded);
+          svgMap.set(encoded, svg);
+        } catch (err) {
+          console.error('Mermaid error:', err);
+          svgMap.set(encoded, `<pre class="mermaid-error">Error: ${err}</pre>`);
+        }
+      }
+      setMermaidSvgs(svgMap);
+    };
+    
+    renderAll();
+  });
+
+  // Get highlighted HTML with search matches and mermaid SVGs
   const highlightedHtml = createMemo(() => {
     const html = renderedHtml();
+    const svgs = mermaidSvgs();
     const query = searchQuery().trim();
 
-    if (!query || !html || showRawMarkdown()) {
+    if (!html || showRawMarkdown()) {
       setSearchMatches(0);
       setCurrentMatch(0);
       return html;
     }
+    
+    // Replace mermaid placeholders with rendered SVGs
+    let processedHtml = html;
+    for (const [encoded, svg] of svgs) {
+      const placeholder = `<div class="mermaid-diagram" id="mermaid-[^"]*" data-mermaid="${encoded}"></div>`;
+      const placeholderRegex = new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('\\[\\^"\\]\\*', '[^"]*'));
+      processedHtml = processedHtml.replace(placeholderRegex, `<div class="mermaid-diagram">${svg}</div>`);
+    }
+
+    if (!query) {
+      setSearchMatches(0);
+      setCurrentMatch(0);
+      return processedHtml;
+    }
 
     // Escape regex special characters
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(${escapedQuery})`, "gi");
+    const searchRegex = new RegExp(`(${escapedQuery})`, "gi");
 
     // Count matches in text content only (not in HTML tags)
     const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = html;
+    tempDiv.innerHTML = processedHtml;
     const textContent = tempDiv.textContent || "";
-    const matches = textContent.match(regex);
-    const matchCount = matches ? matches.length : 0;
+    const foundMatches = textContent.match(searchRegex);
+    const matchCount = foundMatches ? foundMatches.length : 0;
     setSearchMatches(matchCount);
 
     if (matchCount > 0 && currentMatch() === 0) {
@@ -85,14 +147,14 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
 
     // Highlight matches in the HTML (only in text nodes, not in tags)
     let matchIndex = 0;
-    const highlightedHtml = html.replace(
+    const finalHtml = processedHtml.replace(
       /(<[^>]*>)|([^<]+)/g,
       (match, tag, text) => {
         if (tag) return tag; // Return HTML tags unchanged
         if (!text) return match;
 
         // Replace matches in text content
-        return text.replace(regex, (m: string) => {
+        return text.replace(searchRegex, (m: string) => {
           matchIndex++;
           const isCurrent = matchIndex === currentMatch();
           return `<mark class="search-highlight${isCurrent ? " current" : ""}" data-match="${matchIndex}">${m}</mark>`;
@@ -100,7 +162,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
       }
     );
 
-    return highlightedHtml;
+    return finalHtml;
   });
 
   // Calculate match positions for minimap after DOM updates

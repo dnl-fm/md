@@ -6,6 +6,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { confirm } from "./components/confirm-dialog";
 import MarkdownIt from "markdown-it";
 import { createHighlighter, type Highlighter } from "shiki";
+import mermaid from "mermaid";
 
 import "./styles/theme.css";
 import "./styles/markdown.css";
@@ -104,6 +105,14 @@ function App() {
   onMount(async () => {
     try {
       logger.info("App initializing...");
+      
+      // Initialize mermaid with theme support
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: "dark",
+        securityLevel: "loose",
+      });
+      
       const hl = await createHighlighter({
         themes: ["github-dark", "github-light"],
         langs: [
@@ -249,12 +258,23 @@ function App() {
       return defaultRenderToken(tokens, idx, options);
     };
 
+    // Counter for unique mermaid diagram IDs
+    let mermaidCounter = 0;
+    
     // Custom fence renderer for syntax highlighting with shiki
     md.renderer.rules.fence = function(tokens, idx) {
       const token = tokens[idx];
       const code = token.content;
       const lang = token.info || "plaintext";
       const lineAttr = token.map ? ` data-line="${token.map[0]}"` : '';
+      
+      // Handle mermaid diagrams
+      if (lang === "mermaid") {
+        const id = `mermaid-${mermaidCounter++}`;
+        // Store code in data attribute for later rendering
+        const escapedCode = escapeHtml(code).replace(/"/g, '&quot;');
+        return `<div class="mermaid-wrapper"${lineAttr}><div class="mermaid-diagram" id="${id}" data-mermaid="${escapedCode}"></div></div>`;
+      }
       
       if (hl) {
         try {
