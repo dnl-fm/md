@@ -24,8 +24,10 @@
 ## Features
 
 - **Live Preview** - Real-time markdown rendering with GitHub-flavored markdown support
+- **Mermaid Diagrams** - Native support for flowcharts, sequence diagrams, and more with theme-aware colors
 - **Syntax Highlighting** - Code blocks with beautiful syntax highlighting powered by Shiki
 - **Edit Mode** - WASM-powered editor with language-aware syntax highlighting for 16+ languages
+- **Table of Contents** - Quick navigation panel with Ctrl+G, highlights current section
 - **Scroll Sync** - Position preserved when switching between edit and preview modes
 - **In-Document Search** - Find text with Ctrl+F, visual minimap for match locations
 - **Draft Tabs** - Create untitled drafts with Ctrl+N, auto-numbered for easy access
@@ -34,6 +36,7 @@
 - **Recent Files** - Quick access to recently opened files with Ctrl+1-9
 - **Customizable Fonts** - Choose font family and size for both UI and markdown content
 - **Resizable Sidebar** - Drag to resize or double-click to auto-fit content
+- **Print/PDF Export** - Export documents with Ctrl+P using optimized print styles
 - **Lightweight** - Native performance with minimal resource usage
 
 ## Keyboard Shortcuts
@@ -47,14 +50,18 @@
 | `Ctrl+Z` | Undo (in edit mode) |
 | `Ctrl+Y` | Redo (in edit mode) |
 | `Ctrl+F` | Find in document |
+| `Ctrl+G` | Table of contents |
+| `Ctrl+P` | Print / Export PDF |
 | `Ctrl+L` | Toggle line numbers (in edit mode) |
 | `Ctrl+T` | Toggle theme (dark/light) |
 | `Ctrl+B` | Toggle sidebar |
+| `Ctrl+H` | Help |
 | `Ctrl+,` | Open settings |
 | `Ctrl++` | Increase font size |
 | `Ctrl+-` | Decrease font size |
 | `Ctrl+0` | Reset font size |
 | `Ctrl+1-9` | Open Nth file/draft from sidebar |
+| `Ctrl+[/]` | Previous/next file |
 | `Ctrl+Space` | Toggle edit mode |
 | `Tab` | Indent line(s) (in edit mode) |
 | `Shift+Tab` | Dedent line(s) (in edit mode) |
@@ -137,6 +144,7 @@ Configuration is stored in:
 - **[SolidJS](https://www.solidjs.com/)** - Reactive UI framework
 - **[Shiki](https://shiki.matsu.io/)** - Syntax highlighting
 - **[markdown-it](https://github.com/markdown-it/markdown-it)** - Markdown parser
+- **[Mermaid](https://mermaid.js.org/)** - Diagram rendering
 - **[Vite](https://vitejs.dev/)** - Build tool
 
 ## License

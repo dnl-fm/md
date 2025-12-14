@@ -28,8 +28,9 @@ Detailed reference documentation for the MD markdown preview application.
 - `@tauri-apps/api` - Tauri JS bindings
 - `@tauri-apps/plugin-*` - File dialog, filesystem, opener
 - `solid-js` - Reactive UI framework
-- `marked` - Markdown parser
+- `markdown-it` - Markdown parser
 - `shiki` - Syntax highlighter
+- `mermaid` - Diagram rendering
 
 **Backend:**
 - `tauri` + plugins - App framework

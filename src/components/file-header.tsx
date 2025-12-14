@@ -28,6 +28,8 @@ interface FileHeaderProps {
   onSaveDraft?: () => void;
   /** Handler to print document as PDF */
   onPrint?: () => void;
+  /** Whether page previews are being rendered in background */
+  isPreRendering?: boolean;
 }
 
 /**
@@ -41,6 +43,14 @@ export function FileHeader(props: FileHeaderProps) {
         <div class="file-header">
           <span class="file-path">📄 {currentFile()}</span>
           <div class="file-header-right">
+            <Show when={props.isPreRendering}>
+              <span class="prerender-spinner" title="Generating page previews...">
+                <svg class="spinner-icon" viewBox="0 0 24 24" width="14" height="14">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="31.4 31.4" />
+                </svg>
+                <span class="prerender-text">Generating previews...</span>
+              </span>
+            </Show>
             <Show when={isDirty()}>
               <button
                 class="btn btn-small"
@@ -95,6 +105,14 @@ export function FileHeader(props: FileHeaderProps) {
         <div class="file-header">
           <span class="file-path">📄 Untitled-{currentDraftId()?.split("-")[1]} (unsaved)</span>
           <div class="file-header-right">
+            <Show when={props.isPreRendering}>
+              <span class="prerender-spinner" title="Generating page previews...">
+                <svg class="spinner-icon" viewBox="0 0 24 24" width="14" height="14">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="31.4 31.4" />
+                </svg>
+                <span class="prerender-text">Generating previews...</span>
+              </span>
+            </Show>
             <button
               class={`btn btn-small ${showRawMarkdown() ? "active" : ""}`}
               onClick={() => setShowRawMarkdown(!showRawMarkdown())}

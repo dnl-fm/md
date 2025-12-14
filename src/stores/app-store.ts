@@ -149,6 +149,9 @@ const [showSettings, setShowSettings] = createSignal(false);
 /** Whether help modal is visible */
 const [showHelp, setShowHelp] = createSignal(false);
 
+/** Whether page overview modal is visible */
+const [showPageOverview, setShowPageOverview] = createSignal(false);
+
 /** Whether showing raw markdown (edit mode) vs rendered preview */
 const [showRawMarkdown, setShowRawMarkdown] = createSignal(false);
 
@@ -221,6 +224,7 @@ function applyThemeColors(theme?: "dark" | "light") {
   root.style.setProperty("--text-secondary", getColor("text_secondary"));
   root.style.setProperty("--text-heading", getColor("text_heading"));
   root.style.setProperty("--text-link", getColor("text_link"));
+  root.style.setProperty("--text-code", getColor("text_code"));
   root.style.setProperty("--border-color", getColor("border_color"));
   root.style.setProperty("--code-border", getColor("code_border"));
   root.style.setProperty("--accent-color", getColor("accent_color"));
@@ -359,6 +363,8 @@ export {
   setShowSettings,
   showHelp,
   setShowHelp,
+  showPageOverview,
+  setShowPageOverview,
   showRawMarkdown,
   setShowRawMarkdown,
   showLineNumbers,

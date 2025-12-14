@@ -6,6 +6,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { confirm } from "./components/confirm-dialog";
 import MarkdownIt from "markdown-it";
 import { createHighlighter, type Highlighter } from "shiki";
+import mermaid from "mermaid";
 
 import "./styles/theme.css";
 import "./styles/markdown.css";
@@ -46,6 +47,8 @@ import {
   setShowSettings,
   showHelp,
   setShowHelp,
+  showPageOverview,
+  setShowPageOverview,
   showRawMarkdown,
   setShowRawMarkdown,
   showSearch,
@@ -83,6 +86,7 @@ import { ConfirmDialog } from "./components/confirm-dialog";
 import { WelcomeModal } from "./components/welcome-modal";
 import { HelpModal } from "./components/help-modal";
 import { ReleaseNotification } from "./components/release-notification";
+import { PageOverviewModal, preRenderThumbnails } from "./components/page-overview-modal";
 
 // Marked is instantiated per-render to avoid stacking extensions
 
@@ -93,6 +97,23 @@ function App() {
   const [showWelcome, setShowWelcome] = createSignal(false);
   const [showReleaseNotification, setShowReleaseNotification] = createSignal(false);
   const [appVersion, setAppVersion] = createSignal("");
+  const [articleElement, setArticleElement] = createSignal<HTMLElement | null>(null);
+  // Page preview pre-rendering is feature-flagged off
+  const isPreRendering = () => false;
+  
+  // Pre-render page thumbnails when article element and content are ready
+  createEffect(() => {
+    const el = articleElement();
+    const markdown = content();
+    const theme = config().theme;
+    
+    if (el && markdown && !showRawMarkdown()) {
+      // Wait for DOM to settle, then pre-render in background
+      setTimeout(() => {
+        preRenderThumbnails(el, markdown, theme);
+      }, 1000);
+    }
+  });
   
   // Editor API for scroll sync (set when editor mounts, cleared when unmounts)
   let editorApi: WasmEditorApi | null = null;
@@ -104,6 +125,13 @@ function App() {
   onMount(async () => {
     try {
       logger.info("App initializing...");
+      
+      // Initialize mermaid (theme-specific config happens in markdown-viewer)
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "loose",
+      });
+      
       const hl = await createHighlighter({
         themes: ["github-dark", "github-light"],
         langs: [
@@ -249,12 +277,23 @@ function App() {
       return defaultRenderToken(tokens, idx, options);
     };
 
+    // Counter for unique mermaid diagram IDs
+    let mermaidCounter = 0;
+    
     // Custom fence renderer for syntax highlighting with shiki
     md.renderer.rules.fence = function(tokens, idx) {
       const token = tokens[idx];
       const code = token.content;
       const lang = token.info || "plaintext";
       const lineAttr = token.map ? ` data-line="${token.map[0]}"` : '';
+      
+      // Handle mermaid diagrams
+      if (lang === "mermaid") {
+        const id = `mermaid-${mermaidCounter++}`;
+        // Store code in data attribute for later rendering
+        const escapedCode = escapeHtml(code).replace(/"/g, '&quot;');
+        return `<div class="mermaid-wrapper"${lineAttr}><div class="mermaid-diagram" id="${id}" data-mermaid="${escapedCode}"></div></div>`;
+      }
       
       if (hl) {
         try {
@@ -370,10 +409,19 @@ function App() {
           e.preventDefault();
           closeFile();
           break;
-        case "t":
+        case "t": {
           e.preventDefault();
+          const wasOpen = showPageOverview();
+          if (wasOpen) {
+            setShowPageOverview(false);
+          }
           toggleTheme();
+          // Reopen after DOM updates with new theme
+          if (wasOpen) {
+            setTimeout(() => setShowPageOverview(true), 100);
+          }
           break;
+        }
         case "b":
           e.preventDefault();
           toggleSidebar();
@@ -391,6 +439,13 @@ function App() {
             setShowSettings(false);
           }
           setShowHelp(!showHelp());
+          break;
+        case "g":
+          e.preventDefault();
+          // Only show page overview in preview mode with content
+          if (!showRawMarkdown() && content()) {
+            setShowPageOverview(!showPageOverview());
+          }
           break;
         case "=":
         case "+":
@@ -507,13 +562,16 @@ function App() {
       }
     }
     if (e.key === "Escape") {
-      if (showSearch()) {
-        setShowSearch(false);
-        setSearchQuery("");
-      } else if (showSettings()) {
+      // Close in reverse order: last opened first (LIFO)
+      if (showSettings()) {
         setShowSettings(false);
       } else if (showHelp()) {
         setShowHelp(false);
+      } else if (showSearch()) {
+        setShowSearch(false);
+        setSearchQuery("");
+      } else if (showPageOverview()) {
+        setShowPageOverview(false);
       } else if (showRawMarkdown()) {
         setContent(originalContent());
         setShowRawMarkdown(false);
@@ -987,14 +1045,20 @@ function App() {
       <Sidebar onOpenFile={openFileDialog} onLoadFile={loadFile} onLoadDraft={loadDraft} />
 
       <main class="main-content">
-        <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} onPrint={printDocument} />
+        <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} onPrint={printDocument} isPreRendering={isPreRendering()} />
         <MarkdownViewer 
           onSaveAndPreview={saveAndPreview} 
           onSaveDraft={saveDraftToFile}
           onEditorApi={(api) => { editorApi = api; }}
+          onArticleRef={setArticleElement}
         />
       </main>
 
+      <PageOverviewModal
+        isOpen={showPageOverview()}
+        onClose={() => setShowPageOverview(false)}
+        contentElement={articleElement()}
+      />
       <SettingsModal />
       <WelcomeModal show={showWelcome()} onComplete={() => setShowWelcome(false)} />
       <HelpModal 

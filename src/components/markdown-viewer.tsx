@@ -7,6 +7,9 @@
  * - Search: highlights matches in preview with minimap navigation
  */
 import { Show, createEffect, createMemo, createSignal, For, createRenderEffect } from "solid-js";
+import mermaid from "mermaid";
+import { getMermaidColorsFromTheme, getMermaidThemeVariables, getMermaidThemeCSS } from "../mermaid-theme";
+import { darkColors, lightColors } from "../stores/app-store";
 import {
   content,
   renderedHtml,
@@ -21,6 +24,7 @@ import {
   currentDraftId,
   previewScrollLine,
   setPreviewScrollLine,
+  config,
 } from "../stores/app-store";
 import { getFontFamilyCSS } from "../utils";
 import { EmptyState } from "./empty-state";
@@ -35,6 +39,8 @@ interface MarkdownViewerProps {
   onSaveDraft?: () => void;
   /** Callback to receive editor API for scroll sync */
   onEditorApi?: (api: WasmEditorApi | null) => void;
+  /** Callback to receive article element ref */
+  onArticleRef?: (el: HTMLElement | null) => void;
 }
 
 /** Search match position for minimap display */
@@ -53,28 +59,151 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   // Reactive ref so effects re-run when article mounts
   const [articleEl, setArticleEl] = createSignal<HTMLElement | null>(null);
   const [matchPositions, setMatchPositions] = createSignal<MatchPosition[]>([]);
+  const [mermaidSvgs, setMermaidSvgs] = createSignal<Map<number, string>>(new Map());
+  const [mermaidHeights, setMermaidHeights] = createSignal<Map<number, number>>(new Map());
+  
+  // Cache rendered SVGs by content+theme to avoid re-rendering on file switch
+  const mermaidCache = new Map<string, { svg: string; height: number }>();
 
-  // Get highlighted HTML with search matches
+  // Render mermaid diagrams progressively - each pops in when ready
+  createEffect(() => {
+    const html = renderedHtml();
+    const theme = config().theme;
+    if (!html) return;
+    
+    // Extract mermaid code from data attributes
+    const regex = /data-mermaid="([^"]+)"/g;
+    const matches = [...html.matchAll(regex)];
+    if (matches.length === 0) {
+      setMermaidSvgs(new Map());
+      return;
+    }
+    
+    // Configure mermaid with theme-aware colors
+    const isDark = theme === 'dark';
+    const themeColors = isDark ? darkColors() : lightColors();
+    const mermaidColors = getMermaidColorsFromTheme(themeColors);
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      securityLevel: 'loose',
+      themeVariables: getMermaidThemeVariables(mermaidColors),
+      themeCSS: getMermaidThemeCSS(mermaidColors),
+    });
+    
+    // Render all diagrams in background, then swap all at once (no flicker)
+    const renderAll = async () => {
+      const newSvgs = new Map<number, string>();
+      const newHeights = new Map<number, number>();
+      let needsRender = false;
+      
+      for (let index = 0; index < matches.length; index++) {
+        const match = matches[index];
+        const encoded = match[1];
+        const decoded = encoded
+          .replace(/&quot;/g, '"')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>');
+        
+        // Check cache first
+        const cacheKey = `${theme}:${decoded}`;
+        const cached = mermaidCache.get(cacheKey);
+        if (cached) {
+          newSvgs.set(index, cached.svg);
+          newHeights.set(index, cached.height);
+          continue;
+        }
+        
+        needsRender = true;
+        try {
+          const id = `mermaid-${theme}-${index}-${Date.now()}`;
+          const { svg } = await mermaid.render(id, decoded);
+          newSvgs.set(index, svg);
+          
+          // Extract height
+          let height = 0;
+          const heightMatch = svg.match(/height="([\d.]+)/);
+          if (heightMatch) {
+            height = parseFloat(heightMatch[1]);
+          }
+          if (!height) {
+            const viewBoxMatch = svg.match(/viewBox="[\d.]+ [\d.]+ [\d.]+ ([\d.]+)"/);
+            if (viewBoxMatch) {
+              height = parseFloat(viewBoxMatch[1]);
+            }
+          }
+          height = height || 100;
+          newHeights.set(index, height);
+          
+          // Cache for future use
+          mermaidCache.set(cacheKey, { svg, height });
+        } catch (err) {
+          console.error('Mermaid error:', err);
+          newSvgs.set(index, `<pre class="mermaid-error">Error: ${err}</pre>`);
+          newHeights.set(index, 100);
+        }
+        
+        // Yield to keep UI responsive (only when actually rendering)
+        if (needsRender) {
+          await new Promise(r => requestAnimationFrame(r));
+        }
+      }
+      
+      // Swap all at once
+      setMermaidSvgs(newSvgs);
+      setMermaidHeights(newHeights);
+    };
+    
+    renderAll();
+  });
+
+  // Get highlighted HTML with search matches and mermaid SVGs
   const highlightedHtml = createMemo(() => {
     const html = renderedHtml();
+    const svgs = mermaidSvgs();
+    const heights = mermaidHeights(); // Read early to track as dependency
     const query = searchQuery().trim();
 
-    if (!query || !html || showRawMarkdown()) {
+    if (!html || showRawMarkdown()) {
       setSearchMatches(0);
       setCurrentMatch(0);
       return html;
     }
+    
+    // Replace mermaid placeholders with rendered SVGs or loading spinner
+    let diagramIndex = 0;
+    let processedHtml = html.replace(
+      /<div class="mermaid-diagram" id="[^"]*" data-mermaid="[^"]+"><\/div>/g,
+      () => {
+        const idx = diagramIndex++;
+        const svg = svgs.get(idx);
+        const height = heights.get(idx);
+        const style = height ? ` style="min-height:${height}px"` : '';
+        if (svg) {
+          return `<div class="mermaid-diagram"${style}>${svg}</div>`;
+        }
+        // Show spinner with preserved height
+        return `<div class="mermaid-diagram"${style}><div class="mermaid-loading"><span class="spinner"></span></div></div>`;
+      }
+    );
+
+    if (!query) {
+      setSearchMatches(0);
+      setCurrentMatch(0);
+      return processedHtml;
+    }
 
     // Escape regex special characters
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(${escapedQuery})`, "gi");
+    const searchRegex = new RegExp(`(${escapedQuery})`, "gi");
 
     // Count matches in text content only (not in HTML tags)
     const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = html;
+    tempDiv.innerHTML = processedHtml;
     const textContent = tempDiv.textContent || "";
-    const matches = textContent.match(regex);
-    const matchCount = matches ? matches.length : 0;
+    const foundMatches = textContent.match(searchRegex);
+    const matchCount = foundMatches ? foundMatches.length : 0;
     setSearchMatches(matchCount);
 
     if (matchCount > 0 && currentMatch() === 0) {
@@ -85,14 +214,14 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
 
     // Highlight matches in the HTML (only in text nodes, not in tags)
     let matchIndex = 0;
-    const highlightedHtml = html.replace(
+    const finalHtml = processedHtml.replace(
       /(<[^>]*>)|([^<]+)/g,
       (match, tag, text) => {
         if (tag) return tag; // Return HTML tags unchanged
         if (!text) return match;
 
         // Replace matches in text content
-        return text.replace(regex, (m: string) => {
+        return text.replace(searchRegex, (m: string) => {
           matchIndex++;
           const isCurrent = matchIndex === currentMatch();
           return `<mark class="search-highlight${isCurrent ? " current" : ""}" data-match="${matchIndex}">${m}</mark>`;
@@ -100,7 +229,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
       }
     );
 
-    return highlightedHtml;
+    return finalHtml;
   });
 
   // Calculate match positions for minimap after DOM updates
@@ -232,7 +361,10 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
         </Show>
         <Show when={!showRawMarkdown()}>
           <article
-            ref={setArticleEl}
+            ref={(el) => {
+              setArticleEl(el);
+              props.onArticleRef?.(el);
+            }}
             class="markdown-content markdown-body"
             innerHTML={highlightedHtml()}
             style={{
