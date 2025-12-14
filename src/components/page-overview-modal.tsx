@@ -206,16 +206,9 @@ export function PageOverviewModal(props: PageOverviewModalProps) {
         setThumbnails([]);
       }
       
-      // Calculate expected page count for skeleton placeholders
-      const contentWidth = el.scrollWidth;
-      const a4Ratio = 297 / 210;
-      const pgHeight = Math.round(contentWidth * a4Ratio);
-      const totalHeight = el.scrollHeight;
-      const expectedPages = Math.ceil(totalHeight / pgHeight);
-      setExpectedPageCount(expectedPages);
-      
       // Generate if on pages tab (delay to let mermaid re-render with new theme)
       if (activeTab() === "pages" && !loading()) {
+        updateExpectedPageCount();
         setTimeout(() => {
           generateThumbnails(cacheKey);
         }, 300);
@@ -223,11 +216,27 @@ export function PageOverviewModal(props: PageOverviewModalProps) {
     }
   });
 
+  /** Calculate and set expected page count for skeleton placeholders */
+  function updateExpectedPageCount() {
+    const el = props.contentElement;
+    if (!el) return;
+    
+    const contentWidth = el.scrollWidth;
+    const a4Ratio = 297 / 210;
+    const pgHeight = Math.round(contentWidth * a4Ratio);
+    const totalHeight = el.scrollHeight;
+    const expectedPages = Math.ceil(totalHeight / pgHeight);
+    setExpectedPageCount(expectedPages);
+  }
+
   function switchTab(tab: TabType) {
     setActiveTab(tab);
     storeTab(tab);
     // Generate thumbnails on first switch to pages tab
     if (tab === "pages" && thumbnails().length === 0 && props.contentElement && !loading()) {
+      // Calculate expected pages for skeletons
+      updateExpectedPageCount();
+      
       const cacheKey = simpleHash(content() + config().theme);
       const cached = thumbnailCache.get(cacheKey);
       if (cached && cached.length > 0) {

@@ -1291,7 +1291,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: 16px 24px;
     border-bottom: 1px solid var(--border-color);
     gap: 12px;
 }
@@ -1457,7 +1457,7 @@ body {
 .page-overview-content {
     flex: 1;
     overflow-y: auto;
-    padding: 16px;
+    padding: 24px;
 }
 
 .page-overview-grid {
@@ -1469,26 +1469,25 @@ body {
 .page-thumb {
     position: relative;
     cursor: pointer;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
     overflow: hidden;
-    transition: border-color 0.15s, transform 0.15s;
-    background: var(--bg-secondary);
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    background: var(--bg-primary);
     aspect-ratio: 210 / 297;
     width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.page-thumb:hover {
-    border-color: var(--accent-color);
-    transform: scale(1.02);
-}
 
 .page-thumb img {
-    width: 100%;
-    height: 100%;
+    width: calc(100% - 48px);
+    height: calc(100% - 48px);
+    margin: 24px;
     object-fit: cover;
     object-position: top;
     display: block;
+    border-radius: 2px;
 }
 
 .page-thumb .page-number {
@@ -1597,6 +1596,10 @@ body {
 }
 
 /* Active page thumb */
+.page-thumb:hover {
+    border-color: color-mix(in srgb, var(--accent-color) 50%, transparent);
+}
+
 .page-thumb.active {
     border-color: var(--accent-color);
     box-shadow: 0 0 0 2px var(--accent-color);
