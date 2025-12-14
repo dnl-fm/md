@@ -269,6 +269,7 @@
     padding: 8px 16px;
     border: 1px solid var(--border-color);
     vertical-align: top;
+    text-align: left;
     word-wrap: break-word;
 }
 
