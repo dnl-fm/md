@@ -9,6 +9,23 @@ const host = process.env.TAURI_DEV_HOST;
 // https://vite.dev/config/
 export default defineConfig(async () => ({
   plugins: [solid(), wasm(), topLevelAwait()],
+  
+  // Externalize mermaid - loaded via script tag to avoid bundling issues
+  optimizeDeps: {
+    exclude: ["mermaid"],
+  },
+  
+  build: {
+    target: "esnext",
+    rollupOptions: {
+      external: ["mermaid"],
+      output: {
+        globals: {
+          mermaid: "mermaid",
+        },
+      },
+    },
+  },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

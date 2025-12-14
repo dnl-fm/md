@@ -16,6 +16,9 @@ All notable changes to this project will be documented in this file.
 - Table cells now consistently left-aligned
 - Improved theme color organization with diagram-specific tokens
 
+### Fixed
+- Mermaid diagrams not rendering in production builds (externalized to avoid Vite bundling issues)
+
 ## [0.8.0] - 2025-12-13
 
 ### Added

@@ -6,7 +6,9 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { confirm } from "./components/confirm-dialog";
 import MarkdownIt from "markdown-it";
 import { createHighlighter, type Highlighter } from "shiki";
-import mermaid from "mermaid";
+
+// Mermaid loaded via script tag (see index.html) to avoid Vite bundling issues
+declare const mermaid: typeof import("mermaid").default;
 
 import "./styles/theme.css";
 import "./styles/markdown.css";
@@ -129,7 +131,7 @@ function App() {
       // Initialize mermaid (theme-specific config happens in markdown-viewer)
       mermaid.initialize({
         startOnLoad: false,
-        securityLevel: "loose",
+        securityLevel: "strict",
       });
       
       const hl = await createHighlighter({

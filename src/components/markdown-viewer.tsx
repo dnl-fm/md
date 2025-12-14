@@ -7,7 +7,9 @@
  * - Search: highlights matches in preview with minimap navigation
  */
 import { Show, createEffect, createMemo, createSignal, For, createRenderEffect } from "solid-js";
-import mermaid from "mermaid";
+
+// Mermaid loaded via script tag (see index.html) to avoid Vite bundling issues
+declare const mermaid: typeof import("mermaid").default;
 import { getMermaidColorsFromTheme, getMermaidThemeVariables, getMermaidThemeCSS } from "../mermaid-theme";
 import { darkColors, lightColors } from "../stores/app-store";
 import {
@@ -79,20 +81,19 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
       return;
     }
     
-    // Configure mermaid with theme-aware colors
-    const isDark = theme === 'dark';
-    const themeColors = isDark ? darkColors() : lightColors();
-    const mermaidColors = getMermaidColorsFromTheme(themeColors);
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: 'base',
-      securityLevel: 'loose',
-      themeVariables: getMermaidThemeVariables(mermaidColors),
-      themeCSS: getMermaidThemeCSS(mermaidColors),
-    });
-    
     // Render all diagrams in background, then swap all at once (no flicker)
     const renderAll = async () => {
+      // Configure mermaid with theme-aware colors
+      const isDark = theme === 'dark';
+      const themeColors = isDark ? darkColors() : lightColors();
+      const mermaidColors = getMermaidColorsFromTheme(themeColors);
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        securityLevel: 'loose',
+        themeVariables: getMermaidThemeVariables(mermaidColors),
+        themeCSS: getMermaidThemeCSS(mermaidColors),
+      });
       const newSvgs = new Map<number, string>();
       const newHeights = new Map<number, number>();
       let needsRender = false;
