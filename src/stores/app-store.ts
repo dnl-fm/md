@@ -224,6 +224,7 @@ function applyThemeColors(theme?: "dark" | "light") {
   root.style.setProperty("--text-secondary", getColor("text_secondary"));
   root.style.setProperty("--text-heading", getColor("text_heading"));
   root.style.setProperty("--text-link", getColor("text_link"));
+  root.style.setProperty("--text-code", getColor("text_code"));
   root.style.setProperty("--border-color", getColor("border_color"));
   root.style.setProperty("--code-border", getColor("code_border"));
   root.style.setProperty("--accent-color", getColor("accent_color"));

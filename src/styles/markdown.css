@@ -158,6 +158,7 @@
     background: none;
     font-size: 0.92em;
     line-height: 1.5;
+    color: var(--text-code);
 }
 
 /* Code block language label */
@@ -430,3 +431,5 @@
     font-size: 0.9em;
     white-space: pre-wrap;
 }
+
+
