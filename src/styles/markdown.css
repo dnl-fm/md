@@ -244,8 +244,9 @@
 .markdown-body table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     font-size: inherit;
+    table-layout: fixed;
 }
 
 .markdown-body thead {
@@ -256,13 +257,24 @@
     font-weight: 600;
     color: var(--text-heading);
     text-align: left;
-    padding: 8px 12px;
+    padding: 10px 16px;
     border: 1px solid var(--border-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .markdown-body td {
-    padding: 6px 12px;
+    padding: 8px 16px;
     border: 1px solid var(--border-color);
+    vertical-align: top;
+    word-wrap: break-word;
+}
+
+/* First column often contains labels - give it consistent treatment */
+.markdown-body td:first-child {
+    font-weight: 500;
+    white-space: nowrap;
 }
 
 .markdown-body tbody tr:nth-child(odd) {
@@ -275,6 +287,17 @@
 
 .markdown-body tbody tr:hover {
     background: var(--table-row-hover);
+}
+
+/* Compact tables (3+ columns) - tighter spacing */
+.markdown-body table th:nth-child(4),
+.markdown-body table td:nth-child(4) {
+    text-align: center;
+}
+
+/* Status/icon columns - center align */
+.markdown-body td:last-child:not(:first-child) {
+    text-align: center;
 }
 
 /* Images */
