@@ -86,7 +86,7 @@ import { ConfirmDialog } from "./components/confirm-dialog";
 import { WelcomeModal } from "./components/welcome-modal";
 import { HelpModal } from "./components/help-modal";
 import { ReleaseNotification } from "./components/release-notification";
-import { PageOverviewModal, preRenderThumbnails, onPreRenderStatus } from "./components/page-overview-modal";
+import { PageOverviewModal, preRenderThumbnails } from "./components/page-overview-modal";
 
 // Marked is instantiated per-render to avoid stacking extensions
 
@@ -98,13 +98,8 @@ function App() {
   const [showReleaseNotification, setShowReleaseNotification] = createSignal(false);
   const [appVersion, setAppVersion] = createSignal("");
   const [articleElement, setArticleElement] = createSignal<HTMLElement | null>(null);
-  const [isPreRendering, setIsPreRendering] = createSignal(false);
-  
-  // Subscribe to pre-render status
-  onMount(() => {
-    const unsubscribe = onPreRenderStatus(setIsPreRendering);
-    return unsubscribe;
-  });
+  // Page preview pre-rendering is feature-flagged off
+  const isPreRendering = () => false;
   
   // Pre-render page thumbnails when article element and content are ready
   createEffect(() => {
