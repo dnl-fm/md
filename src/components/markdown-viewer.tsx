@@ -37,6 +37,8 @@ interface MarkdownViewerProps {
   onSaveDraft?: () => void;
   /** Callback to receive editor API for scroll sync */
   onEditorApi?: (api: WasmEditorApi | null) => void;
+  /** Callback to receive article element ref */
+  onArticleRef?: (el: HTMLElement | null) => void;
 }
 
 /** Search match position for minimap display */
@@ -351,7 +353,10 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
         </Show>
         <Show when={!showRawMarkdown()}>
           <article
-            ref={setArticleEl}
+            ref={(el) => {
+              setArticleEl(el);
+              props.onArticleRef?.(el);
+            }}
             class="markdown-content markdown-body"
             innerHTML={highlightedHtml()}
             style={{

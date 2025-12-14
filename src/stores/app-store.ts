@@ -149,6 +149,9 @@ const [showSettings, setShowSettings] = createSignal(false);
 /** Whether help modal is visible */
 const [showHelp, setShowHelp] = createSignal(false);
 
+/** Whether page overview modal is visible */
+const [showPageOverview, setShowPageOverview] = createSignal(false);
+
 /** Whether showing raw markdown (edit mode) vs rendered preview */
 const [showRawMarkdown, setShowRawMarkdown] = createSignal(false);
 
@@ -359,6 +362,8 @@ export {
   setShowSettings,
   showHelp,
   setShowHelp,
+  showPageOverview,
+  setShowPageOverview,
   showRawMarkdown,
   setShowRawMarkdown,
   showLineNumbers,

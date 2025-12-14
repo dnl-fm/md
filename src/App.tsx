@@ -47,6 +47,8 @@ import {
   setShowSettings,
   showHelp,
   setShowHelp,
+  showPageOverview,
+  setShowPageOverview,
   showRawMarkdown,
   setShowRawMarkdown,
   showSearch,
@@ -84,6 +86,7 @@ import { ConfirmDialog } from "./components/confirm-dialog";
 import { WelcomeModal } from "./components/welcome-modal";
 import { HelpModal } from "./components/help-modal";
 import { ReleaseNotification } from "./components/release-notification";
+import { PageOverviewModal, preRenderThumbnails, onPreRenderStatus } from "./components/page-overview-modal";
 
 // Marked is instantiated per-render to avoid stacking extensions
 
@@ -94,6 +97,28 @@ function App() {
   const [showWelcome, setShowWelcome] = createSignal(false);
   const [showReleaseNotification, setShowReleaseNotification] = createSignal(false);
   const [appVersion, setAppVersion] = createSignal("");
+  const [articleElement, setArticleElement] = createSignal<HTMLElement | null>(null);
+  const [isPreRendering, setIsPreRendering] = createSignal(false);
+  
+  // Subscribe to pre-render status
+  onMount(() => {
+    const unsubscribe = onPreRenderStatus(setIsPreRendering);
+    return unsubscribe;
+  });
+  
+  // Pre-render page thumbnails when article element and content are ready
+  createEffect(() => {
+    const el = articleElement();
+    const markdown = content();
+    const theme = config().theme;
+    
+    if (el && markdown && !showRawMarkdown()) {
+      // Wait for DOM to settle, then pre-render in background
+      setTimeout(() => {
+        preRenderThumbnails(el, markdown, theme);
+      }, 1000);
+    }
+  });
   
   // Editor API for scroll sync (set when editor mounts, cleared when unmounts)
   let editorApi: WasmEditorApi | null = null;
@@ -390,10 +415,19 @@ function App() {
           e.preventDefault();
           closeFile();
           break;
-        case "t":
+        case "t": {
           e.preventDefault();
+          const wasOpen = showPageOverview();
+          if (wasOpen) {
+            setShowPageOverview(false);
+          }
           toggleTheme();
+          // Reopen after DOM updates with new theme
+          if (wasOpen) {
+            setTimeout(() => setShowPageOverview(true), 100);
+          }
           break;
+        }
         case "b":
           e.preventDefault();
           toggleSidebar();
@@ -411,6 +445,13 @@ function App() {
             setShowSettings(false);
           }
           setShowHelp(!showHelp());
+          break;
+        case "g":
+          e.preventDefault();
+          // Only show page overview in preview mode with content
+          if (!showRawMarkdown() && content()) {
+            setShowPageOverview(!showPageOverview());
+          }
           break;
         case "=":
         case "+":
@@ -527,7 +568,9 @@ function App() {
       }
     }
     if (e.key === "Escape") {
-      if (showSearch()) {
+      if (showPageOverview()) {
+        setShowPageOverview(false);
+      } else if (showSearch()) {
         setShowSearch(false);
         setSearchQuery("");
       } else if (showSettings()) {
@@ -1007,14 +1050,20 @@ function App() {
       <Sidebar onOpenFile={openFileDialog} onLoadFile={loadFile} onLoadDraft={loadDraft} />
 
       <main class="main-content">
-        <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} onPrint={printDocument} />
+        <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} onPrint={printDocument} isPreRendering={isPreRendering()} />
         <MarkdownViewer 
           onSaveAndPreview={saveAndPreview} 
           onSaveDraft={saveDraftToFile}
           onEditorApi={(api) => { editorApi = api; }}
+          onArticleRef={setArticleElement}
         />
       </main>
 
+      <PageOverviewModal
+        isOpen={showPageOverview()}
+        onClose={() => setShowPageOverview(false)}
+        contentElement={articleElement()}
+      />
       <SettingsModal />
       <WelcomeModal show={showWelcome()} onComplete={() => setShowWelcome(false)} />
       <HelpModal 
