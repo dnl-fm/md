@@ -80,6 +80,7 @@ jobs:
 
       - name: Extract changelog for version
         id: changelog
+        shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           # Extract section between ## [VERSION] and next ## [
