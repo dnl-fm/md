@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2025-12-14
+
+### Added
+- **Mermaid diagrams**: Full support for flowcharts, sequence diagrams, class diagrams, and more
+- **Theme-aware diagrams**: Diagrams automatically match your dark/light theme colors
+- **Table of Contents**: Quick navigation panel (Ctrl+G) with current section highlighting
+- **Live theme preview**: See color changes instantly in the settings modal
+- **New shortcuts**: Ctrl+G (TOC), Ctrl+P (Print), Ctrl+H (Help), Ctrl+[/] (prev/next file)
+
+### Changed
+- Settings modal reorganized with tabbed UI/Markdown/Diagrams sections
+- Table cells now consistently left-aligned
+- Improved theme color organization with diagram-specific tokens
+
 ## [0.8.0] - 2025-12-13
 
 ### Added
