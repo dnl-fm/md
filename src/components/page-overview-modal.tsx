@@ -188,7 +188,8 @@ export function PageOverviewModal(props: PageOverviewModalProps) {
     const theme = config().theme;
     const tab = activeTab();
     
-    if (!isOpen || !el) return;
+    // Need modal open, content element, and actual content
+    if (!isOpen || !el || !currentContent) return;
     
     extractToc();
     
@@ -197,6 +198,10 @@ export function PageOverviewModal(props: PageOverviewModalProps) {
     
     // Only use cache if it matches current theme
     if (cached && cached.length > 0) {
+      // Ensure expected page count is set for the grid
+      if (expectedPageCount() !== cached.length) {
+        setExpectedPageCount(cached.length);
+      }
       if (thumbnails() !== cached) {
         setThumbnails(cached);
       }
