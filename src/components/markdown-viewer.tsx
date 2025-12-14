@@ -8,6 +8,8 @@
  */
 import { Show, createEffect, createMemo, createSignal, For, createRenderEffect } from "solid-js";
 import mermaid from "mermaid";
+import { getMermaidColorsFromTheme, getMermaidThemeVariables, getMermaidThemeCSS } from "../mermaid-theme";
+import { darkColors, lightColors } from "../stores/app-store";
 import {
   content,
   renderedHtml,
@@ -77,10 +79,16 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
       return;
     }
     
+    // Configure mermaid with theme-aware colors
+    const isDark = theme === 'dark';
+    const themeColors = isDark ? darkColors() : lightColors();
+    const mermaidColors = getMermaidColorsFromTheme(themeColors);
     mermaid.initialize({
       startOnLoad: false,
-      theme: theme === 'dark' ? 'dark' : 'default',
+      theme: 'base',
       securityLevel: 'loose',
+      themeVariables: getMermaidThemeVariables(mermaidColors),
+      themeCSS: getMermaidThemeCSS(mermaidColors),
     });
     
     // Render all diagrams in background, then swap all at once (no flicker)

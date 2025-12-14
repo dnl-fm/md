@@ -131,10 +131,9 @@ function App() {
     try {
       logger.info("App initializing...");
       
-      // Initialize mermaid with theme support
+      // Initialize mermaid (theme-specific config happens in markdown-viewer)
       mermaid.initialize({
         startOnLoad: false,
-        theme: "dark",
         securityLevel: "loose",
       });
       

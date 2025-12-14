@@ -186,33 +186,34 @@ export function PageOverviewModal(props: PageOverviewModalProps) {
     const el = props.contentElement;
     const currentContent = content();
     const theme = config().theme;
+    const tab = activeTab();
     
-    if (isOpen && el) {
-      extractToc();
-      
-      const cacheKey = simpleHash(currentContent + theme);
-      const cached = thumbnailCache.get(cacheKey);
-      
-      // Only use cache if it matches current theme
-      if (cached && cached.length > 0) {
-        if (thumbnails() !== cached) {
-          setThumbnails(cached);
-        }
-        return;
+    if (!isOpen || !el) return;
+    
+    extractToc();
+    
+    const cacheKey = simpleHash(currentContent + theme);
+    const cached = thumbnailCache.get(cacheKey);
+    
+    // Only use cache if it matches current theme
+    if (cached && cached.length > 0) {
+      if (thumbnails() !== cached) {
+        setThumbnails(cached);
       }
-      
-      // Clear thumbnails from different theme
-      if (thumbnails().length > 0) {
-        setThumbnails([]);
-      }
-      
-      // Generate if on pages tab (delay to let mermaid re-render with new theme)
-      if (activeTab() === "pages" && !loading()) {
-        updateExpectedPageCount();
-        setTimeout(() => {
-          generateThumbnails(cacheKey);
-        }, 300);
-      }
+      return;
+    }
+    
+    // Clear thumbnails from different theme
+    if (thumbnails().length > 0) {
+      setThumbnails([]);
+    }
+    
+    // Generate if on pages tab (delay to let mermaid re-render with new theme)
+    if (tab === "pages" && !loading()) {
+      updateExpectedPageCount();
+      setTimeout(() => {
+        generateThumbnails(cacheKey);
+      }, 300);
     }
   });
 
