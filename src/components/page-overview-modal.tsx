@@ -62,6 +62,17 @@ function simpleHash(str: string): string {
   return hash.toString(36);
 }
 
+/** Yield to browser using requestIdleCallback or setTimeout fallback */
+function yieldToBrowser(): Promise<void> {
+  return new Promise(resolve => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => resolve(), { timeout: 100 });
+    } else {
+      setTimeout(resolve, 0);
+    }
+  });
+}
+
 /** Generate a single page thumbnail */
 async function generateSingleThumbnail(
   el: HTMLElement,
@@ -77,20 +88,65 @@ async function generateSingleThumbnail(
     scrollY: -scrollY,
     useCORS: true,
     logging: false,
-    scale: 0.3,
+    scale: 0.1,               // Low scale for speed
     backgroundColor: bgColor,
+    removeContainer: true,
   });
   
   return {
     index,
-    dataUrl: canvas.toDataURL("image/jpeg", 0.7),
+    dataUrl: canvas.toDataURL("image/jpeg", 0.5),
     scrollY,
   };
 }
 
 /**
- * Pre-render thumbnails in the background (parallel).
- * Call this after content is rendered to have thumbnails ready when modal opens.
+ * Core thumbnail generation with parallel processing.
+ * @param el - Element to capture (original or cloned)
+ * @param onProgress - Optional callback for progressive updates
+ * @returns Array of page thumbnails
+ */
+async function generateThumbnailsCore(
+  el: HTMLElement,
+  onProgress?: (thumbs: PageThumb[]) => void
+): Promise<PageThumb[]> {
+  const contentWidth = el.scrollWidth;
+  const a4Ratio = 297 / 210;
+  const pgHeight = Math.round(contentWidth * a4Ratio);
+  const totalHeight = el.scrollHeight;
+  const pageCount = Math.ceil(totalHeight / pgHeight);
+  
+  const bgColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--bg-primary').trim() || '#ffffff';
+  
+  // Generate all pages in parallel
+  const promises = Array.from({ length: pageCount }, (_, i) => {
+    const scrollY = i * pgHeight;
+    return generateSingleThumbnail(el, i, scrollY, pgHeight, bgColor);
+  });
+  
+  // Collect results as they complete for progressive updates
+  const thumbs: PageThumb[] = new Array(pageCount);
+  let completed = 0;
+  
+  await Promise.all(promises.map(async (promise, i) => {
+    const thumb = await promise;
+    thumbs[i] = thumb;
+    completed++;
+    
+    if (onProgress) {
+      // Report sorted partial results
+      const partial = thumbs.filter(Boolean).sort((a, b) => a.index - b.index);
+      onProgress(partial);
+    }
+  }));
+  
+  return thumbs.sort((a, b) => a.index - b.index);
+}
+
+/**
+ * Pre-render thumbnails in the background with minimal UI impact.
+ * Uses DOM cloning and sequential processing with yielding.
  */
 export async function preRenderThumbnails(
   contentElement: HTMLElement | null,
@@ -107,35 +163,42 @@ export async function preRenderThumbnails(
   preRenderInProgress = true;
   notifyPreRenderStatus(true);
   
+  // Create offscreen container for cloned DOM
+  const offscreen = document.createElement('div');
+  offscreen.style.cssText = `
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    width: ${contentElement.scrollWidth}px;
+    visibility: hidden;
+    pointer-events: none;
+  `;
+  
   try {
+    // Wait for initial render to settle
     await new Promise(r => setTimeout(r, 100));
     
-    const el = contentElement;
-    const contentWidth = el.scrollWidth;
-    const a4Ratio = 297 / 210;
-    const pgHeight = Math.round(contentWidth * a4Ratio);
-    const totalHeight = el.scrollHeight;
-    const pageCount = Math.ceil(totalHeight / pgHeight);
+    // Clone the DOM (deep clone with styles)
+    const clone = contentElement.cloneNode(true) as HTMLElement;
+    clone.style.width = `${contentElement.scrollWidth}px`;
+    offscreen.appendChild(clone);
+    document.body.appendChild(offscreen);
     
-    const bgColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--bg-primary').trim() || '#ffffff';
+    // Wait for clone to be in DOM
+    await yieldToBrowser();
     
-    console.log(`[Background] Pre-rendering ${pageCount} pages...`);
-    
-    const promises: Promise<PageThumb>[] = [];
-    for (let i = 0; i < pageCount; i++) {
-      const scrollY = i * pgHeight;
-      promises.push(generateSingleThumbnail(el, i, scrollY, pgHeight, bgColor));
-    }
-    
-    const thumbs = await Promise.all(promises);
-    thumbs.sort((a, b) => a.index - b.index);
+    console.log("[Background] Pre-rendering pages...");
+    const thumbs = await generateThumbnailsCore(clone);
     
     thumbnailCache.set(cacheKey, thumbs);
-    console.log(`[Background] Pre-render complete`);
+    console.log("[Background] Pre-render complete");
   } catch (err) {
     console.error("[Background] Pre-render failed:", err);
   } finally {
+    // Clean up offscreen container
+    if (offscreen.parentNode) {
+      document.body.removeChild(offscreen);
+    }
     preRenderInProgress = false;
     notifyPreRenderStatus(false);
   }
@@ -208,13 +271,16 @@ export function PageOverviewModal(props: PageOverviewModalProps) {
       return;
     }
     
+    // Don't interfere if already generating
+    if (loading()) return;
+    
     // Clear thumbnails from different theme
     if (thumbnails().length > 0) {
       setThumbnails([]);
     }
     
-    // Generate if on pages tab (delay to let mermaid re-render with new theme)
-    if (tab === "pages" && !loading()) {
+    // Generate if on pages tab
+    if (tab === "pages") {
       updateExpectedPageCount();
       setTimeout(() => {
         generateThumbnails(cacheKey);
@@ -315,34 +381,13 @@ export function PageOverviewModal(props: PageOverviewModalProps) {
     setThumbnails([]);
 
     try {
-      // A4 ratio: 210mm x 297mm = 1:1.414
-      const contentWidth = el.scrollWidth;
-      const a4Ratio = 297 / 210;
-      const pgHeight = Math.round(contentWidth * a4Ratio);
-      const totalHeight = el.scrollHeight;
-      const pageCount = Math.ceil(totalHeight / pgHeight);
-      
-      // Get background color from theme
-      const bgColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--bg-primary').trim() || '#ffffff';
-
-      console.log(`Generating ${pageCount} A4 pages in parallel...`);
-
-      // Generate all pages in parallel
-      const promises: Promise<PageThumb>[] = [];
-      for (let i = 0; i < pageCount; i++) {
-        const scrollY = i * pgHeight;
-        promises.push(generateSingleThumbnail(el, i, scrollY, pgHeight, bgColor));
-      }
-      
-      const thumbs = await Promise.all(promises);
-      thumbs.sort((a, b) => a.index - b.index);
-      setThumbnails(thumbs);
+      // Generate with progressive UI updates
+      const thumbs = await generateThumbnailsCore(el, setThumbnails);
       
       // Cache the results
       thumbnailCache.set(contentHash, thumbs);
     } catch (err) {
-      console.error("html2canvas error:", err);
+      console.error("Thumbnail generation error:", err);
       setError(String(err));
     } finally {
       setLoading(false);
