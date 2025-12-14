@@ -55,9 +55,10 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   // Reactive ref so effects re-run when article mounts
   const [articleEl, setArticleEl] = createSignal<HTMLElement | null>(null);
   const [matchPositions, setMatchPositions] = createSignal<MatchPosition[]>([]);
-  const [mermaidSvgs, setMermaidSvgs] = createSignal<Map<string, string>>(new Map());
+  const [mermaidSvgs, setMermaidSvgs] = createSignal<Map<number, string>>(new Map());
+  const [mermaidHeights, setMermaidHeights] = createSignal<Map<number, number>>(new Map());
 
-  // Render mermaid diagrams and store SVGs
+  // Render mermaid diagrams progressively - each pops in when ready
   createEffect(() => {
     const html = renderedHtml();
     const theme = config().theme;
@@ -77,25 +78,48 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
       securityLevel: 'loose',
     });
     
+    // Render all diagrams in background, then swap all at once (no flicker)
     const renderAll = async () => {
-      const svgMap = new Map<string, string>();
-      for (let i = 0; i < matches.length; i++) {
-        const encoded = matches[i][1];
+      const newSvgs = new Map<number, string>();
+      
+      for (let index = 0; index < matches.length; index++) {
+        const match = matches[index];
+        const encoded = match[1];
         const decoded = encoded
           .replace(/&quot;/g, '"')
           .replace(/&amp;/g, '&')
           .replace(/&lt;/g, '<')
           .replace(/&gt;/g, '>');
+        
         try {
-          const id = `mermaid-render-${i}`;
+          const id = `mermaid-${theme}-${index}-${Date.now()}`;
           const { svg } = await mermaid.render(id, decoded);
-          svgMap.set(encoded, svg);
+          newSvgs.set(index, svg);
+          
+          // Extract and store height for future re-renders
+          let height = 0;
+          const heightMatch = svg.match(/height="([\d.]+)/);
+          if (heightMatch) {
+            height = parseFloat(heightMatch[1]);
+          }
+          if (!height) {
+            const viewBoxMatch = svg.match(/viewBox="[\d.]+ [\d.]+ [\d.]+ ([\d.]+)"/);
+            if (viewBoxMatch) {
+              height = parseFloat(viewBoxMatch[1]);
+            }
+          }
+          setMermaidHeights(prev => new Map(prev).set(index, height || 100));
         } catch (err) {
           console.error('Mermaid error:', err);
-          svgMap.set(encoded, `<pre class="mermaid-error">Error: ${err}</pre>`);
+          newSvgs.set(index, `<pre class="mermaid-error">Error: ${err}</pre>`);
         }
+        
+        // Yield to keep UI responsive
+        await new Promise(r => requestAnimationFrame(r));
       }
-      setMermaidSvgs(svgMap);
+      
+      // Swap all at once
+      setMermaidSvgs(newSvgs);
     };
     
     renderAll();
@@ -105,6 +129,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   const highlightedHtml = createMemo(() => {
     const html = renderedHtml();
     const svgs = mermaidSvgs();
+    const heights = mermaidHeights(); // Read early to track as dependency
     const query = searchQuery().trim();
 
     if (!html || showRawMarkdown()) {
@@ -113,13 +138,22 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
       return html;
     }
     
-    // Replace mermaid placeholders with rendered SVGs
-    let processedHtml = html;
-    for (const [encoded, svg] of svgs) {
-      const placeholder = `<div class="mermaid-diagram" id="mermaid-[^"]*" data-mermaid="${encoded}"></div>`;
-      const placeholderRegex = new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('\\[\\^"\\]\\*', '[^"]*'));
-      processedHtml = processedHtml.replace(placeholderRegex, `<div class="mermaid-diagram">${svg}</div>`);
-    }
+    // Replace mermaid placeholders with rendered SVGs or loading spinner
+    let diagramIndex = 0;
+    let processedHtml = html.replace(
+      /<div class="mermaid-diagram" id="[^"]*" data-mermaid="[^"]+"><\/div>/g,
+      () => {
+        const idx = diagramIndex++;
+        const svg = svgs.get(idx);
+        const height = heights.get(idx);
+        const style = height ? ` style="min-height:${height}px"` : '';
+        if (svg) {
+          return `<div class="mermaid-diagram"${style}>${svg}</div>`;
+        }
+        // Show spinner with preserved height
+        return `<div class="mermaid-diagram"${style}><div class="mermaid-loading"><span class="spinner"></span></div></div>`;
+      }
+    );
 
     if (!query) {
       setSearchMatches(0);
