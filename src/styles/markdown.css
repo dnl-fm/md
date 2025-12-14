@@ -257,7 +257,7 @@
 .markdown-body th {
     font-weight: 600;
     color: var(--text-heading);
-    text-align: left;
+    text-align: left !important;
     padding: 10px 16px;
     border: 1px solid var(--border-color);
     white-space: nowrap;
@@ -269,7 +269,7 @@
     padding: 8px 16px;
     border: 1px solid var(--border-color);
     vertical-align: top;
-    text-align: left;
+    text-align: left !important;
     word-wrap: break-word;
 }
 
