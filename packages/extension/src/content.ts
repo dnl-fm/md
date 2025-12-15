@@ -187,31 +187,46 @@ function renderTOC() {
 
   nav.innerHTML = tocEntries
     .map(
-      (entry) => `
-      <a href="#${entry.id}" class="md-toc-item md-toc-level-${entry.level}">
+      (entry, index) => `
+      <a href="#${entry.id}" data-toc-index="${index}" class="md-toc-item md-toc-level-${entry.level}">
         <span class="md-toc-item-text">${escapeHtml(entry.text)}</span>
       </a>
     `
     )
     .join("");
 
-  // Handle TOC clicks - scroll to heading with offset for header
+  // Handle TOC clicks - scroll to heading with offset and highlight
   nav.querySelectorAll("a").forEach((a) => {
     a.addEventListener("click", (e) => {
       e.preventDefault();
-      const href = a.getAttribute("href");
-      if (href) {
-        const target = document.querySelector(href) as HTMLElement;
-        if (target) {
-          const targetPosition = target.getBoundingClientRect().top + window.scrollY;
-          window.scrollTo({
-            top: targetPosition - HEADER_HEIGHT - 16, // 16px extra padding
-            behavior: "smooth"
-          });
-        }
-      }
+      const index = parseInt(a.getAttribute("data-toc-index") || "0", 10);
+      scrollToHeading(index);
     });
   });
+}
+
+/**
+ * Scroll to heading by index and highlight it
+ */
+function scrollToHeading(index: number) {
+  const content = document.getElementById("md-content");
+  if (!content) return;
+
+  const headings = content.querySelectorAll("h1, h2, h3, h4, h5, h6");
+  const heading = headings[index] as HTMLElement;
+  
+  if (!heading) return;
+
+  // Scroll to heading with offset for sticky header
+  const targetPosition = heading.getBoundingClientRect().top + window.scrollY;
+  window.scrollTo({
+    top: targetPosition - HEADER_HEIGHT - 16,
+    behavior: "smooth"
+  });
+
+  // Flash highlight effect
+  heading.classList.add("highlight-flash");
+  setTimeout(() => heading.classList.remove("highlight-flash"), 1500);
 }
 
 /**

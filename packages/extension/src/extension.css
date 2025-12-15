@@ -350,6 +350,35 @@ body {
 }
 
 /* ============================================================================
+   Highlight Flash for Heading Navigation
+   ============================================================================ */
+
+.highlight-flash {
+  position: relative;
+  z-index: 0;
+}
+
+.highlight-flash::after {
+  content: "";
+  position: absolute;
+  inset: -8px -12px;
+  background-color: rgba(97, 175, 239, 0.3);
+  border-radius: 6px;
+  z-index: -1;
+  pointer-events: none;
+  animation: headingFlash 1.5s ease-out forwards;
+}
+
+@keyframes headingFlash {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
    Mermaid diagrams
    ============================================================================ */
 
