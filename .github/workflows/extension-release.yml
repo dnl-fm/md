@@ -33,13 +33,11 @@ jobs:
           name: md-extension-${{ github.ref_name }}
           path: packages/extension/md-extension-${{ github.ref_name }}.zip
 
-      # Optional: Auto-publish to Chrome Web Store
-      # Requires CHROME_EXTENSION_ID, CHROME_CLIENT_ID, CHROME_CLIENT_SECRET, CHROME_REFRESH_TOKEN
-      # - name: Publish to Chrome Web Store
-      #   uses: mnao305/chrome-extension-upload@v5.0.0
-      #   with:
-      #     file-path: packages/extension/md-extension-${{ github.ref_name }}.zip
-      #     extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
-      #     client-id: ${{ secrets.CHROME_CLIENT_ID }}
-      #     client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
-      #     refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+      - name: Publish to Chrome Web Store
+        uses: mnao305/chrome-extension-upload@v5.0.0
+        with:
+          file-path: packages/extension/md-extension-${{ github.ref_name }}.zip
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
