@@ -225,13 +225,26 @@ function replacePageContent(html: string) {
 
         <!-- Release Notification -->
         ${showReleaseNotification ? `
-        <div class="md-release-notification" id="md-release-notification">
-          <div class="md-release-content">
-            <span class="md-release-icon">🎉</span>
-            <span class="md-release-text">MD Extension updated to v${VERSION}</span>
-            <button class="md-btn md-release-btn" id="md-release-changelog">View Changelog</button>
+        <div class="release-notification" id="release-notification">
+          <div class="release-notification-content">
+            <div class="release-notification-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <div class="release-notification-text">
+              <div class="release-notification-title">New Release ${VERSION}</div>
+            </div>
+            <button class="release-notification-close" id="release-close" title="Dismiss">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
           </div>
-          <button class="md-btn md-release-close" id="md-release-close" title="Dismiss">×</button>
+          <button class="release-notification-btn" id="release-changelog">View Changelog</button>
         </div>
         ` : ''}
       </div>
@@ -261,8 +274,8 @@ function replacePageContent(html: string) {
     if (e.target === e.currentTarget) setHelpVisible(false);
   });
   document.getElementById("md-print-btn")?.addEventListener("click", printDocument);
-  document.getElementById("md-release-close")?.addEventListener("click", dismissReleaseNotification);
-  document.getElementById("md-release-changelog")?.addEventListener("click", viewChangelog);
+  document.getElementById("release-close")?.addEventListener("click", dismissReleaseNotification);
+  document.getElementById("release-changelog")?.addEventListener("click", viewChangelog);
 }
 
 /**
@@ -488,7 +501,7 @@ function printDocument() {
  * Dismiss release notification and save version
  */
 function dismissReleaseNotification() {
-  const notification = document.getElementById("md-release-notification");
+  const notification = document.getElementById("release-notification");
   if (notification) {
     notification.classList.add("leaving");
     setTimeout(() => {
