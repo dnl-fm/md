@@ -136,6 +136,13 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   font-size: inherit !important;
+  transition: max-width 0.2s ease;
+}
+
+/* Full width mode */
+html.full-width .md-content > .markdown-body,
+html.full-width .md-content > .raw-markdown {
+  max-width: none;
 }
 
 .md-content .markdown-body p,

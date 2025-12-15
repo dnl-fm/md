@@ -16,6 +16,7 @@ let tocVisible = false;
 let showingRaw = false;
 let rawMarkdown = "";
 let fontSize = parseInt(localStorage.getItem("md-font-size") || "16", 10);
+let fullWidth = localStorage.getItem("md-full-width") === "true";
 
 // Constants
 const HEADER_HEIGHT = 48;
@@ -89,6 +90,9 @@ function replacePageContent(html: string) {
             </button>
           </div>
           <div class="md-sidebar-content">
+            <button class="md-btn md-btn-icon ${fullWidth ? "active" : ""}" id="md-width-btn" title="Toggle full width">
+              ↔
+            </button>
             <button class="md-btn md-btn-icon" id="md-raw-btn" title="Toggle raw markdown (Ctrl+U)">
               &lt;/&gt;
             </button>
@@ -134,9 +138,10 @@ function replacePageContent(html: string) {
     </body>
   `;
 
-  // Apply theme and font size
+  // Apply theme, font size and width
   document.documentElement.setAttribute("data-theme", theme);
   applyFontSize();
+  applyFullWidth();
 
   // Render TOC
   renderTOC();
@@ -147,8 +152,30 @@ function replacePageContent(html: string) {
   document.getElementById("md-toc-backdrop")?.addEventListener("click", () => setTOCVisible(false));
   document.getElementById("md-theme-btn")?.addEventListener("click", toggleTheme);
   document.getElementById("md-raw-btn")?.addEventListener("click", toggleRawView);
+  document.getElementById("md-width-btn")?.addEventListener("click", toggleFullWidth);
   document.getElementById("md-font-decrease")?.addEventListener("click", () => changeFontSize(-1));
   document.getElementById("md-font-increase")?.addEventListener("click", () => changeFontSize(1));
+}
+
+/**
+ * Toggle full width mode
+ */
+function toggleFullWidth() {
+  fullWidth = !fullWidth;
+  localStorage.setItem("md-full-width", String(fullWidth));
+  applyFullWidth();
+  
+  const btn = document.getElementById("md-width-btn");
+  if (btn) {
+    btn.classList.toggle("active", fullWidth);
+  }
+}
+
+/**
+ * Apply full width setting
+ */
+function applyFullWidth() {
+  document.documentElement.classList.toggle("full-width", fullWidth);
 }
 
 /**
