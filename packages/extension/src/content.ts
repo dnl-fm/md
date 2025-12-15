@@ -13,6 +13,8 @@ const md = new MarkdownIt({
 // State
 let tocEntries: TOCEntry[] = [];
 let tocVisible = false;
+let showingRaw = false;
+let rawMarkdown = "";
 
 // Header height for scroll offset
 const HEADER_HEIGHT = 48;
@@ -25,7 +27,7 @@ async function main() {
     return;
   }
 
-  const rawMarkdown = getRawMarkdown();
+  rawMarkdown = getRawMarkdown() || "";
   if (!rawMarkdown) {
     return;
   }
@@ -97,9 +99,9 @@ function replacePageContent(html: string) {
           <div class="md-file-header">
             <span class="md-file-path">📄 ${escapeHtml(filename)}</span>
             <div class="md-file-header-right">
-              <a class="md-btn md-btn-small" href="${window.location.href}" target="_blank" title="Open original">
-                Raw
-              </a>
+              <button class="md-btn md-btn-small" id="md-raw-btn" title="Toggle raw markdown (Ctrl+U)">
+                RAW
+              </button>
             </div>
           </div>
           <div class="md-content" id="md-content">
@@ -133,6 +135,37 @@ function replacePageContent(html: string) {
   document.getElementById("md-toc-close")?.addEventListener("click", () => setTOCVisible(false));
   document.getElementById("md-toc-backdrop")?.addEventListener("click", () => setTOCVisible(false));
   document.getElementById("md-theme-btn")?.addEventListener("click", toggleTheme);
+  document.getElementById("md-raw-btn")?.addEventListener("click", toggleRawView);
+}
+
+/**
+ * Toggle between rendered and raw markdown view
+ */
+function toggleRawView() {
+  showingRaw = !showingRaw;
+  
+  const content = document.getElementById("md-content");
+  const btn = document.getElementById("md-raw-btn");
+  
+  if (!content || !btn) return;
+  
+  if (showingRaw) {
+    // Show raw markdown
+    content.innerHTML = `<pre class="raw-markdown"><code>${escapeHtml(rawMarkdown)}</code></pre>`;
+    btn.textContent = "PREVIEW";
+    btn.classList.add("active");
+  } else {
+    // Show rendered markdown
+    const html = md.render(rawMarkdown);
+    content.innerHTML = `<div class="markdown-body">${html}</div>`;
+    btn.textContent = "RAW";
+    btn.classList.remove("active");
+    
+    // Re-add heading IDs and re-highlight code
+    addHeadingIds();
+    highlightCodeBlocks();
+    renderMermaidDiagrams();
+  }
 }
 
 /**
@@ -307,6 +340,12 @@ function setupKeyboardShortcuts() {
     if (e.ctrlKey && e.key === "t") {
       e.preventDefault();
       toggleTheme();
+    }
+
+    // Ctrl+U - Toggle raw view
+    if (e.ctrlKey && e.key === "u") {
+      e.preventDefault();
+      toggleRawView();
     }
 
     // Escape - Close TOC
