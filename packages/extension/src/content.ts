@@ -10,20 +10,61 @@ const md = new MarkdownIt({
   breaks: false,
 });
 
+// Constants
+const HEADER_HEIGHT = 48;
+const FONT_SIZE_MIN = 12;
+const FONT_SIZE_MAX = 24;
+const FONT_SIZE_DEFAULT = 16;
+
 // State
 let tocEntries: TOCEntry[] = [];
 let tocVisible = false;
 let helpVisible = false;
 let showingRaw = false;
 let rawMarkdown = "";
-let fontSize = parseInt(localStorage.getItem("md-font-size") || "16", 10);
-let fullWidth = localStorage.getItem("md-full-width") === "true";
+let fontSize = FONT_SIZE_DEFAULT;
+let fullWidth = true;
+let theme: "dark" | "light" = "dark";
 
-// Constants
-const HEADER_HEIGHT = 48;
-const FONT_SIZE_MIN = 12;
-const FONT_SIZE_MAX = 24;
-const FONT_SIZE_DEFAULT = 16;
+// Storage keys
+const STORAGE_KEYS = {
+  theme: "md-theme",
+  fontSize: "md-font-size",
+  fullWidth: "md-full-width",
+} as const;
+
+/**
+ * Load settings from chrome.storage.local
+ */
+async function loadSettings(): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(Object.values(STORAGE_KEYS), (result) => {
+      if (result[STORAGE_KEYS.theme] === "dark" || result[STORAGE_KEYS.theme] === "light") {
+        theme = result[STORAGE_KEYS.theme];
+      } else {
+        // Default to system preference
+        theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      
+      if (typeof result[STORAGE_KEYS.fontSize] === "number") {
+        fontSize = result[STORAGE_KEYS.fontSize];
+      }
+      
+      if (typeof result[STORAGE_KEYS.fullWidth] === "boolean") {
+        fullWidth = result[STORAGE_KEYS.fullWidth];
+      }
+      
+      resolve();
+    });
+  });
+}
+
+/**
+ * Save a setting to chrome.storage.local
+ */
+function saveSetting(key: string, value: string | number | boolean): void {
+  chrome.storage.local.set({ [key]: value });
+}
 
 /**
  * Main entry point
@@ -37,6 +78,9 @@ async function main() {
   if (!rawMarkdown) {
     return;
   }
+
+  // Load settings from extension storage
+  await loadSettings();
 
   // Render markdown
   const html = md.render(rawMarkdown);
@@ -62,9 +106,7 @@ async function main() {
  * Get current theme
  */
 function getCurrentTheme(): "dark" | "light" {
-  const saved = localStorage.getItem("md-theme");
-  if (saved === "dark" || saved === "light") return saved;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return theme;
 }
 
 /**
@@ -204,7 +246,7 @@ function replacePageContent(html: string) {
  */
 function toggleFullWidth() {
   fullWidth = !fullWidth;
-  localStorage.setItem("md-full-width", String(fullWidth));
+  saveSetting(STORAGE_KEYS.fullWidth, fullWidth);
   applyFullWidth();
   
   const btn = document.getElementById("md-width-btn");
@@ -225,7 +267,7 @@ function applyFullWidth() {
  */
 function changeFontSize(delta: number) {
   fontSize = Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, fontSize + delta));
-  localStorage.setItem("md-font-size", String(fontSize));
+  saveSetting(STORAGE_KEYS.fontSize, fontSize);
   applyFontSize();
 }
 
@@ -440,15 +482,14 @@ function setHelpVisible(visible: boolean) {
  */
 function toggleTheme() {
   const root = document.documentElement;
-  const current = root.getAttribute("data-theme");
-  const next = current === "dark" ? "light" : "dark";
-  root.setAttribute("data-theme", next);
-  localStorage.setItem("md-theme", next);
+  theme = theme === "dark" ? "light" : "dark";
+  root.setAttribute("data-theme", theme);
+  saveSetting(STORAGE_KEYS.theme, theme);
   
   // Update theme button icon
   const btn = document.getElementById("md-theme-btn");
   if (btn) {
-    btn.textContent = next === "dark" ? "☀" : "🌙";
+    btn.textContent = theme === "dark" ? "☀" : "🌙";
   }
 }
 
@@ -626,14 +667,16 @@ function formatFileSize(bytes: number): string {
 // Initialize on load
 main().catch(console.error);
 
-// Listen for system theme changes
+// Listen for system theme changes (only if user hasn't set a preference)
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-  if (!localStorage.getItem("md-theme")) {
-    const theme = e.matches ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", theme);
-    const btn = document.getElementById("md-theme-btn");
-    if (btn) {
-      btn.textContent = theme === "dark" ? "☀" : "🌙";
+  chrome.storage.local.get(STORAGE_KEYS.theme, (result) => {
+    if (!result[STORAGE_KEYS.theme]) {
+      theme = e.matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", theme);
+      const btn = document.getElementById("md-theme-btn");
+      if (btn) {
+        btn.textContent = theme === "dark" ? "☀" : "🌙";
+      }
     }
-  }
+  });
 });

@@ -149,6 +149,7 @@ body {
 .md-content > .markdown-body {
   max-width: 1200px;
   margin: 0 auto;
+  font-size: inherit;
   font-size: inherit !important;
   transition: max-width 0.2s ease;
 }
