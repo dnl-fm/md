@@ -138,6 +138,7 @@ Configuration is stored in:
 | `Ctrl+G` | Table of contents |
 | `Ctrl+T` | Toggle theme |
 | `Ctrl+U` | Toggle raw markdown |
+| `Ctrl+P` | Print / PDF |
 | `Ctrl++` | Increase font size |
 | `Ctrl+-` | Decrease font size |
 | `Ctrl+0` | Reset font size |
@@ -164,6 +165,8 @@ bun run build
 - `gist.githubusercontent.com/*`
 - GitLab/Gitea raw file URLs
 - Any URL ending in `.md` or `.markdown`
+
+> **Note:** Local `file://` URLs are not supported. Syntax highlighting and Mermaid diagrams are loaded from CDN, which is blocked on local files. Use the MD desktop app for local markdown files.
 
 ---
 

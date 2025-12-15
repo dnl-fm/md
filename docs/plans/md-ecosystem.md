@@ -435,6 +435,24 @@ bun run --filter @md/extension watch  # Watch mode
 
 ---
 
+## Known Limitations
+
+### No `file://` URL Support
+
+The extension does not support local `file://` URLs. This is intentional.
+
+**Why:** Syntax highlighting (Shiki) and diagrams (Mermaid) are loaded on-demand from esm.sh CDN to keep the extension small (~116KB). Dynamic imports from CDN are blocked on `file://` URLs due to browser security (CORS).
+
+**Alternatives considered:**
+1. **Bundle shiki + mermaid** — Would increase extension size to ~12MB (shiki alone is ~6MB with all grammars). Unacceptable.
+2. **Use lighter libraries** — highlight.js (~500KB) is smaller but still significant. Sugar-high (~20KB) only supports JS/JSX.
+3. **Web accessible resources** — Bundle as separate files, lazy-load from extension. Still ~12MB install size.
+4. **Per-language loading** — Shiki supports this, but still requires bundling core (~50KB) + grammars. Complex build process.
+
+**Recommendation:** For local files, use the MD desktop app. The extension is designed for viewing raw markdown on the web (GitHub, GitLab, Gitea, etc.).
+
+---
+
 ## Open Questions
 
 1. **Extension name:** "MD" or "MD Viewer" or "Markdown Viewer"?

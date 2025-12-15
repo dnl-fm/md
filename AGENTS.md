@@ -173,8 +173,11 @@ bun run watch      # Watch mode
 | `Ctrl+G` | Table of contents |
 | `Ctrl+T` | Toggle theme |
 | `Ctrl+U` | Toggle raw markdown |
+| `Ctrl+P` | Print / PDF |
 | `Ctrl++/-/0` | Font size |
 | `Ctrl+H` | Help |
+
+> **No `file://` support:** Shiki/Mermaid load from CDN (esm.sh), blocked on local files. Bundling would add ~12MB. Use MD app for local files.
 
 ---
 
