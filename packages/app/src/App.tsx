@@ -10,9 +10,9 @@ import { createHighlighter, type Highlighter } from "shiki";
 // Mermaid loaded via script tag (see index.html) to avoid Vite bundling issues
 declare const mermaid: typeof import("mermaid").default;
 
-import "./styles/theme.css";
-import "./styles/markdown.css";
-import "./styles/print.css";
+import "@md/shared/styles/theme.css";
+import "@md/shared/styles/markdown.css";
+import "@md/shared/styles/print.css";
 import "./styles/wasm-editor.css";
 
 import type { AppConfig, FileInfo } from "./types";

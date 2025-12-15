@@ -1,4 +1,4 @@
 node_modules
 dist
-src/wasm-pkg
-src-wasm/target
+packages/app/src/wasm-pkg
+packages/app/src-wasm/target

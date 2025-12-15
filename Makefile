@@ -1,26 +1,28 @@
 .PHONY: dev build build-wasm serve test test-watch install clean lint typecheck codequality help
 
+APP_DIR = packages/app
+
 # Development
 dev:
-	bun run dev
+	cd $(APP_DIR) && bun run dev
 
 # Build
 build:
-	bun run build
+	cd $(APP_DIR) && bun run build
 
 build-wasm:
-	bun run build:wasm
+	cd $(APP_DIR) && bun run build:wasm
 
 # Preview built app
 serve:
-	bun run serve
+	cd $(APP_DIR) && bun run serve
 
 # Testing
 test:
-	bun test
+	cd $(APP_DIR) && bun test
 
 test-watch:
-	bun test --watch
+	cd $(APP_DIR) && bun test --watch
 
 # Setup
 install:
@@ -28,15 +30,16 @@ install:
 
 # Cleanup
 clean:
-	rm -rf dist node_modules src/wasm-pkg
-	cd src-tauri && cargo clean
+	rm -rf node_modules
+	rm -rf $(APP_DIR)/dist $(APP_DIR)/node_modules $(APP_DIR)/src/wasm-pkg
+	cd $(APP_DIR)/src-tauri && cargo clean
 
 # Linting & type checking
 typecheck:
-	bunx tsc --noEmit
+	cd $(APP_DIR) && bunx tsc --noEmit
 
 lint:
-	cd src-tauri && cargo clippy
+	cd $(APP_DIR)/src-tauri && cargo clippy
 
 # Code quality (lint + tests)
 codequality: typecheck lint test
@@ -47,9 +50,10 @@ logs:
 
 # Version info
 version:
-	@echo "package.json:   $$(jq -r .version package.json)"
-	@echo "Cargo.toml:     $$(grep '^version' src-tauri/Cargo.toml | head -1 | cut -d'"' -f2)"
-	@echo "tauri.conf.json: $$(jq -r .version src-tauri/tauri.conf.json)"
+	@echo "root package.json:    $$(jq -r .version package.json)"
+	@echo "app package.json:     $$(jq -r .version $(APP_DIR)/package.json)"
+	@echo "Cargo.toml:           $$(grep '^version' $(APP_DIR)/src-tauri/Cargo.toml | head -1 | cut -d'"' -f2)"
+	@echo "tauri.conf.json:      $$(jq -r .version $(APP_DIR)/src-tauri/tauri.conf.json)"
 
 # Help
 help:

@@ -24,16 +24,16 @@ jobs:
         run: cargo install wasm-pack
 
       - name: Build WASM module
-        run: cd src-wasm && wasm-pack build --target web --out-dir ../src/wasm-pkg
+        run: cd packages/app/src-wasm && wasm-pack build --target web --out-dir ../src/wasm-pkg
 
       - name: Install dependencies
         run: bun install
 
       - name: Run tests
-        run: bun test
+        run: cd packages/app && bun test
 
       - name: Type check
-        run: bun run tsc --noEmit
+        run: cd packages/app && bun run tsc --noEmit
 
   build-check:
     runs-on: ubuntu-latest
@@ -60,10 +60,10 @@ jobs:
         run: bun install
 
       - name: Build WASM module
-        run: bun run build:wasm
+        run: cd packages/app && bun run build:wasm
 
       - name: Build frontend
-        run: bunx vite build
+        run: cd packages/app && bunx vite build
 
       - name: Check Rust
-        run: cd src-tauri && cargo check
+        run: cd packages/app/src-tauri && cargo check

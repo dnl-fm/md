@@ -1,4 +1,4 @@
-# MD - Markdown Preview Application
+# MD - Markdown Ecosystem
 
 Fast, lightweight Markdown viewer with live preview, edit mode, file watching, and theming.
 
@@ -27,41 +27,51 @@ import { useState, useEffect } from "react";  // WRONG
 
 ---
 
-## Project Structure
+## Monorepo Structure
 
 ```
 md/
-├── src/                          # Frontend (SolidJS/TypeScript)
-│   ├── App.tsx                   # Main component, keyboard shortcuts
-│   ├── index.tsx                 # Entry point
-│   ├── types.ts                  # TypeScript interfaces
-│   ├── utils.ts                  # Constants, helpers
-│   ├── logger.ts                 # Frontend logging
-│   ├── components/               # UI components
-│   │   ├── sidebar.tsx           # Recent files, drafts
-│   │   ├── file-header.tsx       # File info, actions
-│   │   ├── markdown-viewer.tsx   # Preview + editor
-│   │   ├── settings-modal.tsx    # Font & color settings
-│   │   ├── confirm-dialog.tsx    # Reusable confirm dialog
-│   │   ├── welcome-modal.tsx     # First-run onboarding
-│   │   ├── help-modal.tsx        # Shortcuts + version
-│   │   └── release-notification.tsx
-│   ├── stores/
-│   │   └── app-store.ts          # SolidJS signals (reactive state)
-│   └── styles/
-│       ├── theme.css             # CSS variables, layout
-│       └── markdown.css          # Rendered markdown styles
+├── packages/
+│   ├── shared/                   # Shared code across packages
+│   │   ├── package.json
+│   │   └── styles/
+│   │       ├── theme.css         # CSS variables, colors
+│   │       ├── markdown.css      # Rendered markdown styles
+│   │       └── print.css         # Print styles
+│   │
+│   ├── app/                      # Tauri desktop app
+│   │   ├── package.json
+│   │   ├── src/                  # SolidJS frontend
+│   │   │   ├── App.tsx           # Main component, shortcuts
+│   │   │   ├── index.tsx         # Entry point
+│   │   │   ├── types.ts          # TypeScript interfaces
+│   │   │   ├── utils.ts          # Constants, helpers
+│   │   │   ├── logger.ts         # Frontend logging
+│   │   │   ├── components/       # UI components
+│   │   │   ├── stores/           # SolidJS signals
+│   │   │   └── styles/           # App-specific styles
+│   │   ├── src-tauri/            # Rust backend
+│   │   │   ├── src/lib.rs        # Tauri commands
+│   │   │   ├── Cargo.toml        # Rust deps
+│   │   │   └── tauri.conf.json   # Tauri config
+│   │   ├── src-wasm/             # WASM module (Rust)
+│   │   └── tests/                # Unit tests
+│   │
+│   └── extension/                # Chrome/Firefox extension
+│       └── (Phase 1 - TODO)
 │
-├── src-tauri/                    # Backend (Rust/Tauri)
-│   ├── src/
-│   │   ├── main.rs               # Entry point
-│   │   └── lib.rs                # All Tauri commands & config
-│   ├── Cargo.toml                # Rust dependencies
-│   └── tauri.conf.json           # Tauri config
-│
-├── src-wasm/                     # WASM module (Rust)
-├── tests/                        # Unit tests (bun test)
-└── docs/llm/                     # Detailed reference docs
+├── package.json                  # Workspace root
+├── Makefile                      # Dev commands
+├── docs/
+│   ├── llm/                      # LLM reference docs
+│   └── plans/                    # Project plans
+└── README.md
+```
+
+**Workspace imports:**
+```typescript
+import "@md/shared/styles/theme.css";
+import "@md/shared/styles/markdown.css";
 ```
 
 ---
@@ -75,6 +85,7 @@ Load from `docs/llm/` when task involves:
 | state, signals, config, theme, CSS variables | [architecture.md](docs/llm/architecture.md) | State management, config, theming |
 | invoke, commands, IPC, events, backend | [tauri-commands.md](docs/llm/tauri-commands.md) | All Tauri commands |
 | patterns, print, PDF, quirks | [patterns.md](docs/llm/patterns.md) | Common code patterns |
+| ecosystem, extension, cloud, phases | [plans/md-ecosystem.md](docs/plans/md-ecosystem.md) | Full ecosystem plan |
 
 Full index: [docs/llm/index.md](docs/llm/index.md)
 
@@ -122,11 +133,12 @@ make version       # Show versions across files
 ## Versioning
 
 When creating a new version:
-1. Update `package.json` → `version`
-2. Update `src-tauri/Cargo.toml` → `version`
-3. Update `src-tauri/tauri.conf.json` → `version`
-4. Update `CHANGELOG.md` with release notes
-5. Git tag: `git tag vX.Y.Z`
+1. Update `package.json` (root) → `version`
+2. Update `packages/app/package.json` → `version`
+3. Update `packages/app/src-tauri/Cargo.toml` → `version`
+4. Update `packages/app/src-tauri/tauri.conf.json` → `version`
+5. Update `CHANGELOG.md` with release notes
+6. Git tag: `git tag vX.Y.Z`
 
 **Patch vs Minor:**
 - `fix/*` branch → patch (0.0.x) - bug fixes
@@ -136,11 +148,13 @@ When creating a new version:
 
 ## Common Tasks
 
-**Add Tauri command**: Function in `src-tauri/src/lib.rs` with `#[tauri::command]` → register in `invoke_handler![]` → call via `invoke()`
+**Add Tauri command**: Function in `packages/app/src-tauri/src/lib.rs` with `#[tauri::command]` → register in `invoke_handler![]` → call via `invoke()`
 
-**Add component**: File in `src/components/` → import in parent → use SolidJS patterns (signals, Show, For)
+**Add component**: File in `packages/app/src/components/` → import in parent → use SolidJS patterns (signals, Show, For)
 
-**Modify state**: Edit `src/stores/app-store.ts` → export signal + setter → use in components
+**Modify state**: Edit `packages/app/src/stores/app-store.ts` → export signal + setter → use in components
+
+**Add shared styles**: Edit files in `packages/shared/styles/` → import via `@md/shared/styles/*`
 
 **Debug**: Check `~/.md/md.log` or run `make logs`
 
