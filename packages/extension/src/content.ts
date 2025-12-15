@@ -168,10 +168,7 @@ function changeFontSize(delta: number) {
  * Apply font size to content
  */
 function applyFontSize() {
-  const content = document.getElementById("md-content");
-  if (content) {
-    content.style.fontSize = `${fontSize}px`;
-  }
+  document.documentElement.style.setProperty("--md-font-size", `${fontSize}px`);
 }
 
 /**

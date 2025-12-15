@@ -146,11 +146,20 @@ body {
 /* Content area */
 .md-content {
   padding: 2rem 1.5rem 4rem;
+  font-size: var(--md-font-size, 16px);
 }
 
 .md-content > .markdown-body {
   max-width: 900px;
   margin: 0 auto;
+  font-size: inherit !important;
+}
+
+.md-content .markdown-body p,
+.md-content .markdown-body li,
+.md-content .markdown-body td,
+.md-content .markdown-body th {
+  font-size: inherit;
 }
 
 /* Raw markdown view */
