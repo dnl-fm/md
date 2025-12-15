@@ -177,6 +177,8 @@ bun run watch      # Watch mode
 | `Ctrl++/-/0` | Font size |
 | `Ctrl+H` | Help |
 
+**Settings:** Stored in `chrome.storage.local` (persists across all URLs).
+
 > **No `file://` support:** Shiki/Mermaid load from CDN (esm.sh), blocked on local files. Bundling would add ~12MB. Use MD app for local files.
 
 ---

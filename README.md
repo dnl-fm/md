@@ -127,9 +127,11 @@ Configuration is stored in:
 - **Mermaid Diagrams** - Flowcharts, sequence diagrams, etc.
 - **Table of Contents** - Navigate long documents with Ctrl+G
 - **Theme Support** - Dark/light themes, follows system preference
+- **Print/PDF** - Export with Ctrl+P
 - **Raw View** - Toggle to see original markdown source
 - **Font Size** - Adjustable with Ctrl++/-
-- **Full Width** - Toggle between constrained and full-width layout
+- **Full Width** - Toggle between constrained and full-width layout (default: on)
+- **Persistent Settings** - Theme, font size, width saved across all sites
 
 ### Keyboard Shortcuts
 
