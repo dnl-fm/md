@@ -100,7 +100,9 @@ Key CSS variables:
 
 ---
 
-## Mermaid Diagrams
+## Diagram Rendering
+
+### Mermaid Diagrams
 
 Mermaid diagrams are rendered with theme-aware colors derived from the app's theme.
 
@@ -116,6 +118,32 @@ Mermaid diagrams are rendered with theme-aware colors derived from the app's the
 - Text: `--text-primary` → `primaryTextColor`
 - Lines/borders: `--border-color` → `lineColor`
 - Accent: `--accent-color` → highlights
+
+### ASCII Diagrams
+
+ASCII diagrams use WASM module from `../../cli/ascii/` to render Mermaid-like syntax as box-drawing characters.
+
+**Usage:**
+````markdown
+```ascii
+flowchart TD
+    A[Start] --> B[Process]
+    B --> C{Decision?}
+    C -->|Yes| D[End]
+```
+````
+
+**Supported types:** flowchart, erDiagram, sequenceDiagram, stateDiagram, classDiagram, timeline, table
+
+**Implementation** (`src/ascii-pkg/` + `src/components/markdown-viewer.tsx`):
+1. WASM module built with `make build-ascii`
+2. `render_ascii()` function called for `ascii` code blocks
+3. Results cached by content
+4. Rendered as `<pre class="ascii-diagram">` with monospace font
+
+**When to use ASCII vs Mermaid:**
+- **Mermaid:** Rich SVG graphics, hover states, complex layouts
+- **ASCII:** Copy-pasteable, works in terminals/plain text, lightweight
 
 ---
 

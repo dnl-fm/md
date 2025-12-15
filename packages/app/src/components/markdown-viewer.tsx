@@ -11,6 +11,18 @@ import { Show, createEffect, createMemo, createSignal, For, createRenderEffect }
 // Mermaid loaded via script tag (see index.html) to avoid Vite bundling issues
 declare const mermaid: typeof import("mermaid").default;
 import { getMermaidColorsFromTheme, getMermaidThemeVariables, getMermaidThemeCSS } from "../mermaid-theme";
+
+// ASCII diagram WASM module
+import initAscii, { render_ascii } from "../ascii-pkg/ascii";
+
+// Initialize ASCII WASM module once
+let asciiInitialized = false;
+const initAsciiWasm = async () => {
+  if (!asciiInitialized) {
+    await initAscii();
+    asciiInitialized = true;
+  }
+};
 import { darkColors, lightColors } from "../stores/app-store";
 import {
   content,
@@ -63,9 +75,12 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   const [matchPositions, setMatchPositions] = createSignal<MatchPosition[]>([]);
   const [mermaidSvgs, setMermaidSvgs] = createSignal<Map<number, string>>(new Map());
   const [mermaidHeights, setMermaidHeights] = createSignal<Map<number, number>>(new Map());
+  const [asciiDiagrams, setAsciiDiagrams] = createSignal<Map<number, string>>(new Map());
   
   // Cache rendered SVGs by content+theme to avoid re-rendering on file switch
   const mermaidCache = new Map<string, { svg: string; height: number }>();
+  // Cache rendered ASCII diagrams by content
+  const asciiCache = new Map<string, string>();
 
   // Render mermaid diagrams progressively - each pops in when ready
   createEffect(() => {
@@ -159,11 +174,61 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
     renderAll();
   });
 
-  // Get highlighted HTML with search matches and mermaid SVGs
+  // Render ASCII diagrams via WASM
+  createEffect(() => {
+    const html = renderedHtml();
+    if (!html) return;
+    
+    // Extract ASCII code from data attributes
+    const regex = /data-ascii="([^"]+)"/g;
+    const matches = [...html.matchAll(regex)];
+    if (matches.length === 0) {
+      setAsciiDiagrams(new Map());
+      return;
+    }
+    
+    const renderAll = async () => {
+      await initAsciiWasm();
+      const newDiagrams = new Map<number, string>();
+      
+      for (let index = 0; index < matches.length; index++) {
+        const match = matches[index];
+        const encoded = match[1];
+        const decoded = encoded
+          .replace(/&quot;/g, '"')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>');
+        
+        // Check cache first
+        const cached = asciiCache.get(decoded);
+        if (cached) {
+          newDiagrams.set(index, cached);
+          continue;
+        }
+        
+        try {
+          const result = render_ascii(decoded);
+          newDiagrams.set(index, result);
+          asciiCache.set(decoded, result);
+        } catch (err) {
+          console.error('ASCII render error:', err);
+          newDiagrams.set(index, `Error: ${err}`);
+        }
+      }
+      
+      setAsciiDiagrams(newDiagrams);
+    };
+    
+    renderAll();
+  });
+
+  // Get highlighted HTML with search matches, mermaid SVGs, and ASCII diagrams
   const highlightedHtml = createMemo(() => {
     const html = renderedHtml();
     const svgs = mermaidSvgs();
     const heights = mermaidHeights(); // Read early to track as dependency
+    const ascii = asciiDiagrams(); // Track ASCII diagrams as dependency
     const query = searchQuery().trim();
 
     if (!html || showRawMarkdown()) {
@@ -186,6 +251,26 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
         }
         // Show spinner with preserved height
         return `<div class="mermaid-diagram"${style}><div class="mermaid-loading"><span class="spinner"></span></div></div>`;
+      }
+    );
+
+    // Replace ASCII placeholders with rendered diagrams or loading state
+    let asciiIndex = 0;
+    processedHtml = processedHtml.replace(
+      /<pre class="ascii-diagram" id="[^"]*" data-ascii="[^"]+"><\/pre>/g,
+      () => {
+        const idx = asciiIndex++;
+        const rendered = ascii.get(idx);
+        if (rendered) {
+          // Escape HTML in rendered ASCII to prevent XSS, preserve whitespace
+          const escaped = rendered
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+          return `<pre class="ascii-diagram">${escaped}</pre>`;
+        }
+        // Show loading state
+        return `<pre class="ascii-diagram ascii-loading">Rendering...</pre>`;
       }
     );
 

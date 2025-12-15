@@ -41,6 +41,7 @@ Both share the same rendering engine, styles, and keyboard shortcuts.
 
 - **Live Preview** - Real-time markdown rendering with GitHub-flavored markdown support
 - **Mermaid Diagrams** - Native support for flowcharts, sequence diagrams, and more with theme-aware colors
+- **ASCII Diagrams** - Box-drawing character diagrams via WASM, same syntax as Mermaid but copy-pasteable
 - **Syntax Highlighting** - Code blocks with beautiful syntax highlighting powered by Shiki
 - **Edit Mode** - WASM-powered editor with language-aware syntax highlighting for 16+ languages
 - **Table of Contents** - Quick navigation panel with Ctrl+G, highlights current section
@@ -125,6 +126,7 @@ Configuration is stored in:
 - **Auto-Detection** - Renders raw `.md` URLs from GitHub, GitLab, Gitea, and any plain text markdown
 - **Syntax Highlighting** - Code blocks with Shiki
 - **Mermaid Diagrams** - Flowcharts, sequence diagrams, etc.
+- **ASCII Diagrams** - Box-drawing diagrams, same syntax as Mermaid
 - **Table of Contents** - Navigate long documents with Ctrl+G
 - **Theme Support** - Dark/light themes, follows system preference
 - **Print/PDF** - Export with Ctrl+P
