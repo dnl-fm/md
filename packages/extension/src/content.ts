@@ -607,59 +607,67 @@ function setupKeyboardShortcuts() {
 }
 
 /**
- * Highlight code blocks using Shiki
+ * Highlight code blocks using Prism.js
  */
 async function highlightCodeBlocks() {
   const codeBlocks = document.querySelectorAll("pre code[class*='language-']");
   if (codeBlocks.length === 0) return;
 
   try {
-    const { createHighlighter } = await import("https://esm.sh/shiki@1.24.0");
-
-    const highlighter = await createHighlighter({
-      themes: ["github-dark", "github-light"],
-      langs: [
-        "javascript",
-        "typescript",
-        "python",
-        "rust",
-        "go",
-        "bash",
-        "json",
-        "yaml",
-        "html",
-        "css",
-        "sql",
-        "markdown",
-        "php",
-      ],
-    });
-
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    // Import Prism core and needed languages
+    const Prism = await import("prismjs");
+    
+    // Import language definitions (in dependency order)
+    await import("prismjs/components/prism-javascript");
+    await import("prismjs/components/prism-typescript");
+    await import("prismjs/components/prism-jsx");
+    await import("prismjs/components/prism-tsx");
+    await import("prismjs/components/prism-python");
+    await import("prismjs/components/prism-rust");
+    await import("prismjs/components/prism-go");
+    await import("prismjs/components/prism-php");
+    await import("prismjs/components/prism-bash");
+    await import("prismjs/components/prism-json");
+    await import("prismjs/components/prism-yaml");
+    await import("prismjs/components/prism-toml");
+    await import("prismjs/components/prism-markup"); // html/xml
+    await import("prismjs/components/prism-css");
+    await import("prismjs/components/prism-sql");
+    await import("prismjs/components/prism-markdown");
+    await import("prismjs/components/prism-diff");
 
     for (const block of codeBlocks) {
       const code = block.textContent || "";
       const langClass = block.className.match(/language-(\w+)/);
-      const lang = langClass ? langClass[1] : "text";
+      let lang = langClass ? langClass[1] : "text";
+
+      // Map common aliases
+      if (lang === "js") lang = "javascript";
+      if (lang === "ts") lang = "typescript";
+      if (lang === "html" || lang === "xml") lang = "markup";
+      if (lang === "sh" || lang === "shell") lang = "bash";
+      if (lang === "yml") lang = "yaml";
+
+      // Check if language is supported
+      if (!Prism.default.languages[lang]) {
+        continue; // Skip unsupported languages
+      }
 
       try {
-        const highlighted = highlighter.codeToHtml(code, {
-          lang: lang,
-          theme: isDark ? "github-dark" : "github-light",
-        });
+        const highlighted = Prism.default.highlight(
+          code,
+          Prism.default.languages[lang],
+          lang
+        );
 
-        const pre = block.parentElement;
-        if (pre) {
-          const wrapper = document.createElement("div");
-          wrapper.innerHTML = highlighted;
-          pre.replaceWith(wrapper.firstElementChild!);
-        }
-      } catch {
-        // Language not supported, skip
+        block.innerHTML = highlighted;
+        block.classList.add("language-" + lang);
+      } catch (error) {
+        console.warn(`MD: Failed to highlight ${lang} code block`, error);
       }
     }
   } catch (error) {
-    console.warn("MD: Failed to load syntax highlighter", error);
+    console.warn("MD: Failed to load Prism.js", error);
   }
 }
 

@@ -44,6 +44,10 @@ function buildStyles() {
   // Read extension-specific styles
   const extensionCSS = readFileSync("./src/extension.css", "utf-8");
 
+  // Read Prism.js theme (using github-like themes)
+  const prismDarkCSS = readFileSync("./node_modules/prismjs/themes/prism-tomorrow.css", "utf-8");
+  const prismLightCSS = readFileSync("./node_modules/prismjs/themes/prism.css", "utf-8");
+
   // Combine all styles
   const combined = `
 /* MD Extension Styles */
@@ -57,6 +61,16 @@ ${markdownCSS}
 
 /* === Extension UI === */
 ${extensionCSS}
+
+/* === Prism.js Syntax Highlighting (Dark) === */
+[data-theme="dark"] {
+${prismDarkCSS}
+}
+
+/* === Prism.js Syntax Highlighting (Light) === */
+[data-theme="light"] {
+${prismLightCSS}
+}
 
 /* === Print Styles === */
 ${printCSS}
