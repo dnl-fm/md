@@ -225,6 +225,10 @@ html.full-width .md-content > .raw-markdown {
   border-color: var(--accent-hover, #2563eb);
 }
 
+.md-btn-icon-lg {
+  font-size: 1.3em;
+}
+
 /* ============================================================================
    Table of Contents - Matches MD App Style
    ============================================================================ */

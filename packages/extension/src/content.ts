@@ -90,8 +90,8 @@ function replacePageContent(html: string) {
             </button>
           </div>
           <div class="md-sidebar-content">
-            <button class="md-btn md-btn-icon ${fullWidth ? "active" : ""}" id="md-width-btn" title="Toggle full width">
-              ↔
+            <button class="md-btn md-btn-icon md-btn-icon-lg ${fullWidth ? "active" : ""}" id="md-width-btn" title="Toggle full width">
+              ⇔
             </button>
             <button class="md-btn md-btn-icon" id="md-raw-btn" title="Toggle raw markdown (Ctrl+U)">
               &lt;/&gt;
