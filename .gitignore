@@ -1,6 +1,5 @@
 node_modules
 dist
 packages/app/src/wasm-pkg
-packages/app/src/ascii-pkg
 packages/app/src-wasm/target
 packages/extension/dist
