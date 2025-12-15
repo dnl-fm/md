@@ -1,8 +1,3 @@
-FROM node:20-alpine AS mermaid-builder
-
-# Install mermaid-cli globally
-RUN npm install -g @mermaid-js/mermaid-cli
-
 FROM golang:1.21-alpine AS builder
 
 WORKDIR /build
@@ -17,22 +12,19 @@ COPY . .
 # Build
 RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server
 
-FROM alpine:latest
-
-# Install Node.js for mermaid-cli
-RUN apk add --no-cache nodejs npm chromium
-
-# Copy mermaid-cli from builder
-COPY --from=mermaid-builder /usr/local/lib/node_modules/@mermaid-js/mermaid-cli /usr/local/lib/node_modules/@mermaid-js/mermaid-cli
-RUN ln -s /usr/local/lib/node_modules/@mermaid-js/mermaid-cli/src/cli.js /usr/local/bin/mmdc && \
-    chmod +x /usr/local/lib/node_modules/@mermaid-js/mermaid-cli/src/cli.js
-
-# Set Puppeteer to use installed Chromium
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+# Final stage with headless-shell
+FROM chromedp/headless-shell:stable
 
 # Copy Go binary
 COPY --from=builder /build/server /usr/local/bin/server
+
+# Set environment for chromedp
+ENV CHROME_BIN=/headless-shell/headless-shell
+ENV CHROME_PATH=/headless-shell/headless-shell
+
+# Create non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
 
 EXPOSE 8080
 

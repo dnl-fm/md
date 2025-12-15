@@ -18,6 +18,14 @@ func main() {
 		port = "8080"
 	}
 
+	// Initialize renderers
+	log.Println("Initializing renderers...")
+	if err := handlers.InitializeRenderers(); err != nil {
+		log.Fatal("Failed to initialize renderers:", err)
+	}
+	defer handlers.CloseRenderers()
+	log.Println("Renderers ready")
+
 	r := chi.NewRouter()
 
 	// Middleware

@@ -11,8 +11,28 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/dnl-fm/md/packages/api/internal/renderer"
 	"github.com/go-chi/chi/v5"
 )
+
+var mermaidRenderer *renderer.MermaidRenderer
+
+// InitializeRenderers sets up the warm mermaid renderer
+func InitializeRenderers() error {
+	var err error
+	mermaidRenderer, err = renderer.NewMermaidRenderer()
+	if err != nil {
+		return fmt.Errorf("failed to initialize mermaid renderer: %w", err)
+	}
+	return nil
+}
+
+// CloseRenderers shuts down renderers gracefully
+func CloseRenderers() {
+	if mermaidRenderer != nil {
+		mermaidRenderer.Close()
+	}
+}
 
 type ErrorResponse struct {
 	Error string `json:"error"`
@@ -55,38 +75,17 @@ func RenderMermaid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create temp file for input
-	tmpDir := os.TempDir()
-	tmpFile := filepath.Join(tmpDir, hash+".mmd")
-	if err := os.WriteFile(tmpFile, code, 0644); err != nil {
-		respondError(w, "failed to write temp file", http.StatusInternalServerError)
-		return
-	}
-	defer os.Remove(tmpFile)
-
-	// Create output file path
-	outFile := filepath.Join(tmpDir, hash+".svg")
-	defer os.Remove(outFile)
-
-	// Execute mermaid-cli
-	cmd := exec.Command("mmdc", "-i", tmpFile, "-o", outFile, "-t", theme, "-b", "transparent")
-	output, err := cmd.CombinedOutput()
+	// Render using chromedp (fast, warm page)
+	svg, err := mermaidRenderer.Render(string(code), theme)
 	if err != nil {
-		respondError(w, fmt.Sprintf("render failed: %s", string(output)), http.StatusBadRequest)
-		return
-	}
-
-	// Read generated SVG
-	svg, err := os.ReadFile(outFile)
-	if err != nil {
-		respondError(w, "failed to read output", http.StatusInternalServerError)
+		respondError(w, fmt.Sprintf("render failed: %s", err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	// Return SVG
 	w.Header().Set("Content-Type", "image/svg+xml")
 	w.Header().Set("Cache-Control", "public, max-age=2592000") // 30 days
-	w.Write(svg)
+	w.Write([]byte(svg))
 }
 
 // RenderASCII renders ASCII diagram to text

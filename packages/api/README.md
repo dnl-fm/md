@@ -57,8 +57,9 @@ curl "http://localhost:8080/render/ascii/${HASH}?code=${ENCODED}"
 
 ### Prerequisites
 - Go 1.21+
-- Node.js 20+ (for mermaid-cli)
-- mermaid-cli: `npm install -g @mermaid-js/mermaid-cli`
+- Chrome/Chromium (for chromedp)
+  - macOS: `brew install --cask google-chrome`
+  - Ubuntu: `sudo apt install google-chrome-stable`
 
 ### Run Locally
 ```bash
