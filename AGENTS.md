@@ -197,6 +197,11 @@ When creating a new version:
 - `fix/*` branch → patch (0.0.x) - bug fixes
 - `feat/*` branch → minor (0.x.0) - new features
 
+**Changelogs:** Each package has its own changelog:
+- `packages/app/CHANGELOG.md` - Desktop app
+- `packages/extension/CHANGELOG.md` - Browser extension  
+- `packages/shared/CHANGELOG.md` - Shared styles
+
 ---
 
 ## Common Tasks

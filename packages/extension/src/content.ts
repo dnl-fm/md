@@ -11,6 +11,7 @@ const md = new MarkdownIt({
 });
 
 // Constants
+const VERSION = "0.1.0";
 const HEADER_HEIGHT = 48;
 const FONT_SIZE_MIN = 12;
 const FONT_SIZE_MAX = 24;
@@ -25,12 +26,14 @@ let rawMarkdown = "";
 let fontSize = FONT_SIZE_DEFAULT;
 let fullWidth = true;
 let theme: "dark" | "light" = "dark";
+let showReleaseNotification = false;
 
 // Storage keys
 const STORAGE_KEYS = {
   theme: "md-theme",
   fontSize: "md-font-size",
   fullWidth: "md-full-width",
+  lastSeenVersion: "md-last-seen-version",
 } as const;
 
 /**
@@ -52,6 +55,12 @@ async function loadSettings(): Promise<void> {
       
       if (typeof result[STORAGE_KEYS.fullWidth] === "boolean") {
         fullWidth = result[STORAGE_KEYS.fullWidth];
+      }
+      
+      // Check if this is a new version
+      const lastSeenVersion = result[STORAGE_KEYS.lastSeenVersion];
+      if (lastSeenVersion !== VERSION) {
+        showReleaseNotification = true;
       }
       
       resolve();
@@ -212,6 +221,17 @@ function replacePageContent(html: string) {
           </div>
           <nav class="md-toc-nav" id="md-toc-nav"></nav>
         </aside>
+
+        <!-- Release Notification -->
+        ${showReleaseNotification ? `
+        <div class="md-release-notification" id="md-release-notification">
+          <div class="md-release-content">
+            <span class="md-release-icon">🎉</span>
+            <span class="md-release-text">MD Extension updated to v${VERSION}</span>
+          </div>
+          <button class="md-btn md-release-close" id="md-release-close" title="Dismiss">×</button>
+        </div>
+        ` : ''}
       </div>
     </body>
   `;
@@ -239,6 +259,7 @@ function replacePageContent(html: string) {
     if (e.target === e.currentTarget) setHelpVisible(false);
   });
   document.getElementById("md-print-btn")?.addEventListener("click", printDocument);
+  document.getElementById("md-release-close")?.addEventListener("click", dismissReleaseNotification);
 }
 
 /**
@@ -458,6 +479,20 @@ function setTOCVisible(visible: boolean) {
  */
 function printDocument() {
   window.print();
+}
+
+/**
+ * Dismiss release notification and save version
+ */
+function dismissReleaseNotification() {
+  const notification = document.getElementById("md-release-notification");
+  if (notification) {
+    notification.classList.add("leaving");
+    setTimeout(() => {
+      notification.remove();
+      saveSetting(STORAGE_KEYS.lastSeenVersion, VERSION);
+    }, 200);
+  }
 }
 
 function toggleHelp() {
