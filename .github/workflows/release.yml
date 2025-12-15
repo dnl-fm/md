@@ -84,7 +84,7 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           # Extract section between ## [VERSION] and next ## [
-          CHANGELOG=$(sed -n "/^## \[${VERSION}\]/,/^## \[/p" CHANGELOG.md | sed '$d')
+          CHANGELOG=$(sed -n "/^## \[${VERSION}\]/,/^## \[/p" packages/app/CHANGELOG.md | sed '$d')
           # Remove the header line
           CHANGELOG=$(echo "$CHANGELOG" | tail -n +2)
           # Handle multiline for GitHub Actions

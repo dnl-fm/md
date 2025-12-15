@@ -35,6 +35,22 @@ jobs:
       - name: Type check
         run: cd packages/app && bun run tsc --noEmit
 
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build extension
+        run: cd packages/extension && bun run build
+
   build-check:
     runs-on: ubuntu-latest
     steps:
