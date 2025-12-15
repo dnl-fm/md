@@ -12,6 +12,7 @@ const md = new MarkdownIt({
 
 // Constants
 const VERSION = "0.1.0";
+const CHANGELOG_URL = "https://github.com/dnl-fm/md/blob/main/packages/extension/CHANGELOG.md";
 const HEADER_HEIGHT = 48;
 const FONT_SIZE_MIN = 12;
 const FONT_SIZE_MAX = 24;
@@ -228,6 +229,7 @@ function replacePageContent(html: string) {
           <div class="md-release-content">
             <span class="md-release-icon">🎉</span>
             <span class="md-release-text">MD Extension updated to v${VERSION}</span>
+            <button class="md-btn md-release-btn" id="md-release-changelog">View Changelog</button>
           </div>
           <button class="md-btn md-release-close" id="md-release-close" title="Dismiss">×</button>
         </div>
@@ -260,6 +262,7 @@ function replacePageContent(html: string) {
   });
   document.getElementById("md-print-btn")?.addEventListener("click", printDocument);
   document.getElementById("md-release-close")?.addEventListener("click", dismissReleaseNotification);
+  document.getElementById("md-release-changelog")?.addEventListener("click", viewChangelog);
 }
 
 /**
@@ -493,6 +496,14 @@ function dismissReleaseNotification() {
       saveSetting(STORAGE_KEYS.lastSeenVersion, VERSION);
     }, 200);
   }
+}
+
+/**
+ * Open changelog and dismiss notification
+ */
+function viewChangelog() {
+  window.open(CHANGELOG_URL, "_blank");
+  dismissReleaseNotification();
 }
 
 function toggleHelp() {

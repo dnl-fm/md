@@ -675,6 +675,21 @@ html.full-width .md-content > .raw-markdown {
   font-size: 14px;
 }
 
+.md-release-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  background: var(--accent-color, #4a9eff);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.md-release-btn:hover {
+  opacity: 0.9;
+}
+
 .md-release-close {
   background: none;
   border: none;
