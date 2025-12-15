@@ -433,4 +433,29 @@
     white-space: pre-wrap;
 }
 
+/* ASCII Diagrams */
+.ascii-wrapper {
+    margin: 1em 0;
+    overflow-x: auto;
+}
+
+.ascii-diagram {
+    font-family: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+    font-size: 0.85em;
+    line-height: 1.4;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1em;
+    margin: 0;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--text-primary);
+}
+
+.ascii-diagram.ascii-loading {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 

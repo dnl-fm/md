@@ -279,8 +279,9 @@ function App() {
       return defaultRenderToken(tokens, idx, options);
     };
 
-    // Counter for unique mermaid diagram IDs
+    // Counter for unique mermaid/ascii diagram IDs
     let mermaidCounter = 0;
+    let asciiCounter = 0;
     
     // Custom fence renderer for syntax highlighting with shiki
     md.renderer.rules.fence = function(tokens, idx) {
@@ -295,6 +296,14 @@ function App() {
         // Store code in data attribute for later rendering
         const escapedCode = escapeHtml(code).replace(/"/g, '&quot;');
         return `<div class="mermaid-wrapper"${lineAttr}><div class="mermaid-diagram" id="${id}" data-mermaid="${escapedCode}"></div></div>`;
+      }
+      
+      // Handle ASCII diagrams (mermaid-like syntax rendered as box-drawing characters)
+      if (lang === "ascii") {
+        const id = `ascii-${asciiCounter++}`;
+        // Store code in data attribute for WASM rendering
+        const escapedCode = escapeHtml(code).replace(/"/g, '&quot;');
+        return `<div class="ascii-wrapper"${lineAttr}><pre class="ascii-diagram" id="${id}" data-ascii="${escapedCode}"></pre></div>`;
       }
       
       if (hl) {

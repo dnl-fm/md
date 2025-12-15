@@ -2,7 +2,7 @@
 
 Desktop app + browser extension for viewing markdown files beautifully.
 
-**Stack:** Tauri 2 (Rust), SolidJS (NOT React), TypeScript, Vite, Bun, Shiki, MarkdownIt, Mermaid
+**Stack:** Tauri 2 (Rust), SolidJS (NOT React), TypeScript, Vite, Bun, Shiki, MarkdownIt, Mermaid, ASCII (WASM)
 
 **Architecture:** Bun workspace monorepo with shared styles across packages
 
