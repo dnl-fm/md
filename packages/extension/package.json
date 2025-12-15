@@ -1,0 +1,19 @@
+{
+  "name": "@md/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run build.ts",
+    "watch": "bun run build.ts --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@md/shared": "workspace:*",
+    "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "typescript": "~5.6.2"
+  }
+}

@@ -1,6 +1,7 @@
-.PHONY: dev build build-wasm serve test test-watch install clean lint typecheck codequality help
+.PHONY: dev build build-wasm build-ext serve test test-watch install clean lint typecheck codequality help
 
 APP_DIR = packages/app
+EXT_DIR = packages/extension
 
 # Development
 dev:
@@ -12,6 +13,9 @@ build:
 
 build-wasm:
 	cd $(APP_DIR) && bun run build:wasm
+
+build-ext:
+	cd $(EXT_DIR) && bun run build
 
 # Preview built app
 serve:
@@ -32,6 +36,7 @@ install:
 clean:
 	rm -rf node_modules
 	rm -rf $(APP_DIR)/dist $(APP_DIR)/node_modules $(APP_DIR)/src/wasm-pkg
+	rm -rf $(EXT_DIR)/dist $(EXT_DIR)/node_modules
 	cd $(APP_DIR)/src-tauri && cargo clean
 
 # Linting & type checking
@@ -54,6 +59,7 @@ version:
 	@echo "app package.json:     $$(jq -r .version $(APP_DIR)/package.json)"
 	@echo "Cargo.toml:           $$(grep '^version' $(APP_DIR)/src-tauri/Cargo.toml | head -1 | cut -d'"' -f2)"
 	@echo "tauri.conf.json:      $$(jq -r .version $(APP_DIR)/src-tauri/tauri.conf.json)"
+	@echo "extension:            $$(jq -r .version $(EXT_DIR)/package.json)"
 
 # Help
 help:
@@ -61,6 +67,7 @@ help:
 	@echo "  dev         - Start dev server + Tauri"
 	@echo "  build       - Production build (wasm + tauri)"
 	@echo "  build-wasm  - Build WASM module only"
+	@echo "  build-ext   - Build Chrome extension"
 	@echo "  serve       - Preview built app"
 	@echo "  test        - Run tests"
 	@echo "  test-watch  - Run tests in watch mode"
