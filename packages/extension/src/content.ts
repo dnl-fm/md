@@ -84,8 +84,14 @@ function replacePageContent(html: string) {
         <!-- Sidebar (collapsed) -->
         <aside class="md-sidebar">
           <div class="md-sidebar-header">
+            <button class="md-btn md-btn-icon" id="md-toc-btn" title="Table of Contents (Ctrl+G)">
+              ☰
+            </button>
           </div>
           <div class="md-sidebar-content">
+            <button class="md-btn md-btn-icon" id="md-raw-btn" title="Toggle raw markdown (Ctrl+U)">
+              &lt;/&gt;
+            </button>
           </div>
           <div class="md-sidebar-footer">
             <button class="md-btn md-btn-icon" id="md-font-increase" title="Increase font size">
@@ -105,12 +111,6 @@ function replacePageContent(html: string) {
           <div class="md-file-header">
             <span class="md-file-path">📄 ${escapeHtml(filename)}</span>
             <div class="md-file-header-right">
-              <button class="md-btn md-btn-small" id="md-toc-btn" title="Table of Contents (Ctrl+G)">
-                TOC
-              </button>
-              <button class="md-btn md-btn-small" id="md-raw-btn" title="Toggle raw markdown (Ctrl+U)">
-                RAW
-              </button>
               <span class="md-file-meta">${formatFileSize(rawMarkdown.length)}</span>
             </div>
           </div>

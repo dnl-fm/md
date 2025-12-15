@@ -57,12 +57,12 @@ body {
 }
 
 .md-sidebar-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 8px;
   gap: 4px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .md-sidebar-footer {
@@ -72,6 +72,7 @@ body {
   gap: 4px;
   padding: 8px;
   border-top: 1px solid var(--border-color);
+  margin-top: auto;
 }
 
 /* ============================================================================
