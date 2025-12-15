@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync } from "fs";
-import { join, dirname } from "path";
+import { join } from "path";
 
 const DIST_DIR = "./dist";
 const SHARED_STYLES = "../shared/styles";
@@ -39,6 +39,7 @@ function buildStyles() {
   // Read shared styles
   const themeCSS = readFileSync(join(SHARED_STYLES, "theme.css"), "utf-8");
   const markdownCSS = readFileSync(join(SHARED_STYLES, "markdown.css"), "utf-8");
+  const printCSS = readFileSync(join(SHARED_STYLES, "print.css"), "utf-8");
 
   // Read extension-specific styles
   const extensionCSS = readFileSync("./src/extension.css", "utf-8");
@@ -56,6 +57,9 @@ ${markdownCSS}
 
 /* === Extension UI === */
 ${extensionCSS}
+
+/* === Print Styles === */
+${printCSS}
 `.trim();
 
   writeFileSync(join(DIST_DIR, "styles.css"), combined);
@@ -77,7 +81,6 @@ function copyIcons() {
     mkdirSync(iconsDir, { recursive: true });
   }
 
-  // For now, create placeholder icons (you can replace with real ones)
   const sizes = [16, 48, 128];
   for (const size of sizes) {
     const iconPath = `./icons/icon${size}.png`;
@@ -86,7 +89,6 @@ function copyIcons() {
     if (existsSync(iconPath)) {
       cpSync(iconPath, destPath);
     } else {
-      // Create a simple SVG placeholder and note that real icons are needed
       console.log(`  ⚠ Missing icon: ${iconPath}`);
     }
   }

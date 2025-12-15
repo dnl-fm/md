@@ -121,6 +121,7 @@ function replacePageContent(html: string) {
           <div class="md-file-header">
             <span class="md-file-path">📄 ${escapeHtml(filename)}</span>
             <div class="md-file-header-right">
+              <button class="md-btn md-header-btn" id="md-print-btn" title="Print / PDF (Ctrl+P)">Print</button>
               <span class="md-file-meta">${formatFileSize(rawMarkdown.length)}</span>
             </div>
           </div>
@@ -151,6 +152,7 @@ function replacePageContent(html: string) {
                   <div class="md-shortcut"><kbd>Ctrl+G</kbd> Table of contents</div>
                   <div class="md-shortcut"><kbd>Ctrl+T</kbd> Toggle theme</div>
                   <div class="md-shortcut"><kbd>Ctrl+U</kbd> Toggle raw markdown</div>
+                  <div class="md-shortcut"><kbd>Ctrl+P</kbd> Print / PDF</div>
                   <div class="md-shortcut"><kbd>Ctrl+H</kbd> Help</div>
                   <div class="md-shortcut"><kbd>Esc</kbd> Close panel</div>
                 </div>
@@ -194,6 +196,7 @@ function replacePageContent(html: string) {
   document.getElementById("md-help-backdrop")?.addEventListener("click", (e) => {
     if (e.target === e.currentTarget) setHelpVisible(false);
   });
+  document.getElementById("md-print-btn")?.addEventListener("click", printDocument);
 }
 
 /**
@@ -408,6 +411,13 @@ function setTOCVisible(visible: boolean) {
 /**
  * Toggle help modal
  */
+/**
+ * Print document
+ */
+function printDocument() {
+  window.print();
+}
+
 function toggleHelp() {
   setHelpVisible(!helpVisible);
 }
@@ -463,6 +473,12 @@ function setupKeyboardShortcuts() {
     if (e.ctrlKey && e.key === "u") {
       e.preventDefault();
       toggleRawView();
+    }
+
+    // Ctrl+P - Print
+    if (e.ctrlKey && e.key === "p") {
+      e.preventDefault();
+      printDocument();
     }
 
     // Ctrl+H - Toggle help

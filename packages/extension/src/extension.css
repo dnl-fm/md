@@ -118,6 +118,22 @@ body {
   gap: 12px;
 }
 
+.md-header-btn {
+  padding: 4px 10px;
+  font-size: 13px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.md-header-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
 .md-file-meta {
   color: var(--text-secondary);
 }
@@ -602,19 +618,38 @@ html.full-width .md-content > .raw-markdown {
    ============================================================================ */
 
 @media print {
+  /* Hide extension UI elements */
   .md-sidebar,
   .md-file-header,
   .md-toc,
-  .md-toc-backdrop {
+  .md-toc-backdrop,
+  .md-modal-backdrop,
+  .md-modal {
     display: none !important;
   }
 
+  /* Reset layout for print */
+  .md-app-container,
+  .md-main-content,
   .md-content {
-    max-width: none;
-    padding: 0;
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
-  
-  .md-app-container {
-    display: block;
+
+  /* Mermaid diagrams */
+  .mermaid-diagram {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .mermaid-diagram svg {
+    max-width: 100% !important;
+    height: auto !important;
   }
 }
