@@ -115,7 +115,32 @@ body {
 .md-file-header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+/* Font size controls */
+.md-font-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.md-font-controls .md-btn-icon {
+  min-width: 28px;
+  min-height: 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 1em;
+  font-weight: bold;
+}
+
+.md-font-size {
+  min-width: 28px;
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Content area */

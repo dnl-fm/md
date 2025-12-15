@@ -15,9 +15,13 @@ let tocEntries: TOCEntry[] = [];
 let tocVisible = false;
 let showingRaw = false;
 let rawMarkdown = "";
+let fontSize = parseInt(localStorage.getItem("md-font-size") || "16", 10);
 
-// Header height for scroll offset
+// Constants
 const HEADER_HEIGHT = 48;
+const FONT_SIZE_MIN = 12;
+const FONT_SIZE_MAX = 24;
+const FONT_SIZE_DEFAULT = 16;
 
 /**
  * Main entry point
@@ -99,6 +103,15 @@ function replacePageContent(html: string) {
           <div class="md-file-header">
             <span class="md-file-path">📄 ${escapeHtml(filename)}</span>
             <div class="md-file-header-right">
+              <div class="md-font-controls">
+                <button class="md-btn md-btn-icon md-btn-small" id="md-font-decrease" title="Decrease font size">
+                  −
+                </button>
+                <span class="md-font-size" id="md-font-size">${fontSize}</span>
+                <button class="md-btn md-btn-icon md-btn-small" id="md-font-increase" title="Increase font size">
+                  +
+                </button>
+              </div>
               <button class="md-btn md-btn-small" id="md-raw-btn" title="Toggle raw markdown (Ctrl+U)">
                 RAW
               </button>
@@ -124,8 +137,9 @@ function replacePageContent(html: string) {
     </body>
   `;
 
-  // Apply theme
+  // Apply theme and font size
   document.documentElement.setAttribute("data-theme", theme);
+  applyFontSize();
 
   // Render TOC
   renderTOC();
@@ -136,6 +150,38 @@ function replacePageContent(html: string) {
   document.getElementById("md-toc-backdrop")?.addEventListener("click", () => setTOCVisible(false));
   document.getElementById("md-theme-btn")?.addEventListener("click", toggleTheme);
   document.getElementById("md-raw-btn")?.addEventListener("click", toggleRawView);
+  document.getElementById("md-font-decrease")?.addEventListener("click", () => changeFontSize(-1));
+  document.getElementById("md-font-increase")?.addEventListener("click", () => changeFontSize(1));
+}
+
+/**
+ * Change font size
+ */
+function changeFontSize(delta: number) {
+  fontSize = Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, fontSize + delta));
+  localStorage.setItem("md-font-size", String(fontSize));
+  applyFontSize();
+  updateFontSizeDisplay();
+}
+
+/**
+ * Apply font size to content
+ */
+function applyFontSize() {
+  const content = document.getElementById("md-content");
+  if (content) {
+    content.style.fontSize = `${fontSize}px`;
+  }
+}
+
+/**
+ * Update font size display
+ */
+function updateFontSizeDisplay() {
+  const display = document.getElementById("md-font-size");
+  if (display) {
+    display.textContent = String(fontSize);
+  }
 }
 
 /**
