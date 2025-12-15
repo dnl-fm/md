@@ -1,14 +1,14 @@
 # MD - Markdown Ecosystem
 
-Fast, lightweight Markdown viewer with live preview, edit mode, file watching, and theming.
+Desktop app + browser extension for viewing markdown files beautifully.
 
 **Stack:** Tauri 2 (Rust), SolidJS (NOT React), TypeScript, Vite, Bun, Shiki, MarkdownIt, Mermaid
+
+**Architecture:** Bun workspace monorepo with shared styles across packages
 
 **Flow:** `SolidJS UI → Tauri invoke() → Rust backend → File I/O`
 
 **Decisions:** Desktop-first (Tauri) · Signals for state (SolidJS) · WASM for heavy lifting · Single instance
-
-**Features:** Live preview · Edit mode · Mermaid diagrams · Theme-aware rendering · TOC panel · Print/PDF
 
 ---
 
@@ -28,6 +28,8 @@ import { useState, useEffect } from "react";  // WRONG
 ---
 
 ## Monorepo Structure
+
+Bun workspaces with `packages/*`. Single `bun install` at root installs all dependencies.
 
 ```
 md/
@@ -58,7 +60,16 @@ md/
 │   │   └── tests/                # Unit tests
 │   │
 │   └── extension/                # Chrome/Firefox extension
-│       └── (Phase 1 - TODO)
+│       ├── package.json
+│       ├── manifest.json         # Extension manifest v3
+│       ├── build.ts              # Bundle script
+│       ├── src/
+│       │   ├── content.ts        # Main content script
+│       │   ├── detector.ts       # URL pattern detection
+│       │   ├── toc.ts            # Table of contents
+│       │   └── extension.css     # Styles
+│       ├── icons/                # Extension icons
+│       └── dist/                 # Built extension
 │
 ├── package.json                  # Workspace root
 ├── Makefile                      # Dev commands
@@ -73,6 +84,16 @@ md/
 import "@md/shared/styles/theme.css";
 import "@md/shared/styles/markdown.css";
 ```
+
+---
+
+## Components
+
+| Component | Status | Purpose |
+|-----------|--------|---------|
+| **MD App** | ✅ Complete | Desktop app: local files, full editing, print/PDF |
+| **MD Extension** | ✅ Phase 1 | Browser extension: raw .md URL rendering |
+| **MD Cloud** | 📋 Planned | Document storage, sharing, revision history |
 
 ---
 
@@ -93,6 +114,8 @@ Full index: [docs/llm/index.md](docs/llm/index.md)
 
 ## Development Commands
 
+### Desktop App
+
 ```bash
 make dev           # Start dev server + Tauri
 make build         # Production build (wasm + tauri)
@@ -104,11 +127,26 @@ make logs          # Tail ~/.md/md.log
 make version       # Show versions across files
 ```
 
+### Extension
+
+```bash
+cd packages/extension
+bun run build      # Build extension to dist/
+bun run watch      # Watch mode
+
+# Load in Chrome:
+# 1. chrome://extensions
+# 2. Enable Developer mode
+# 3. Load unpacked → packages/extension/dist
+```
+
 **⚠️ Before any commit:** Always run `make codequality` to ensure lint passes and tests succeed.
 
 ---
 
 ## Keyboard Shortcuts
+
+### Desktop App
 
 | Shortcut | Action |
 |----------|--------|
@@ -127,6 +165,16 @@ make version       # Show versions across files
 | `Ctrl++/-/0` | Font size |
 | `Ctrl+1-9` | Open Nth file |
 | `Ctrl+[/]` | Prev/next file |
+
+### Extension
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+G` | Table of contents |
+| `Ctrl+T` | Toggle theme |
+| `Ctrl+U` | Toggle raw markdown |
+| `Ctrl++/-/0` | Font size |
+| `Ctrl+H` | Help |
 
 ---
 

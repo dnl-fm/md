@@ -1,17 +1,29 @@
 <p align="center">
-  <img src="src-tauri/icons/128x128@2x.png" alt="MD Logo" width="128" height="128">
+  <img src="packages/app/src-tauri/icons/128x128@2x.png" alt="MD Logo" width="128" height="128">
 </p>
 
 <h1 align="center">MD</h1>
 
 <p align="center">
-  A fast, lightweight Markdown preview application built with Tauri 2, SolidJS, and Shiki.
+  A fast, lightweight Markdown ecosystem: desktop app + browser extension.
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue" alt="Platform">
+  <img src="https://img.shields.io/badge/Browser-Chrome%20%7C%20Firefox-orange" alt="Browser">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
 </p>
+
+## Overview
+
+MD is a markdown viewing ecosystem with two components:
+
+| Component | Purpose |
+|-----------|---------|
+| **MD App** | Desktop application for local markdown files with full editing, print/PDF export |
+| **MD Extension** | Browser extension that renders raw `.md` URLs beautifully |
+
+Both share the same rendering engine, styles, and keyboard shortcuts.
 
 ## Screenshots
 
@@ -21,7 +33,11 @@
   <img src="docs/theme-light.png" alt="Light Theme" width="45%">
 </p>
 
-## Features
+---
+
+## MD App (Desktop)
+
+### Features
 
 - **Live Preview** - Real-time markdown rendering with GitHub-flavored markdown support
 - **Mermaid Diagrams** - Native support for flowcharts, sequence diagrams, and more with theme-aware colors
@@ -37,9 +53,8 @@
 - **Customizable Fonts** - Choose font family and size for both UI and markdown content
 - **Resizable Sidebar** - Drag to resize or double-click to auto-fit content
 - **Print/PDF Export** - Export documents with Ctrl+P using optimized print styles
-- **Lightweight** - Native performance with minimal resource usage
 
-## Keyboard Shortcuts
+### Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
@@ -65,12 +80,11 @@
 | `Ctrl+Space` | Toggle edit mode |
 | `Tab` | Indent line(s) (in edit mode) |
 | `Shift+Tab` | Dedent line(s) (in edit mode) |
-| `'`, `"`, `` ` ``, `(`, `[`, `{`, `<`, `*`, `_` | Wrap selection (in edit mode) |
 | `Esc` | Cancel edit / close search / discard changes |
 
-## Installation
+### Installation
 
-### Pre-built Binaries
+#### Pre-built Binaries
 
 Download the latest release for your platform from the [Releases](https://github.com/dnl-fm/md/releases) page.
 
@@ -78,15 +92,7 @@ Download the latest release for your platform from the [Releases](https://github
 - **macOS**: `.dmg`
 - **Windows**: `.msi` or `.exe`
 
-### Build from Source
-
-#### Prerequisites
-
-- [Rust](https://rustup.rs/) (latest stable)
-- [Node.js](https://nodejs.org/) (v18+)
-- [Bun](https://bun.sh/) (recommended) or npm
-
-#### Build Steps
+#### Build from Source
 
 ```bash
 # Clone the repository
@@ -97,46 +103,69 @@ cd md
 bun install
 
 # Development mode
-bun run dev
+make dev
 
 # Build for production
-bun run build
+make build
 ```
 
-The built application will be in `src-tauri/target/release/bundle/`.
-
-## Usage
-
-### Open a file
-
-- **From file manager**: Double-click any `.md` file or right-click → "Open with MD"
-- **From app**: Launch MD and press `Ctrl+O` to select a file
-- **From terminal**: `md /path/to/file.md` (if installed via .deb/.rpm)
-
-### File Associations
-
-MD registers itself for `.md` and `.markdown` files during installation.
-
-### Settings
-
-Click the ⚙ Settings button or press `Ctrl+,` to customize:
-
-**Fonts Tab**
-- UI Font Family and Size
-- Markdown Font Family and Size
-
-**Dark/Light Theme Tabs** (with UI and Markdown sub-tabs)
-- UI colors: backgrounds, text, borders, buttons, sidebar, drafts
-- Markdown colors: headings, links, code blocks, tables
-
-Settings are automatically saved and persisted.
-
-## Configuration
+### Configuration
 
 Configuration is stored in:
 - **Linux**: `~/.config/com.fightbulc.md-preview/config.json`
 - **macOS**: `~/Library/Application Support/com.fightbulc.md-preview/config.json`
 - **Windows**: `%APPDATA%\com.fightbulc.md-preview\config.json`
+
+---
+
+## MD Extension (Browser)
+
+### Features
+
+- **Auto-Detection** - Renders raw `.md` URLs from GitHub, GitLab, Gitea, and any plain text markdown
+- **Syntax Highlighting** - Code blocks with Shiki
+- **Mermaid Diagrams** - Flowcharts, sequence diagrams, etc.
+- **Table of Contents** - Navigate long documents with Ctrl+G
+- **Theme Support** - Dark/light themes, follows system preference
+- **Raw View** - Toggle to see original markdown source
+- **Font Size** - Adjustable with Ctrl++/-
+- **Full Width** - Toggle between constrained and full-width layout
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+G` | Table of contents |
+| `Ctrl+T` | Toggle theme |
+| `Ctrl+U` | Toggle raw markdown |
+| `Ctrl++` | Increase font size |
+| `Ctrl+-` | Decrease font size |
+| `Ctrl+0` | Reset font size |
+| `Ctrl+H` | Help |
+
+### Installation
+
+#### Load Unpacked (Development)
+
+```bash
+cd packages/extension
+bun install
+bun run build
+```
+
+1. Open `chrome://extensions` (Chrome) or `about:debugging` (Firefox)
+2. Enable Developer mode
+3. Click "Load unpacked" and select `packages/extension/dist`
+
+#### Supported URLs
+
+- `*.md` files served as `text/plain`
+- `raw.githubusercontent.com/*`
+- `gist.githubusercontent.com/*`
+- GitLab/Gitea raw file URLs
+- Any URL ending in `.md` or `.markdown`
+
+---
 
 ## Tech Stack
 
@@ -146,6 +175,19 @@ Configuration is stored in:
 - **[markdown-it](https://github.com/markdown-it/markdown-it)** - Markdown parser
 - **[Mermaid](https://mermaid.js.org/)** - Diagram rendering
 - **[Vite](https://vitejs.dev/)** - Build tool
+- **[Bun](https://bun.sh/)** - JavaScript runtime & package manager
+
+## Project Structure
+
+```
+md/
+├── packages/
+│   ├── shared/       # Shared styles (CSS variables, markdown, print)
+│   ├── app/          # Tauri desktop app (SolidJS + Rust)
+│   └── extension/    # Chrome/Firefox extension
+├── docs/             # Screenshots, plans, LLM docs
+└── Makefile          # Development commands
+```
 
 ## License
 
