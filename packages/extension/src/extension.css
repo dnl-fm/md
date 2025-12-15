@@ -216,10 +216,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 8px 20px;
+  height: 48px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--border-color);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.05em;
 }
 
 .md-toc-close {
