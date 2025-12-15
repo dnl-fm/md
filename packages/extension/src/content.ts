@@ -34,6 +34,9 @@ async function main() {
   // Replace page content
   replacePageContent(html);
 
+  // Add IDs to headings for TOC navigation
+  addHeadingIds();
+
   // Setup keyboard shortcuts
   setupKeyboardShortcuts();
 
@@ -78,9 +81,12 @@ function replacePageContent(html: string) {
             </button>
           </div>
         </header>
-        <main class="md-content markdown-body">
-          ${html}
+        <main class="md-content" id="md-content">
+          <div class="markdown-body">
+            ${html}
+          </div>
         </main>
+        <div class="md-toc-backdrop" id="md-toc-backdrop"></div>
         <aside class="md-toc" id="md-toc">
           <div class="md-toc-header">
             <span>Table of Contents</span>
@@ -98,7 +104,46 @@ function replacePageContent(html: string) {
   // Setup button handlers
   document.getElementById("md-toc-btn")?.addEventListener("click", toggleTOC);
   document.getElementById("md-toc-close")?.addEventListener("click", () => setTOCVisible(false));
+  document.getElementById("md-toc-backdrop")?.addEventListener("click", () => setTOCVisible(false));
   document.getElementById("md-theme-btn")?.addEventListener("click", toggleTheme);
+}
+
+/**
+ * Add IDs to headings for anchor navigation
+ */
+function addHeadingIds() {
+  const content = document.getElementById("md-content");
+  if (!content) return;
+
+  const usedIds = new Set<string>();
+  const headings = content.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+  headings.forEach((heading) => {
+    const text = heading.textContent || "";
+    const id = generateId(text, usedIds);
+    heading.id = id;
+  });
+}
+
+/**
+ * Generate a unique slug ID
+ */
+function generateId(text: string, usedIds: Set<string>): string {
+  let id = text
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]/g, "")
+    .replace(/--+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  const baseId = id;
+  let counter = 1;
+  while (usedIds.has(id)) {
+    id = `${baseId}-${counter++}`;
+  }
+  usedIds.add(id);
+
+  return id;
 }
 
 /**
@@ -117,15 +162,25 @@ function renderTOC() {
     .map(
       (entry) => `
       <a href="#${entry.id}" class="md-toc-item md-toc-level-${entry.level}">
-        ${escapeHtml(entry.text)}
+        <span class="md-toc-item-text">${escapeHtml(entry.text)}</span>
       </a>
     `
     )
     .join("");
 
-  // Close TOC when clicking a link
+  // Handle TOC clicks - scroll and close
   nav.querySelectorAll("a").forEach((a) => {
-    a.addEventListener("click", () => setTOCVisible(false));
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      const href = a.getAttribute("href");
+      if (href) {
+        const target = document.querySelector(href);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+      setTOCVisible(false);
+    });
   });
 }
 
@@ -139,8 +194,13 @@ function toggleTOC() {
 function setTOCVisible(visible: boolean) {
   tocVisible = visible;
   const toc = document.getElementById("md-toc");
+  const backdrop = document.getElementById("md-toc-backdrop");
+  
   if (toc) {
     toc.classList.toggle("visible", visible);
+  }
+  if (backdrop) {
+    backdrop.classList.toggle("visible", visible);
   }
 }
 

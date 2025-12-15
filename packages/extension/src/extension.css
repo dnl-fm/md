@@ -1,10 +1,20 @@
 /* Extension-specific styles */
 
+/* Reset and base */
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 /* Container */
 .md-container {
   min-height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
@@ -18,7 +28,7 @@
   padding: 0.75rem 1.5rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
-  backdrop-filter: blur(8px);
+  flex-shrink: 0;
 }
 
 .md-header-title {
@@ -73,76 +83,192 @@
   transform: scale(0.95);
 }
 
-/* Content area */
+/* Content area - scrollable */
 .md-content {
-  max-width: 900px;
-  margin: 0 auto;
+  flex: 1;
+  overflow-y: auto;
   padding: 2rem 1.5rem 4rem;
 }
 
-/* Table of Contents */
+.md-content > .markdown-body {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ============================================================================
+   Table of Contents - Matches MD App Style
+   ============================================================================ */
+
+.md-toc-backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 1000;
+  display: none;
+}
+
+.md-toc-backdrop.visible {
+  display: block;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
 .md-toc {
   position: fixed;
   top: 0;
   right: 0;
-  width: 300px;
-  height: 100vh;
-  background: var(--bg-secondary);
+  bottom: 0;
+  width: 500px;
+  max-width: 90vw;
+  background: var(--bg-primary);
   border-left: 1px solid var(--border-color);
   transform: translateX(100%);
   transition: transform 0.2s ease;
-  z-index: 200;
+  z-index: 1001;
   display: flex;
   flex-direction: column;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
 }
 
 .md-toc.visible {
   transform: translateX(0);
+  animation: slideIn 0.2s ease;
 }
 
 .md-toc-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--border-color);
   font-weight: 600;
+  font-size: 1rem;
 }
 
 .md-toc-close {
-  font-size: 1.25rem;
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0 4px;
   line-height: 1;
+  width: auto;
+}
+
+.md-toc-close:hover {
+  color: var(--text-primary);
+  background: none;
+  border: none;
 }
 
 .md-toc-nav {
   flex: 1;
   overflow-y: auto;
-  padding: 0.5rem 0;
+  padding: 12px 8px;
 }
 
+/* TOC Items - Matches MD App */
 .md-toc-item {
-  display: block;
-  padding: 0.5rem 1rem;
-  color: var(--text-secondary);
+  display: flex;
+  align-items: flex-start;
+  padding: 8px 20px;
+  color: var(--text-primary);
   text-decoration: none;
-  font-size: 0.875rem;
-  transition: all 0.15s ease;
+  cursor: pointer;
+  font-size: 0.9em;
+  line-height: 1.4;
+  transition: background 0.1s;
+  overflow: hidden;
 }
 
 .md-toc-item:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  background: var(--bg-elevated, var(--bg-tertiary));
+  color: var(--accent-color, var(--accent));
 }
 
-.md-toc-level-1 { padding-left: 1rem; font-weight: 600; }
-.md-toc-level-2 { padding-left: 1.5rem; }
-.md-toc-level-3 { padding-left: 2rem; }
-.md-toc-level-4 { padding-left: 2.5rem; font-size: 0.8125rem; }
-.md-toc-level-5 { padding-left: 3rem; font-size: 0.8125rem; }
-.md-toc-level-6 { padding-left: 3.5rem; font-size: 0.8125rem; }
+.md-toc-item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Heading level badges */
+.md-toc-item::before {
+  display: inline-block;
+  min-width: 28px;
+  margin-right: 10px;
+  font-size: 0.7em;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.md-toc-level-1 {
+  font-weight: 600;
+  font-size: 1em;
+}
+.md-toc-level-1::before {
+  content: "H1";
+  background: #3b82f6;
+  color: white;
+}
+
+.md-toc-level-2 {
+  font-weight: 500;
+}
+.md-toc-level-2::before {
+  content: "H2";
+  background: #8b5cf6;
+  color: white;
+}
+
+.md-toc-level-3 {
+  font-size: 0.9em;
+}
+.md-toc-level-3::before {
+  content: "H3";
+  background: #10b981;
+  color: white;
+}
+
+.md-toc-level-4 {
+  font-size: 0.85em;
+  color: var(--text-secondary);
+}
+.md-toc-level-4::before {
+  content: "H4";
+  background: #f59e0b;
+  color: white;
+}
+
+.md-toc-level-5 {
+  font-size: 0.8em;
+  color: var(--text-secondary);
+}
+.md-toc-level-5::before {
+  content: "H5";
+  background: #6b7280;
+  color: white;
+}
+
+.md-toc-level-6 {
+  font-size: 0.8em;
+  color: var(--text-secondary);
+}
+.md-toc-level-6::before {
+  content: "H6";
+  background: #6b7280;
+  color: white;
+}
 
 .md-toc-empty {
-  padding: 1rem;
+  padding: 1rem 20px;
   color: var(--text-muted);
   font-style: italic;
 }
@@ -184,12 +310,14 @@
 /* Print styles */
 @media print {
   .md-header,
-  .md-toc {
+  .md-toc,
+  .md-toc-backdrop {
     display: none !important;
   }
 
   .md-content {
     max-width: none;
     padding: 0;
+    overflow: visible;
   }
 }
