@@ -219,14 +219,40 @@ function scrollToHeading(index: number) {
 
   // Scroll to heading with offset for sticky header
   const targetPosition = heading.getBoundingClientRect().top + window.scrollY;
+  const scrollTarget = targetPosition - HEADER_HEIGHT - 16;
+  
   window.scrollTo({
-    top: targetPosition - HEADER_HEIGHT - 16,
+    top: scrollTarget,
     behavior: "smooth"
   });
 
-  // Flash highlight effect
-  heading.classList.add("highlight-flash");
-  setTimeout(() => heading.classList.remove("highlight-flash"), 1500);
+  // Wait for scroll to complete, then flash highlight
+  waitForScrollEnd(() => {
+    heading.classList.add("highlight-flash");
+    setTimeout(() => heading.classList.remove("highlight-flash"), 1500);
+  });
+}
+
+/**
+ * Wait for scroll animation to complete
+ */
+function waitForScrollEnd(callback: () => void) {
+  let scrollTimeout: number;
+  let lastScrollY = window.scrollY;
+  
+  const checkScrollEnd = () => {
+    if (window.scrollY === lastScrollY) {
+      // Scroll has stopped
+      callback();
+    } else {
+      // Still scrolling, check again
+      lastScrollY = window.scrollY;
+      scrollTimeout = window.setTimeout(checkScrollEnd, 50);
+    }
+  };
+  
+  // Start checking after a brief delay to let scroll begin
+  scrollTimeout = window.setTimeout(checkScrollEnd, 100);
 }
 
 /**
