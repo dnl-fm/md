@@ -131,6 +131,8 @@ function replacePageContent(html: string) {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${filename} - MD</title>
+      <link rel="icon" type="image/png" sizes="32x32" href="${chrome.runtime.getURL("icons/icon48.png")}">
+      <link rel="icon" type="image/png" sizes="16x16" href="${chrome.runtime.getURL("icons/icon16.png")}">
       <link rel="stylesheet" href="${chrome.runtime.getURL("styles.css")}">
     </head>
     <body>

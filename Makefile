@@ -5,7 +5,7 @@ EXT_DIR = packages/extension
 
 # Development
 dev:
-	cd $(APP_DIR) && bun run dev
+	cd $(APP_DIR) && bun run dev --watch
 
 # Build
 build:
