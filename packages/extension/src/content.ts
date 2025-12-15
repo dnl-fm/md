@@ -181,13 +181,11 @@ function toggleRawView() {
   if (showingRaw) {
     // Show raw markdown
     content.innerHTML = `<pre class="raw-markdown"><code>${escapeHtml(rawMarkdown)}</code></pre>`;
-    btn.textContent = "PREVIEW";
     btn.classList.add("active");
   } else {
     // Show rendered markdown
     const html = md.render(rawMarkdown);
     content.innerHTML = `<div class="markdown-body">${html}</div>`;
-    btn.textContent = "RAW";
     btn.classList.remove("active");
     
     // Re-add heading IDs and re-highlight code
@@ -328,12 +326,16 @@ function setTOCVisible(visible: boolean) {
   tocVisible = visible;
   const toc = document.getElementById("md-toc");
   const backdrop = document.getElementById("md-toc-backdrop");
+  const btn = document.getElementById("md-toc-btn");
   
   if (toc) {
     toc.classList.toggle("visible", visible);
   }
   if (backdrop) {
     backdrop.classList.toggle("visible", visible);
+  }
+  if (btn) {
+    btn.classList.toggle("active", visible);
   }
 }
 
