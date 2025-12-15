@@ -672,79 +672,92 @@ async function highlightCodeBlocks() {
 }
 
 /**
- * Render Mermaid diagrams
+ * Render Mermaid diagrams via API
  */
 async function renderMermaidDiagrams() {
   const mermaidBlocks = document.querySelectorAll("pre code.language-mermaid");
   if (mermaidBlocks.length === 0) return;
 
-  try {
-    const mermaid = await import("https://esm.sh/mermaid@11.4.0");
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const { renderMermaid } = await import("./api");
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const theme = isDark ? "dark" : "light";
 
-    mermaid.default.initialize({
-      startOnLoad: false,
-      theme: isDark ? "dark" : "default",
-    });
+  for (const block of mermaidBlocks) {
+    const code = block.textContent || "";
+    const pre = block.parentElement;
+    if (!pre) continue;
 
-    let index = 0;
-    for (const block of mermaidBlocks) {
-      const code = block.textContent || "";
-      const pre = block.parentElement;
-      if (!pre) continue;
+    // Add loading state
+    const loadingDiv = document.createElement("div");
+    loadingDiv.className = "mermaid-loading";
+    loadingDiv.textContent = "Loading diagram...";
+    pre.replaceWith(loadingDiv);
 
-      try {
-        const id = `mermaid-${index++}`;
-        const { svg } = await mermaid.default.render(id, code);
-
+    try {
+      const svg = await renderMermaid(code, theme);
+      
+      if (svg) {
         const wrapper = document.createElement("div");
         wrapper.className = "mermaid-diagram";
         wrapper.innerHTML = svg;
-        pre.replaceWith(wrapper);
-      } catch (error) {
-        console.warn("MD: Failed to render mermaid diagram", error);
+        loadingDiv.replaceWith(wrapper);
+      } else {
+        // Fallback to raw code on error
+        const fallback = document.createElement("pre");
+        fallback.innerHTML = `<code class="language-mermaid">${escapeHtml(code)}</code>`;
+        loadingDiv.replaceWith(fallback);
       }
+    } catch (error) {
+      console.warn("MD: Failed to render mermaid diagram", error);
+      // Fallback to raw code
+      const fallback = document.createElement("pre");
+      fallback.innerHTML = `<code class="language-mermaid">${escapeHtml(code)}</code>`;
+      loadingDiv.replaceWith(fallback);
     }
-  } catch (error) {
-    console.warn("MD: Failed to load mermaid", error);
   }
 }
 
 /**
- * Render ASCII diagrams using WASM
+ * Render ASCII diagrams via API
  */
 async function renderAsciiDiagrams() {
   const asciiBlocks = document.querySelectorAll("pre code.language-ascii");
   if (asciiBlocks.length === 0) return;
 
-  try {
-    // Load WASM module from extension resources
-    const wasmUrl = chrome.runtime.getURL("ascii_bg.wasm");
-    const { render_ascii, default: initAscii } = await import(
-      chrome.runtime.getURL("ascii.js")
-    );
-    
-    // Initialize with the WASM URL
-    await initAscii(wasmUrl);
+  const { renderASCII } = await import("./api");
 
-    for (const block of asciiBlocks) {
-      const code = block.textContent || "";
-      const pre = block.parentElement;
-      if (!pre) continue;
+  for (const block of asciiBlocks) {
+    const code = block.textContent || "";
+    const pre = block.parentElement;
+    if (!pre) continue;
 
-      try {
-        const result = render_ascii(code);
-        
+    // Add loading state
+    const loadingPre = document.createElement("pre");
+    loadingPre.className = "ascii-loading";
+    loadingPre.textContent = "Loading diagram...";
+    pre.replaceWith(loadingPre);
+
+    try {
+      const result = await renderASCII(code);
+      
+      if (result) {
         const wrapper = document.createElement("pre");
         wrapper.className = "ascii-diagram";
         wrapper.textContent = result;
-        pre.replaceWith(wrapper);
-      } catch (error) {
-        console.warn("MD: Failed to render ASCII diagram", error);
+        loadingPre.replaceWith(wrapper);
+      } else {
+        // Fallback to raw code on error
+        const fallback = document.createElement("pre");
+        fallback.innerHTML = `<code class="language-ascii">${escapeHtml(code)}</code>`;
+        loadingPre.replaceWith(fallback);
       }
+    } catch (error) {
+      console.warn("MD: Failed to render ASCII diagram", error);
+      // Fallback to raw code
+      const fallback = document.createElement("pre");
+      fallback.innerHTML = `<code class="language-ascii">${escapeHtml(code)}</code>`;
+      loadingPre.replaceWith(fallback);
     }
-  } catch (error) {
-    console.warn("MD: Failed to load ASCII WASM module", error);
   }
 }
 

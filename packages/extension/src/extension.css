@@ -661,3 +661,39 @@ html.full-width .md-content > .raw-markdown {
     break-inside: avoid;
   }
 }
+
+/* ============================================================================
+   Loading States
+   ============================================================================ */
+
+.mermaid-loading,
+.ascii-loading {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-style: italic;
+  text-align: center;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Error fallback styling */
+pre code.language-mermaid,
+pre code.language-ascii {
+  display: block;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow-x: auto;
+}

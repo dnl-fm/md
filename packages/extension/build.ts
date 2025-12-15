@@ -109,18 +109,10 @@ function copyIcons() {
   console.log("✓ icons copied");
 }
 
-// Copy ASCII WASM module
+// Copy ASCII WASM module (deprecated - using API now)
 function copyAsciiWasm() {
-  console.log("Copying ASCII WASM module...");
-  const asciiDir = "./src/ascii-pkg";
-  
-  if (existsSync(join(asciiDir, "ascii.js"))) {
-    cpSync(join(asciiDir, "ascii.js"), join(DIST_DIR, "ascii.js"));
-    cpSync(join(asciiDir, "ascii_bg.wasm"), join(DIST_DIR, "ascii_bg.wasm"));
-    console.log("✓ ASCII WASM copied");
-  } else {
-    console.log("  ⚠ ASCII WASM not found, skipping");
-  }
+  console.log("Skipping ASCII WASM (using API)...");
+  // No longer needed - rendering happens server-side via API
 }
 
 // Main build
