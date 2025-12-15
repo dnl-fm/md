@@ -654,4 +654,10 @@ html.full-width .md-content > .raw-markdown {
     max-width: 100% !important;
     height: auto !important;
   }
+
+  /* ASCII diagrams */
+  .ascii-diagram {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
 }

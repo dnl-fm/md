@@ -31,7 +31,7 @@
     "default_title": "MD - Markdown Viewer"
   },
   "web_accessible_resources": [{
-    "resources": ["icons/*"],
+    "resources": ["icons/*", "ascii.js", "ascii_bg.wasm"],
     "matches": ["<all_urls>"]
   }]
 }

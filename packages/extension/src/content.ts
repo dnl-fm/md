@@ -110,6 +110,9 @@ async function main() {
 
   // Setup mermaid diagrams (lazy load)
   await renderMermaidDiagrams();
+
+  // Setup ASCII diagrams (WASM)
+  await renderAsciiDiagrams();
 }
 
 /**
@@ -342,6 +345,7 @@ function toggleRawView() {
     addHeadingIds();
     highlightCodeBlocks();
     renderMermaidDiagrams();
+    renderAsciiDiagrams();
   }
 }
 
@@ -695,6 +699,44 @@ async function renderMermaidDiagrams() {
     }
   } catch (error) {
     console.warn("MD: Failed to load mermaid", error);
+  }
+}
+
+/**
+ * Render ASCII diagrams using WASM
+ */
+async function renderAsciiDiagrams() {
+  const asciiBlocks = document.querySelectorAll("pre code.language-ascii");
+  if (asciiBlocks.length === 0) return;
+
+  try {
+    // Load WASM module from extension resources
+    const wasmUrl = chrome.runtime.getURL("ascii_bg.wasm");
+    const { render_ascii, default: initAscii } = await import(
+      chrome.runtime.getURL("ascii.js")
+    );
+    
+    // Initialize with the WASM URL
+    await initAscii(wasmUrl);
+
+    for (const block of asciiBlocks) {
+      const code = block.textContent || "";
+      const pre = block.parentElement;
+      if (!pre) continue;
+
+      try {
+        const result = render_ascii(code);
+        
+        const wrapper = document.createElement("pre");
+        wrapper.className = "ascii-diagram";
+        wrapper.textContent = result;
+        pre.replaceWith(wrapper);
+      } catch (error) {
+        console.warn("MD: Failed to render ASCII diagram", error);
+      }
+    }
+  } catch (error) {
+    console.warn("MD: Failed to load ASCII WASM module", error);
   }
 }
 
