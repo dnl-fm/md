@@ -88,10 +88,10 @@ body {
 /* File Header */
 .md-file-header {
   padding: 8px 20px;
-  height: 48px;
+  min-height: 48px;
   box-sizing: border-box;
   border-bottom: 1px solid var(--border-color);
-  font-size: 1.05em;
+  font-size: var(--md-font-size, 16px);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
