@@ -84,14 +84,16 @@ function replacePageContent(html: string) {
         <!-- Sidebar (collapsed) -->
         <aside class="md-sidebar">
           <div class="md-sidebar-header">
-            <button class="md-btn md-btn-icon" id="md-toc-btn" title="Table of Contents (Ctrl+G)">
-              ☰
-            </button>
           </div>
           <div class="md-sidebar-content">
-            <!-- Empty for extension -->
           </div>
           <div class="md-sidebar-footer">
+            <button class="md-btn md-btn-icon" id="md-font-increase" title="Increase font size">
+              +
+            </button>
+            <button class="md-btn md-btn-icon" id="md-font-decrease" title="Decrease font size">
+              −
+            </button>
             <button class="md-btn md-btn-icon" id="md-theme-btn" title="Toggle theme (Ctrl+T)">
               ${theme === "dark" ? "☀" : "🌙"}
             </button>
@@ -103,15 +105,9 @@ function replacePageContent(html: string) {
           <div class="md-file-header">
             <span class="md-file-path">📄 ${escapeHtml(filename)}</span>
             <div class="md-file-header-right">
-              <div class="md-font-controls">
-                <button class="md-btn md-btn-icon md-btn-small" id="md-font-decrease" title="Decrease font size">
-                  −
-                </button>
-                <span class="md-font-size" id="md-font-size">${fontSize}</span>
-                <button class="md-btn md-btn-icon md-btn-small" id="md-font-increase" title="Increase font size">
-                  +
-                </button>
-              </div>
+              <button class="md-btn md-btn-small" id="md-toc-btn" title="Table of Contents (Ctrl+G)">
+                TOC
+              </button>
               <button class="md-btn md-btn-small" id="md-raw-btn" title="Toggle raw markdown (Ctrl+U)">
                 RAW
               </button>
@@ -161,7 +157,6 @@ function changeFontSize(delta: number) {
   fontSize = Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, fontSize + delta));
   localStorage.setItem("md-font-size", String(fontSize));
   applyFontSize();
-  updateFontSizeDisplay();
 }
 
 /**
@@ -169,16 +164,6 @@ function changeFontSize(delta: number) {
  */
 function applyFontSize() {
   document.documentElement.style.setProperty("--md-font-size", `${fontSize}px`);
-}
-
-/**
- * Update font size display
- */
-function updateFontSizeDisplay() {
-  const display = document.getElementById("md-font-size");
-  if (display) {
-    display.textContent = String(fontSize);
-  }
 }
 
 /**

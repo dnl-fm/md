@@ -118,30 +118,7 @@ body {
   gap: 12px;
 }
 
-/* Font size controls */
-.md-font-controls {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
 
-.md-font-controls .md-btn-icon {
-  min-width: 28px;
-  min-height: 28px;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  font-size: 1em;
-  font-weight: bold;
-}
-
-.md-font-size {
-  min-width: 28px;
-  text-align: center;
-  font-size: 0.85em;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
 
 /* Content area */
 .md-content {
@@ -150,7 +127,7 @@ body {
 }
 
 .md-content > .markdown-body {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   font-size: inherit !important;
 }
@@ -164,7 +141,7 @@ body {
 
 /* Raw markdown view */
 .md-content > .raw-markdown {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
