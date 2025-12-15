@@ -13,6 +13,7 @@ const md = new MarkdownIt({
 // State
 let tocEntries: TOCEntry[] = [];
 let tocVisible = false;
+let helpVisible = false;
 let showingRaw = false;
 let rawMarkdown = "";
 let fontSize = parseInt(localStorage.getItem("md-font-size") || "16", 10);
@@ -109,6 +110,9 @@ function replacePageContent(html: string) {
             <button class="md-btn md-btn-icon" id="md-theme-btn" title="Toggle theme (Ctrl+T)">
               ${theme === "dark" ? "☀" : "🌙"}
             </button>
+            <button class="md-btn md-btn-icon" id="md-help-btn" title="Help (Ctrl+H)">
+              ?
+            </button>
           </div>
         </aside>
 
@@ -126,6 +130,34 @@ function replacePageContent(html: string) {
             </div>
           </div>
         </main>
+
+        <!-- Help Modal -->
+        <div class="md-modal-backdrop" id="md-help-backdrop">
+          <div class="md-modal">
+            <div class="md-modal-header">
+              <span>Help</span>
+              <button class="md-btn md-modal-close" id="md-help-close">×</button>
+            </div>
+            <div class="md-modal-body">
+              <div class="md-version-box">
+                <strong>MD Extension</strong> — 0.1.0
+              </div>
+              
+              <h3>Keyboard Shortcuts</h3>
+              
+              <div class="md-shortcuts-section">
+                <h4>VIEW</h4>
+                <div class="md-shortcuts-grid">
+                  <div class="md-shortcut"><kbd>Ctrl+G</kbd> Table of contents</div>
+                  <div class="md-shortcut"><kbd>Ctrl+T</kbd> Toggle theme</div>
+                  <div class="md-shortcut"><kbd>Ctrl+U</kbd> Toggle raw markdown</div>
+                  <div class="md-shortcut"><kbd>Ctrl+H</kbd> Help</div>
+                  <div class="md-shortcut"><kbd>Esc</kbd> Close panel</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- TOC Panel -->
         <div class="md-toc-backdrop" id="md-toc-backdrop"></div>
@@ -157,6 +189,11 @@ function replacePageContent(html: string) {
   document.getElementById("md-width-btn")?.addEventListener("click", toggleFullWidth);
   document.getElementById("md-font-decrease")?.addEventListener("click", () => changeFontSize(-1));
   document.getElementById("md-font-increase")?.addEventListener("click", () => changeFontSize(1));
+  document.getElementById("md-help-btn")?.addEventListener("click", toggleHelp);
+  document.getElementById("md-help-close")?.addEventListener("click", () => setHelpVisible(false));
+  document.getElementById("md-help-backdrop")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) setHelpVisible(false);
+  });
 }
 
 /**
@@ -369,6 +406,26 @@ function setTOCVisible(visible: boolean) {
 }
 
 /**
+ * Toggle help modal
+ */
+function toggleHelp() {
+  setHelpVisible(!helpVisible);
+}
+
+function setHelpVisible(visible: boolean) {
+  helpVisible = visible;
+  const backdrop = document.getElementById("md-help-backdrop");
+  const btn = document.getElementById("md-help-btn");
+  
+  if (backdrop) {
+    backdrop.classList.toggle("visible", visible);
+  }
+  if (btn) {
+    btn.classList.toggle("active", visible);
+  }
+}
+
+/**
  * Toggle theme
  */
 function toggleTheme() {
@@ -408,10 +465,21 @@ function setupKeyboardShortcuts() {
       toggleRawView();
     }
 
-    // Escape - Close TOC
-    if (e.key === "Escape" && tocVisible) {
+    // Ctrl+H - Toggle help
+    if (e.ctrlKey && e.key === "h") {
       e.preventDefault();
-      setTOCVisible(false);
+      toggleHelp();
+    }
+
+    // Escape - Close panels
+    if (e.key === "Escape") {
+      if (helpVisible) {
+        e.preventDefault();
+        setHelpVisible(false);
+      } else if (tocVisible) {
+        e.preventDefault();
+        setTOCVisible(false);
+      }
     }
   });
 }

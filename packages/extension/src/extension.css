@@ -119,9 +119,7 @@ body {
 }
 
 .md-file-meta {
-  font-size: 0.85em;
-  color: var(--text-muted, var(--text-secondary));
-  opacity: 0.7;
+  color: var(--text-secondary);
 }
 
 
@@ -409,6 +407,124 @@ html.full-width .md-content > .raw-markdown {
   padding: 1rem 20px;
   color: var(--text-muted);
   font-style: italic;
+}
+
+/* ============================================================================
+   Help Modal
+   ============================================================================ */
+
+.md-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.md-modal-backdrop.visible {
+  display: flex;
+}
+
+.md-modal {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.md-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.md-modal-close {
+  background: none !important;
+  border: none !important;
+  font-size: 1.5em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  width: auto;
+  min-width: auto;
+}
+
+.md-modal-close:hover {
+  color: var(--text-primary);
+}
+
+.md-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.md-version-box {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.md-modal-body h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1em;
+}
+
+.md-shortcuts-section {
+  margin-bottom: 16px;
+}
+
+.md-shortcuts-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.md-shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.md-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9em;
+}
+
+.md-shortcut kbd {
+  display: inline-block;
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  min-width: 70px;
+  text-align: center;
+}
+
+@media (max-width: 500px) {
+  .md-shortcuts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ============================================================================
