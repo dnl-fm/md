@@ -19,77 +19,103 @@ body {
   overflow: visible !important;
 }
 
-/* Container */
-.md-container {
+/* ============================================================================
+   App Container - Matches MD App Layout
+   ============================================================================ */
+
+.md-app-container {
+  display: flex;
   min-height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
 }
 
-/* Header */
-.md-header {
+/* ============================================================================
+   Sidebar (Collapsed Style)
+   ============================================================================ */
+
+.md-sidebar {
+  width: 48px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
   position: sticky;
   top: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1.5rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
+  height: 100vh;
 }
 
-.md-header-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.md-logo {
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--accent);
-  background: var(--bg-tertiary);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-}
-
-.md-filename {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-}
-
-.md-header-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* Buttons */
-.md-btn {
+.md-sidebar-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  padding: 8px;
+  height: 48px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.md-sidebar-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  gap: 4px;
+}
+
+.md-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* ============================================================================
+   Main Content Area
+   ============================================================================ */
+
+.md-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* File Header */
+.md-file-header {
+  padding: 8px 20px;
+  height: 48px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 1.05em;
   color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: var(--bg-primary);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-.md-btn:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border-color: var(--border-hover);
+.md-file-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.md-btn:active {
-  transform: scale(0.95);
+.md-file-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Content area */
@@ -100,6 +126,47 @@ body {
 .md-content > .markdown-body {
   max-width: 900px;
   margin: 0 auto;
+}
+
+/* ============================================================================
+   Buttons - Match MD App
+   ============================================================================ */
+
+.md-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.md-btn:hover {
+  background: var(--bg-elevated, var(--bg-secondary));
+  color: var(--text-primary);
+  border-color: var(--border-hover, var(--border-color));
+}
+
+.md-btn:active {
+  transform: scale(0.95);
+}
+
+.md-btn-icon {
+  padding: 6px;
+  min-width: 32px;
+  min-height: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+.md-btn-small {
+  padding: 6px 12px;
+  font-size: 0.85em;
 }
 
 /* ============================================================================
@@ -156,20 +223,22 @@ body {
 }
 
 .md-toc-close {
-  background: none;
-  border: none;
+  background: none !important;
+  border: none !important;
   font-size: 1.5em;
   color: var(--text-secondary);
   cursor: pointer;
   padding: 0 4px;
   line-height: 1;
   width: auto;
+  min-width: auto;
+  min-height: auto;
 }
 
 .md-toc-close:hover {
   color: var(--text-primary);
-  background: none;
-  border: none;
+  background: none !important;
+  border: none !important;
 }
 
 .md-toc-nav {
@@ -280,7 +349,10 @@ body {
   font-style: italic;
 }
 
-/* Mermaid diagrams */
+/* ============================================================================
+   Mermaid diagrams
+   ============================================================================ */
+
 .mermaid-diagram {
   display: flex;
   justify-content: center;
@@ -296,7 +368,10 @@ body {
   height: auto;
 }
 
-/* Responsive */
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+
 @media (max-width: 768px) {
   .md-content {
     padding: 1.5rem 1rem 3rem;
@@ -306,17 +381,22 @@ body {
     width: 100%;
   }
 
-  .md-filename {
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .md-file-path {
+    max-width: 200px;
+  }
+  
+  .md-sidebar {
+    display: none;
   }
 }
 
-/* Print styles */
+/* ============================================================================
+   Print styles
+   ============================================================================ */
+
 @media print {
-  .md-header,
+  .md-sidebar,
+  .md-file-header,
   .md-toc,
   .md-toc-backdrop {
     display: none !important;
@@ -325,6 +405,9 @@ body {
   .md-content {
     max-width: none;
     padding: 0;
-    overflow: visible;
+  }
+  
+  .md-app-container {
+    display: block;
   }
 }

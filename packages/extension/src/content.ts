@@ -14,6 +14,9 @@ const md = new MarkdownIt({
 let tocEntries: TOCEntry[] = [];
 let tocVisible = false;
 
+// Header height for scroll offset
+const HEADER_HEIGHT = 48;
+
 /**
  * Main entry point
  */
@@ -48,11 +51,20 @@ async function main() {
 }
 
 /**
+ * Get current theme
+ */
+function getCurrentTheme(): "dark" | "light" {
+  const saved = localStorage.getItem("md-theme");
+  if (saved === "dark" || saved === "light") return saved;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+/**
  * Replace page content with rendered markdown
  */
 function replacePageContent(html: string) {
-  // Get filename from URL
   const filename = getFilenameFromURL();
+  const theme = getCurrentTheme();
 
   document.documentElement.innerHTML = `
     <head>
@@ -62,30 +74,42 @@ function replacePageContent(html: string) {
       <link rel="stylesheet" href="${chrome.runtime.getURL("styles.css")}">
     </head>
     <body>
-      <div class="md-container">
-        <header class="md-header">
-          <div class="md-header-title">
-            <span class="md-logo">MD</span>
-            <span class="md-filename">${escapeHtml(filename)}</span>
-          </div>
-          <div class="md-header-actions">
-            <button class="md-btn" id="md-toc-btn" title="Table of Contents (Ctrl+G)">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M2 2h12v2H2V2zm0 4h8v2H2V6zm0 4h10v2H2v-2zm0 4h6v2H2v-2z"/>
-              </svg>
-            </button>
-            <button class="md-btn" id="md-theme-btn" title="Toggle Theme (Ctrl+T)">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 1a7 7 0 100 14A7 7 0 008 1zM8 13V3a5 5 0 010 10z"/>
-              </svg>
+      <div class="md-app-container">
+        <!-- Sidebar (collapsed) -->
+        <aside class="md-sidebar">
+          <div class="md-sidebar-header">
+            <button class="md-btn md-btn-icon" id="md-toc-btn" title="Table of Contents (Ctrl+G)">
+              ☰
             </button>
           </div>
-        </header>
-        <main class="md-content" id="md-content">
-          <div class="markdown-body">
-            ${html}
+          <div class="md-sidebar-content">
+            <!-- Empty for extension -->
+          </div>
+          <div class="md-sidebar-footer">
+            <button class="md-btn md-btn-icon" id="md-theme-btn" title="Toggle theme (Ctrl+T)">
+              ${theme === "dark" ? "☀" : "🌙"}
+            </button>
+          </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="md-main-content">
+          <div class="md-file-header">
+            <span class="md-file-path">📄 ${escapeHtml(filename)}</span>
+            <div class="md-file-header-right">
+              <a class="md-btn md-btn-small" href="${window.location.href}" target="_blank" title="Open original">
+                Raw
+              </a>
+            </div>
+          </div>
+          <div class="md-content" id="md-content">
+            <div class="markdown-body">
+              ${html}
+            </div>
           </div>
         </main>
+
+        <!-- TOC Panel -->
         <div class="md-toc-backdrop" id="md-toc-backdrop"></div>
         <aside class="md-toc" id="md-toc">
           <div class="md-toc-header">
@@ -97,6 +121,9 @@ function replacePageContent(html: string) {
       </div>
     </body>
   `;
+
+  // Apply theme
+  document.documentElement.setAttribute("data-theme", theme);
 
   // Render TOC
   renderTOC();
@@ -168,15 +195,19 @@ function renderTOC() {
     )
     .join("");
 
-  // Handle TOC clicks - scroll to heading
+  // Handle TOC clicks - scroll to heading with offset for header
   nav.querySelectorAll("a").forEach((a) => {
     a.addEventListener("click", (e) => {
       e.preventDefault();
       const href = a.getAttribute("href");
       if (href) {
-        const target = document.querySelector(href);
+        const target = document.querySelector(href) as HTMLElement;
         if (target) {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          const targetPosition = target.getBoundingClientRect().top + window.scrollY;
+          window.scrollTo({
+            top: targetPosition - HEADER_HEIGHT - 16, // 16px extra padding
+            behavior: "smooth"
+          });
         }
       }
     });
@@ -212,6 +243,12 @@ function toggleTheme() {
   const next = current === "dark" ? "light" : "dark";
   root.setAttribute("data-theme", next);
   localStorage.setItem("md-theme", next);
+  
+  // Update theme button icon
+  const btn = document.getElementById("md-theme-btn");
+  if (btn) {
+    btn.textContent = next === "dark" ? "☀" : "🌙";
+  }
 }
 
 /**
@@ -247,7 +284,6 @@ async function highlightCodeBlocks() {
   if (codeBlocks.length === 0) return;
 
   try {
-    // Dynamically import shiki
     const { createHighlighter } = await import("https://esm.sh/shiki@1.24.0");
 
     const highlighter = await createHighlighter({
@@ -265,8 +301,11 @@ async function highlightCodeBlocks() {
         "css",
         "sql",
         "markdown",
+        "php",
       ],
     });
+
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
 
     for (const block of codeBlocks) {
       const code = block.textContent || "";
@@ -274,10 +313,6 @@ async function highlightCodeBlocks() {
       const lang = langClass ? langClass[1] : "text";
 
       try {
-        const isDark =
-          document.documentElement.getAttribute("data-theme") === "dark" ||
-          window.matchMedia("(prefers-color-scheme: dark)").matches;
-
         const highlighted = highlighter.codeToHtml(code, {
           lang: lang,
           theme: isDark ? "github-dark" : "github-light",
@@ -306,12 +341,8 @@ async function renderMermaidDiagrams() {
   if (mermaidBlocks.length === 0) return;
 
   try {
-    // Dynamically import mermaid
     const mermaid = await import("https://esm.sh/mermaid@11.4.0");
-
-    const isDark =
-      document.documentElement.getAttribute("data-theme") === "dark" ||
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
 
     mermaid.default.initialize({
       startOnLoad: false,
@@ -362,18 +393,14 @@ function escapeHtml(text: string): string {
 // Initialize on load
 main().catch(console.error);
 
-// Listen for theme changes
+// Listen for system theme changes
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
   if (!localStorage.getItem("md-theme")) {
-    document.documentElement.setAttribute("data-theme", e.matches ? "dark" : "light");
+    const theme = e.matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", theme);
+    const btn = document.getElementById("md-theme-btn");
+    if (btn) {
+      btn.textContent = theme === "dark" ? "☀" : "🌙";
+    }
   }
 });
-
-// Apply saved theme or system preference
-const savedTheme = localStorage.getItem("md-theme");
-if (savedTheme) {
-  document.documentElement.setAttribute("data-theme", savedTheme);
-} else {
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
-}
