@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation - MD</title>
+  <meta name="description" content="Documentation for MD, the fast markdown viewer for desktop.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">
+      <img src="/icon.png" alt="MD">
+      <span>MD</span>
+    </a>
+    <nav class="nav">
+      <a href="/changelog.html">Changelog</a>
+      <a href="/docs.html">Docs</a>
+      <a href="https://github.com/dnl-fm/md" target="_blank">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="docs-page">
+    <h1>Documentation</h1>
+    <p>A fast, lightweight Markdown viewer for Linux, macOS, and Windows</p>
+
+    <section class="docs-section">
+      <h2>Quick Start</h2>
+      <pre><code># Download from GitHub Releases
+# or build from source:
+
+git clone https://github.com/dnl-fm/md.git
+cd md
+bun install
+make build</code></pre>
+
+      <h3>Opening Files</h3>
+      <ul>
+        <li>Drag and drop a <code>.md</code> file onto the window</li>
+        <li>Use <code>Ctrl+O</code> to open a file dialog</li>
+        <li>Pass a file path as command line argument: <code>md /path/to/file.md</code></li>
+      </ul>
+    </section>
+
+    <section class="docs-section">
+      <h2>Keyboard Shortcuts</h2>
+      <table class="docs-table">
+        <thead>
+          <tr>
+            <th>Shortcut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Ctrl+O</code></td><td>Open file</td></tr>
+          <tr><td><code>Ctrl+N</code></td><td>New untitled draft</td></tr>
+          <tr><td><code>Ctrl+W</code></td><td>Close file</td></tr>
+          <tr><td><code>Ctrl+S</code></td><td>Save changes (in edit mode)</td></tr>
+          <tr><td><code>Ctrl+Z</code></td><td>Undo (in edit mode)</td></tr>
+          <tr><td><code>Ctrl+Y</code></td><td>Redo (in edit mode)</td></tr>
+          <tr><td><code>Ctrl+F</code></td><td>Find in document</td></tr>
+          <tr><td><code>Ctrl+G</code></td><td>Table of contents</td></tr>
+          <tr><td><code>Ctrl+P</code></td><td>Print / Export PDF</td></tr>
+          <tr><td><code>Ctrl+L</code></td><td>Toggle line numbers (in edit mode)</td></tr>
+          <tr><td><code>Ctrl+T</code></td><td>Toggle theme (dark/light)</td></tr>
+          <tr><td><code>Ctrl+B</code></td><td>Toggle sidebar</td></tr>
+          <tr><td><code>Ctrl+H</code></td><td>Help</td></tr>
+          <tr><td><code>Ctrl+,</code></td><td>Open settings</td></tr>
+          <tr><td><code>Ctrl++</code></td><td>Increase font size</td></tr>
+          <tr><td><code>Ctrl+-</code></td><td>Decrease font size</td></tr>
+          <tr><td><code>Ctrl+0</code></td><td>Reset font size</td></tr>
+          <tr><td><code>Ctrl+1-9</code></td><td>Open Nth file/draft from sidebar</td></tr>
+          <tr><td><code>Ctrl+[/]</code></td><td>Previous/next file</td></tr>
+          <tr><td><code>Ctrl+Space</code></td><td>Toggle edit mode</td></tr>
+          <tr><td><code>Tab</code></td><td>Indent line(s) (in edit mode)</td></tr>
+          <tr><td><code>Shift+Tab</code></td><td>Dedent line(s) (in edit mode)</td></tr>
+          <tr><td><code>Esc</code></td><td>Cancel edit / close search</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="docs-section">
+      <h2>Features</h2>
+
+      <h3>Live Preview</h3>
+      <p>Markdown is rendered in real-time with GitHub-flavored markdown support. Tables, task lists, strikethrough, and autolinks are all supported.</p>
+
+      <h3>Edit Mode</h3>
+      <p>Toggle edit mode with <code>Ctrl+Space</code>. The WASM-powered editor includes:</p>
+      <ul>
+        <li>Syntax highlighting for markdown (headings, code, bold, links, lists)</li>
+        <li>Line numbers (toggle with <code>Ctrl+L</code>)</li>
+        <li>Undo/redo with <code>Ctrl+Z</code> / <code>Ctrl+Y</code></li>
+        <li>Tab/Shift+Tab to indent/dedent lines</li>
+        <li>Wrap selection with quotes/brackets</li>
+        <li>Virtual scrolling for large files</li>
+      </ul>
+
+      <h3>Mermaid Diagrams</h3>
+      <p>Create diagrams using Mermaid syntax in fenced code blocks:</p>
+      <pre><code>```mermaid
+flowchart LR
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Action]
+    B -->|No| D[End]
+```</code></pre>
+      <p>Diagrams automatically match your current theme colors.</p>
+
+      <h3>Syntax Highlighting</h3>
+      <p>Code blocks are highlighted with Shiki for 16+ languages:</p>
+      <ul>
+        <li>SQL, JavaScript/TypeScript, PHP, Python, Rust, Go, Bash, JSON</li>
+        <li>HTML/XML/SVG, CSS/SCSS/SASS, YAML, TOML, C/C++, Java/Kotlin, Ruby, Docker</li>
+      </ul>
+
+      <h3>Table of Contents</h3>
+      <p>Press <code>Ctrl+G</code> to open the table of contents panel. Click any heading to navigate to it. The current section is highlighted as you scroll.</p>
+
+      <h3>In-Document Search</h3>
+      <p>Press <code>Ctrl+F</code> to search within the document:</p>
+      <ul>
+        <li>Matches highlighted in yellow, current match in orange</li>
+        <li>Navigate with Enter/Shift+Enter or arrow buttons</li>
+        <li>Minimap on right edge shows all match positions</li>
+      </ul>
+
+      <h3>Print & PDF Export</h3>
+      <p>Press <code>Ctrl+P</code> to print or export as PDF. The output is optimized with:</p>
+      <ul>
+        <li>Proper page breaks</li>
+        <li>Syntax highlighting preserved</li>
+        <li>Relative images embedded as base64</li>
+      </ul>
+
+      <h3>File Watching</h3>
+      <p>MD automatically reloads when the file changes on disk. Perfect for previewing while editing in your favorite editor (VS Code, Vim, etc.).</p>
+
+      <h3>Drafts</h3>
+      <p>Press <code>Ctrl+N</code> to create a new untitled draft. Drafts are auto-numbered (Untitled-1, Untitled-2, etc.) and can be saved to disk with <code>Ctrl+S</code>.</p>
+    </section>
+
+    <section class="docs-section">
+      <h2>Configuration</h2>
+      <p>Configuration is stored in:</p>
+      <ul>
+        <li><strong>Linux</strong>: <code>~/.config/com.fightbulc.md-preview/config.json</code></li>
+        <li><strong>macOS</strong>: <code>~/Library/Application Support/com.fightbulc.md-preview/config.json</code></li>
+        <li><strong>Windows</strong>: <code>%APPDATA%\com.fightbulc.md-preview\config.json</code></li>
+      </ul>
+
+      <h3>Settings</h3>
+      <p>Open settings with <code>Ctrl+,</code> to customize:</p>
+      <ul>
+        <li>Font family and size (UI and markdown)</li>
+        <li>Theme colors (background, text, accent, etc.)</li>
+        <li>Mermaid diagram colors</li>
+      </ul>
+    </section>
+
+    <section class="docs-section">
+      <h2>Browser Extension</h2>
+      <p>MD also includes a browser extension for Chrome and Firefox that renders raw <code>.md</code> URLs.</p>
+
+      <h3>Supported URLs</h3>
+      <ul>
+        <li><code>raw.githubusercontent.com/*</code></li>
+        <li><code>gist.githubusercontent.com/*</code></li>
+        <li>GitLab/Gitea raw file URLs</li>
+        <li>Any URL ending in <code>.md</code> or <code>.markdown</code> served as <code>text/plain</code></li>
+      </ul>
+
+      <h3>Extension Shortcuts</h3>
+      <table class="docs-table">
+        <thead>
+          <tr>
+            <th>Shortcut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Ctrl+G</code></td><td>Table of contents</td></tr>
+          <tr><td><code>Ctrl+T</code></td><td>Toggle theme</td></tr>
+          <tr><td><code>Ctrl+U</code></td><td>Toggle raw markdown</td></tr>
+          <tr><td><code>Ctrl+P</code></td><td>Print / PDF</td></tr>
+          <tr><td><code>Ctrl++/-/0</code></td><td>Font size</td></tr>
+          <tr><td><code>Ctrl+H</code></td><td>Help</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="docs-section">
+      <h2>Tech Stack</h2>
+      <ul>
+        <li><strong>Tauri 2</strong> — Native app framework</li>
+        <li><strong>SolidJS</strong> — Reactive UI framework</li>
+        <li><strong>Rust/WASM</strong> — Editor backend</li>
+        <li><strong>Shiki</strong> — Syntax highlighting</li>
+        <li><strong>markdown-it</strong> — Markdown parser</li>
+        <li><strong>Mermaid</strong> — Diagram rendering</li>
+        <li><strong>Vite + Bun</strong> — Build tooling</li>
+      </ul>
+    </section>
+
+    <section class="docs-section">
+      <h2>Troubleshooting</h2>
+      <table class="docs-table">
+        <thead>
+          <tr>
+            <th>Issue</th>
+            <th>Solution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>App won't start</td>
+            <td>Check logs at <code>~/.md/md.log</code></td>
+          </tr>
+          <tr>
+            <td>File not loading</td>
+            <td>Ensure file exists and is readable</td>
+          </tr>
+          <tr>
+            <td>Mermaid not rendering</td>
+            <td>Check syntax in a <code>```mermaid</code> code block</td>
+          </tr>
+          <tr>
+            <td>Font not applied</td>
+            <td>Font must be installed on system</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 MD. Open source under MIT license.</p>
+    <div class="footer-links">
+      <a href="https://github.com/dnl-fm/md" target="_blank" title="GitHub">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </a>
+    </div>
+  </footer>
+</body>
+</html>

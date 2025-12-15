@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MD - A Fast Markdown Viewer for Desktop</title>
+  <meta name="description" content="A lightweight, native Markdown viewer with live preview, edit mode, Mermaid diagrams, and theme support. Available for Linux, macOS, and Windows.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">
+      <img src="/icon.png" alt="MD">
+      <span>MD</span>
+    </a>
+    <nav class="nav">
+      <a href="/changelog.html">Changelog</a>
+      <a href="/docs.html">Docs</a>
+      <a href="https://github.com/dnl-fm/md" target="_blank">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>A fast <em>Markdown viewer</em><br>for your desktop.</h1>
+      <p class="hero-subtitle">
+        Live preview, WASM-powered editor, Mermaid diagrams, syntax highlighting, and customizable themes. 
+        All in a lightweight native app, under 10 MB.
+      </p>
+      
+      <div class="cta-group">
+        <a href="https://github.com/dnl-fm/md/releases/latest" class="btn btn-primary">
+          Download
+          <span class="btn-meta">v0.9.0 · Free & Open Source</span>
+        </a>
+        <a href="/docs.html" class="btn btn-secondary">
+          Documentation
+        </a>
+      </div>
+
+      <div class="platforms">
+        Available for Linux (.deb, .rpm, .AppImage), macOS (.dmg), and Windows (.msi)
+      </div>
+
+      <div class="hero-images">
+        <div>
+          <div class="hero-image">
+            <img src="/theme-dark.png" alt="MD with dark theme" width="1350" height="1160" loading="eager">
+          </div>
+          <p class="hero-image-label">Dark theme</p>
+        </div>
+        <div>
+          <div class="hero-image">
+            <img src="/theme-light.png" alt="MD with light theme" width="1350" height="1160" loading="eager">
+          </div>
+          <p class="hero-image-label">Light theme</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <h2>Features</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <h3>Live preview</h3>
+          <p>Real-time markdown rendering with GitHub-flavored markdown support</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </div>
+          <h3>WASM editor</h3>
+          <p>Rust/WebAssembly powered editor with undo/redo, line numbers, and virtual scrolling</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+          </div>
+          <h3>Built for speed</h3>
+          <p>Native Tauri app with Rust backend, instant startup, minimal memory footprint</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <path d="M3 9h18M9 21V9"/>
+            </svg>
+          </div>
+          <h3>Mermaid diagrams</h3>
+          <p>Flowcharts, sequence diagrams, class diagrams with theme-aware colors</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 7 4 4 20 4 20 7"/>
+              <line x1="9" y1="20" x2="15" y2="20"/>
+              <line x1="12" y1="4" x2="12" y2="20"/>
+            </svg>
+          </div>
+          <h3>Syntax highlighting</h3>
+          <p>Language-aware code blocks for 16+ languages powered by Shiki</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </div>
+          <h3>Customizable themes</h3>
+          <p>Dark and light themes with fully customizable colors and live preview</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <h3>Table of contents</h3>
+          <p>Quick navigation panel with current section highlighting</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+          </div>
+          <h3>Print & PDF export</h3>
+          <p>Print-optimized output with embedded images and syntax highlighting</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <h3>In-document search</h3>
+          <p>Find text with highlighting, minimap markers, and keyboard navigation</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="shortcuts">
+      <h2>Keyboard shortcuts</h2>
+      <div class="shortcuts-grid">
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl+O</span>
+          <span>Open file</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl+N</span>
+          <span>New draft</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl+S</span>
+          <span>Save</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl+Space</span>
+          <span>Toggle edit</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl+F</span>
+          <span>Search</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl+G</span>
+          <span>Table of contents</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl+P</span>
+          <span>Print / PDF</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl+T</span>
+          <span>Toggle theme</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="changelog" class="changelog">
+      <div class="changelog-header">
+        <h2>Changelog</h2>
+        <a href="/changelog.html" class="see-more">See all →</a>
+      </div>
+      <div class="changelog-grid">
+        <div class="changelog-card">
+          <span class="version-badge">v0.9.0</span>
+          <span class="changelog-date">Dec 14, 2025</span>
+          <p>Mermaid diagrams, Table of Contents, theme-aware rendering</p>
+        </div>
+        <div class="changelog-card">
+          <span class="version-badge">v0.8.0</span>
+          <span class="changelog-date">Dec 13, 2025</span>
+          <p>Syntax highlighting for 16+ languages, scroll sync</p>
+        </div>
+        <div class="changelog-card">
+          <span class="version-badge">v0.7.0</span>
+          <span class="changelog-date">Dec 13, 2025</span>
+          <p>WASM editor with Rust backend, virtual scrolling</p>
+        </div>
+        <div class="changelog-card">
+          <span class="version-badge">v0.6.0</span>
+          <span class="changelog-date">Dec 2, 2025</span>
+          <p>Print/PDF export with embedded images</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="extension">
+      <h2>Browser extension</h2>
+      <p>Render raw .md URLs beautifully in Chrome and Firefox. Same engine, same shortcuts.</p>
+      <div class="extension-features">
+        <div class="extension-feature">Auto-detect raw markdown URLs</div>
+        <div class="extension-feature">GitHub, GitLab, Gitea support</div>
+        <div class="extension-feature">Syntax highlighting & Mermaid</div>
+      </div>
+    </section>
+
+    <section class="faq">
+      <h2>Frequently asked questions</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <h3>What platforms does MD run on?</h3>
+          <p>MD runs on Linux, macOS, and Windows. It's built with Tauri, using native webviews for minimal footprint.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Is MD free?</h3>
+          <p>Yes, MD is free and open source under the MIT license.</p>
+        </div>
+        <div class="faq-item">
+          <h3>How do I open files?</h3>
+          <p>Drag and drop files onto the window, use Ctrl+O to open a file dialog, or pass a file path as a command line argument.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Does MD watch files for changes?</h3>
+          <p>Yes, MD automatically reloads when the file changes on disk, making it perfect for previewing while editing in your favorite editor.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 MD. Open source under MIT license.</p>
+    <div class="footer-links">
+      <a href="https://github.com/dnl-fm/md" target="_blank" title="GitHub">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </a>
+    </div>
+  </footer>
+</body>
+</html>

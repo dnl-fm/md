@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0] - 2025-12-15
+
+### Added
+- **ASCII diagrams**: Box-drawing character diagrams via WASM as alternative to Mermaid
+  - Same Mermaid-like syntax but renders as copy-pasteable ASCII art
+  - Supports: flowchart, erDiagram, sequenceDiagram, stateDiagram, classDiagram, timeline, table
+  - Emoji auto-converted to ASCII equivalents (✅ → [x], ❌ → [ ])
+  - Use ` ```ascii ` code fence instead of ` ```mermaid `
+
 ## [0.9.0] - 2025-12-14
 
 ### Added

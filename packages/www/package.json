@@ -1,0 +1,10 @@
+{
+  "name": "@md/www",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "bun run serve.ts",
+    "build": "bun run build.ts"
+  },
+  "devDependencies": {}
+}
