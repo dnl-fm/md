@@ -1,11 +1,22 @@
 /* Extension-specific styles */
 
-/* Reset and base */
-html, body {
+/* Reset and base - override theme.css overflow:hidden */
+html {
   height: 100%;
   width: 100%;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto !important;
+}
+
+body {
+  height: auto;
+  min-height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: visible !important;
 }
 
 /* Container */
@@ -13,8 +24,6 @@ html, body {
   min-height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
-  display: flex;
-  flex-direction: column;
 }
 
 /* Header */
@@ -83,10 +92,8 @@ html, body {
   transform: scale(0.95);
 }
 
-/* Content area - scrollable */
+/* Content area */
 .md-content {
-  flex: 1;
-  overflow-y: auto;
   padding: 2rem 1.5rem 4rem;
 }
 

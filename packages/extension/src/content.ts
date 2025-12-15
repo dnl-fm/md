@@ -168,7 +168,7 @@ function renderTOC() {
     )
     .join("");
 
-  // Handle TOC clicks - scroll and close
+  // Handle TOC clicks - scroll to heading
   nav.querySelectorAll("a").forEach((a) => {
     a.addEventListener("click", (e) => {
       e.preventDefault();
@@ -179,7 +179,6 @@ function renderTOC() {
           target.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }
-      setTOCVisible(false);
     });
   });
 }
