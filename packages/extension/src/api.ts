@@ -16,10 +16,13 @@ async function sha256(text: string): Promise<string> {
 }
 
 /**
- * Base64 URL-safe encoding
+ * Base64 URL-safe encoding (handles UTF-8)
  */
 function base64UrlEncode(text: string): string {
-  return btoa(text)
+  // Convert to UTF-8 bytes then to base64
+  const bytes = new TextEncoder().encode(text);
+  const binString = Array.from(bytes, (b) => String.fromCharCode(b)).join("");
+  return btoa(binString)
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
@@ -27,9 +30,6 @@ function base64UrlEncode(text: string): string {
 
 /**
  * Render a mermaid diagram via API
- * @param code - Raw mermaid diagram code
- * @param theme - Theme (dark or light)
- * @returns SVG string or null on error
  */
 export async function renderMermaid(
   code: string,
@@ -64,8 +64,6 @@ export async function renderMermaid(
 
 /**
  * Render an ASCII diagram via API
- * @param code - Raw ASCII diagram code
- * @returns Rendered text or null on error
  */
 export async function renderASCII(code: string): Promise<string | null> {
   try {
