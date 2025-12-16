@@ -693,7 +693,11 @@ function App() {
     logger.info(`loadDraft START: id=${id}, currentDraftId=${currentDraftId()}, showRawMarkdown=${showRawMarkdown()}`);
     // Don't reload the same draft
     if (currentDraftId() === id) {
-      logger.info(`loadDraft: early return - same draft`);
+      logger.info(`loadDraft: early return - same draft, showRawMarkdown=${showRawMarkdown()}`);
+      // Check state after a delay to see if something changes it
+      setTimeout(() => {
+        logger.info(`loadDraft: 100ms later, showRawMarkdown=${showRawMarkdown()}`);
+      }, 100);
       return;
     }
     
@@ -736,6 +740,10 @@ function App() {
       // URL-fetched drafts stay in preview mode, regular drafts open in edit mode
       setShowRawMarkdown(!draft.sourceUrl);
       logger.info(`loadDraft END: showRawMarkdown is now ${showRawMarkdown()}`);
+      // Check if something changes it after
+      setTimeout(() => {
+        logger.info(`loadDraft: 100ms after END, showRawMarkdown=${showRawMarkdown()}`);
+      }, 100);
     }
   }
 
