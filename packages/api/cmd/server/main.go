@@ -18,6 +18,11 @@ func main() {
 		port = "8080"
 	}
 
+	dataDir := os.Getenv("DATA_DIR")
+	if dataDir == "" {
+		dataDir = "./data"
+	}
+
 	// Initialize renderers
 	log.Println("Initializing renderers...")
 	if err := handlers.InitializeRenderers(); err != nil {
@@ -25,6 +30,11 @@ func main() {
 	}
 	defer handlers.CloseRenderers()
 	log.Println("Renderers ready")
+
+	// Initialize cloud database
+	log.Println("Initializing cloud database...")
+	handlers.InitCloudDB(dataDir)
+	log.Println("Cloud database ready")
 
 	r := chi.NewRouter()
 
@@ -49,6 +59,15 @@ func main() {
 	r.Get("/health", handlers.Health)
 	r.Get("/render/mermaid/{theme}/{hash}", handlers.RenderMermaid)
 	r.Get("/render/ascii/{hash}", handlers.RenderASCII)
+
+	// Cloud sync routes (v1 API)
+	r.Route("/v1/cloud", func(r chi.Router) {
+		r.Get("/documents", handlers.ListDocuments)
+		r.Post("/documents", handlers.CreateDocument)
+		r.Get("/documents/{id}", handlers.GetDocument)
+		r.Put("/documents/{id}", handlers.UpdateDocument)
+		r.Delete("/documents/{id}", handlers.DeleteDocument)
+	})
 
 	// Start server
 	log.Printf("Starting server on :%s", port)

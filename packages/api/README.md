@@ -4,14 +4,16 @@ Server-side rendering API for Mermaid diagrams and ASCII art.
 
 ## Endpoints
 
-### Health Check
+### Rendering API
+
+#### Health Check
 ```
 GET /health
 ```
 
 Returns: `{"status": "ok"}`
 
-### Render Mermaid Diagram
+#### Render Mermaid Diagram
 ```
 GET /render/mermaid/{theme}/{hash}?code={base64}
 ```
@@ -31,6 +33,22 @@ GET /render/ascii/{hash}?code={base64}
 - `code`: Base64-encoded diagram code (URL-safe)
 
 Returns: Plain text rendered diagram
+
+### Cloud Sync API
+
+See [CLOUD_SYNC.md](./CLOUD_SYNC.md) for complete documentation.
+
+```
+GET    /v1/cloud/documents          # List documents
+POST   /v1/cloud/documents          # Create document
+GET    /v1/cloud/documents/{id}     # Get document
+PUT    /v1/cloud/documents/{id}     # Update document
+DELETE /v1/cloud/documents/{id}     # Delete document
+```
+
+**Development mode:**
+- Use header: `X-Dev-User: dev-user-001`
+- No authentication required
 
 ## Example Usage
 
