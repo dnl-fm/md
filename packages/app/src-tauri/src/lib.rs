@@ -356,6 +356,69 @@ fn get_file_dir(path: &str) -> Option<String> {
         .map(|s| s.to_string())
 }
 
+/// Response from fetching a URL
+#[derive(serde::Serialize)]
+struct FetchUrlResponse {
+    content: String,
+    content_type: String,
+    url: String,
+}
+
+/// Fetch content from a URL. Only accepts text/* content types.
+#[tauri::command]
+fn fetch_url(url: &str) -> Result<FetchUrlResponse, String> {
+    // Validate URL format
+    let parsed = url.parse::<reqwest::Url>()
+        .map_err(|e| format!("Invalid URL: {}", e))?;
+    
+    // Only allow http/https
+    if parsed.scheme() != "http" && parsed.scheme() != "https" {
+        return Err("Only HTTP and HTTPS URLs are supported".to_string());
+    }
+    
+    // Fetch the URL
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .user_agent("MD-App/1.0")
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+    
+    let response = client.get(url)
+        .send()
+        .map_err(|e| format!("Failed to fetch URL: {}", e))?;
+    
+    // Check status
+    if !response.status().is_success() {
+        return Err(format!("HTTP error: {}", response.status()));
+    }
+    
+    // Check content type
+    let content_type = response
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("text/plain")
+        .to_string();
+    
+    // Extract mime type (before semicolon for charset)
+    let mime_type = content_type.split(';').next().unwrap_or("").trim();
+    
+    // Only accept text/* content types
+    if !mime_type.starts_with("text/") {
+        return Err(format!("Unsupported content type: {}. Only text/* is supported.", mime_type));
+    }
+    
+    // Read body
+    let body = response.text()
+        .map_err(|e| format!("Failed to read response body: {}", e))?;
+    
+    Ok(FetchUrlResponse {
+        content: body,
+        content_type: mime_type.to_string(),
+        url: url.to_string(),
+    })
+}
+
 #[tauri::command]
 fn get_changelog_path(app: AppHandle) -> Result<String, String> {
     // Try resource directory first (production)
@@ -426,6 +489,7 @@ pub fn run() {
             get_changelog_path,
             read_image_base64,
             get_file_dir,
+            fetch_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

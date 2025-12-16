@@ -16,7 +16,9 @@ import {
   setShowRawMarkdown,
   setContent,
   originalContent,
+  content,
   currentDraftId,
+  getDraft,
 } from "../stores/app-store";
 import { formatFileSize } from "../utils";
 
@@ -102,40 +104,51 @@ export function FileHeader(props: FileHeaderProps) {
 
       {/* Header for drafts */}
       <Show when={currentDraftId()}>
-        <div class="file-header">
-          <span class="file-path">📄 Untitled-{currentDraftId()?.split("-")[1]} (unsaved)</span>
-          <div class="file-header-right">
-            <Show when={props.isPreRendering}>
-              <span class="prerender-spinner" title="Generating page previews...">
-                <svg class="spinner-icon" viewBox="0 0 24 24" width="14" height="14">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="31.4 31.4" />
-                </svg>
-                <span class="prerender-text">Generating previews...</span>
-              </span>
-            </Show>
-            <button
-              class={`btn btn-small ${showRawMarkdown() ? "active" : ""}`}
-              onClick={() => setShowRawMarkdown(!showRawMarkdown())}
-              title={showRawMarkdown() ? "Preview (Ctrl+Space)" : "Edit (Ctrl+Space)"}
-            >
-              {showRawMarkdown() ? "Preview" : "Edit"}
-            </button>
-            <button
-              class="btn btn-small btn-save"
-              onClick={() => props.onSaveDraft?.()}
-              title="Save to file (Ctrl+S)"
-            >
-              Save As
-            </button>
-            <button
-              class="btn btn-small no-print"
-              onClick={() => props.onPrint?.()}
-              title="Print / Export PDF (Ctrl+P)"
-            >
-              Print
-            </button>
-          </div>
-        </div>
+        {(() => {
+          const draft = getDraft(currentDraftId()!);
+          const displayName = draft?.sourceTitle 
+            ? draft.sourceTitle 
+            : `Untitled-${currentDraftId()?.split("-")[1]}`;
+          return (
+            <div class="file-header">
+              <span class="file-path">📄 {displayName} (unsaved)</span>
+              <div class="file-header-right">
+                <Show when={props.isPreRendering}>
+                  <span class="prerender-spinner" title="Generating page previews...">
+                    <svg class="spinner-icon" viewBox="0 0 24 24" width="14" height="14">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="31.4 31.4" />
+                    </svg>
+                    <span class="prerender-text">Generating previews...</span>
+                  </span>
+                </Show>
+                <button
+                  class={`btn btn-small ${showRawMarkdown() ? "active" : ""}`}
+                  onClick={() => setShowRawMarkdown(!showRawMarkdown())}
+                  title={showRawMarkdown() ? "Preview (Ctrl+Space)" : "Edit (Ctrl+Space)"}
+                >
+                  {showRawMarkdown() ? "Preview" : "Edit"}
+                </button>
+                <button
+                  class="btn btn-small btn-save"
+                  onClick={() => props.onSaveDraft?.()}
+                  title="Save to file (Ctrl+S)"
+                >
+                  Save As
+                </button>
+                <button
+                  class="btn btn-small no-print"
+                  onClick={() => props.onPrint?.()}
+                  title="Print / Export PDF (Ctrl+P)"
+                >
+                  Print
+                </button>
+                <span class="file-meta">
+                  {formatFileSize(content().length)}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
       </Show>
     </>
   );

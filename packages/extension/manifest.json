@@ -3,16 +3,15 @@
   "name": "MD",
   "version": "0.1.0",
   "description": "Beautiful markdown rendering for raw .md files",
-  "permissions": ["activeTab", "storage"],
-  "host_permissions": ["https://api.getmd.dev/*"],
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "content_scripts": [
     {
-      "matches": [
-        "*://*/*.md",
-        "*://*/*.markdown",
-        "*://raw.githubusercontent.com/*",
-        "*://gist.githubusercontent.com/*"
-      ],
+      "matches": ["<all_urls>"],
       "js": ["content.js"],
       "css": ["styles.css"],
       "run_at": "document_end"

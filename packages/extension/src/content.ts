@@ -77,11 +77,33 @@ function saveSetting(key: string, value: string | number | boolean): void {
   chrome.storage.local.set({ [key]: value });
 }
 
+// Track if we're showing rendered markdown view
+let isRendered = false;
+
 /**
  * Main entry point
  */
 async function main() {
-  if (!shouldRenderPage()) {
+  // Always set up global 'm' listener
+  setupGlobalShortcut();
+  
+  // Check if user toggled to show original (skip auto-render)
+  const skipRender = checkSkipRender();
+  if (skipRender) {
+    // Remove MD favicon to show original/default
+    restoreOriginalFavicon();
+    // For .md files, store the raw content so 'm' can render it later
+    if (shouldRenderPage()) {
+      rawMarkdown = getRawMarkdown() || "";
+    }
+    return;
+  }
+  
+  // Check if this is a converted page (from HTML) or a raw .md file
+  const isConverted = document.documentElement.hasAttribute("data-md-converted");
+  
+  // Auto-render for .md files and converted pages
+  if (!isConverted && !shouldRenderPage()) {
     return;
   }
 
@@ -90,6 +112,27 @@ async function main() {
     return;
   }
 
+  await renderMarkdownView();
+}
+
+/**
+ * Check if we should skip auto-render (user pressed 'm' to see original)
+ */
+function checkSkipRender(): boolean {
+  if (window.location.hash === "#md-raw") {
+    // Clear the hash without triggering reload
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Render the markdown view UI
+ */
+async function renderMarkdownView() {
+  isRendered = true;
+  
   // Load settings from extension storage
   await loadSettings();
 
@@ -154,9 +197,6 @@ function replacePageContent(html: string) {
                 <path d="M18 8l4 4-4 4M6 8l-4 4 4 4M2 12h20"/>
               </svg>
             </button>
-            <button class="md-btn md-btn-icon" id="md-raw-btn" title="Toggle raw markdown (Ctrl+U)">
-              &lt;/&gt;
-            </button>
           </div>
           <div class="md-sidebar-footer">
             <button class="md-btn md-btn-icon" id="md-font-increase" title="Increase font size">
@@ -181,6 +221,7 @@ function replacePageContent(html: string) {
             <div class="md-file-header-right">
               ${isSandboxedPage() ? '<span class="md-sandbox-warning" title="Print and other features are disabled on sandboxed pages">⚠ Sandboxed mode. Some features unavailable.</span>' : ''}
               <button class="md-btn md-header-btn ${isSandboxedPage() ? 'md-btn-disabled' : ''}" id="md-print-btn" title="Print / PDF (Ctrl+P)" ${isSandboxedPage() ? 'disabled' : ''}>Print</button>
+              <button class="md-btn md-header-btn" id="md-exit-btn" title="Exit MD view (M)">Exit</button>
               <span class="md-file-meta">${formatFileSize(rawMarkdown.length)}</span>
             </div>
           </div>
@@ -210,7 +251,7 @@ function replacePageContent(html: string) {
                 <div class="md-shortcuts-grid">
                   <div class="md-shortcut"><kbd>Ctrl+G</kbd> Table of contents</div>
                   <div class="md-shortcut"><kbd>Ctrl+T</kbd> Toggle theme</div>
-                  <div class="md-shortcut"><kbd>Ctrl+U</kbd> Toggle raw markdown</div>
+                  <div class="md-shortcut"><kbd>M</kbd> Exit view</div>
                   ${isSandboxedPage() ? '' : '<div class="md-shortcut"><kbd>Ctrl+P</kbd> Print / PDF</div>'}
                   <div class="md-shortcut"><kbd>Ctrl+H</kbd> Help</div>
                   <div class="md-shortcut"><kbd>Esc</kbd> Close panel</div>
@@ -271,7 +312,7 @@ function replacePageContent(html: string) {
   document.getElementById("md-toc-close")?.addEventListener("click", () => setTOCVisible(false));
   document.getElementById("md-toc-backdrop")?.addEventListener("click", () => setTOCVisible(false));
   document.getElementById("md-theme-btn")?.addEventListener("click", toggleTheme);
-  document.getElementById("md-raw-btn")?.addEventListener("click", toggleRawView);
+  document.getElementById("md-exit-btn")?.addEventListener("click", toggleRawView);
   document.getElementById("md-width-btn")?.addEventListener("click", toggleFullWidth);
   document.getElementById("md-font-decrease")?.addEventListener("click", () => changeFontSize(-1));
   document.getElementById("md-font-increase")?.addEventListener("click", () => changeFontSize(1));
@@ -283,6 +324,16 @@ function replacePageContent(html: string) {
   document.getElementById("md-print-btn")?.addEventListener("click", printDocument);
   document.getElementById("release-close")?.addEventListener("click", dismissReleaseNotification);
   document.getElementById("release-changelog")?.addEventListener("click", viewChangelog);
+
+  // Handle content links - force full page navigation
+  document.getElementById("md-content")?.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    const link = target.closest("a");
+    if (link && link.href && !link.href.startsWith("#")) {
+      e.preventDefault();
+      window.location.href = link.href;
+    }
+  });
 }
 
 /**
@@ -320,35 +371,19 @@ function changeFontSize(delta: number) {
  */
 function applyFontSize() {
   document.documentElement.style.setProperty("--md-font-size", `${fontSize}px`);
+  // Scale images proportionally (1.0 at default 16px)
+  const scale = fontSize / FONT_SIZE_DEFAULT;
+  document.documentElement.style.setProperty("--md-image-scale", `${scale}`);
 }
 
 /**
  * Toggle between rendered and raw markdown view
  */
 function toggleRawView() {
-  showingRaw = !showingRaw;
-  
-  const content = document.getElementById("md-content");
-  const btn = document.getElementById("md-raw-btn");
-  
-  if (!content || !btn) return;
-  
-  if (showingRaw) {
-    // Show raw markdown
-    content.innerHTML = `<pre class="raw-markdown"><code>${escapeHtml(rawMarkdown)}</code></pre>`;
-    btn.classList.add("active");
-  } else {
-    // Show rendered markdown
-    const html = md.render(rawMarkdown);
-    content.innerHTML = `<div class="markdown-body">${html}</div>`;
-    btn.classList.remove("active");
-    
-    // Re-add heading IDs and re-highlight code
-    addHeadingIds();
-    highlightCodeBlocks();
-    renderMermaidDiagrams();
-    renderAsciiDiagrams();
-  }
+  // Add hash to skip auto-render on reload
+  isRendered = false;
+  window.location.hash = "md-raw";
+  window.location.reload();
 }
 
 /**
@@ -572,7 +607,72 @@ function toggleTheme() {
 }
 
 /**
- * Setup keyboard shortcuts
+ * Setup global 'm' shortcut - runs on ALL pages
+ */
+function setupGlobalShortcut() {
+  document.addEventListener("keydown", async (e) => {
+    if (e.key !== "m" || isEditableElement(e.target as HTMLElement)) {
+      return;
+    }
+    
+    e.preventDefault();
+    
+    if (isRendered) {
+      // Currently showing markdown view - toggle back to original
+      toggleRawView();
+    } else if (rawMarkdown) {
+      // .md file showing raw text - render it
+      await renderMarkdownView();
+    } else {
+      // Regular HTML page - convert to markdown
+      await convertAndRender();
+    }
+  });
+}
+
+/**
+ * Convert current HTML page to markdown and render
+ */
+async function convertAndRender() {
+  // Dynamically import Turndown
+  const TurndownService = (await import("turndown")).default;
+  
+  const turndown = new TurndownService({
+    headingStyle: "atx",
+    codeBlockStyle: "fenced",
+    bulletListMarker: "-",
+  });
+
+  turndown.remove([
+    "script", "style", "nav", "header", "footer", "aside",
+    "iframe", "noscript", "svg", "form", "button", "input",
+  ]);
+
+  const selectors = [
+    "article", "main", "[role='main']",
+    ".post-content", ".article-content", ".entry-content",
+    ".post-body", ".article-body", "#content", ".content",
+  ];
+
+  let source: Element | null = null;
+  for (const sel of selectors) {
+    source = document.querySelector(sel);
+    if (source) break;
+  }
+  source = source || document.body;
+
+  const title = document.title || "Converted Page";
+  const url = window.location.href;
+  rawMarkdown = `# ${title}\n\n> Source: ${url}\n\n---\n\n${turndown.turndown(source.innerHTML)}`;
+  
+  document.documentElement.setAttribute("data-md-converted", "true");
+  tocEntries = buildTOC(rawMarkdown);
+  
+  await renderMarkdownView();
+}
+
+/**
+ * Setup keyboard shortcuts (within MD viewer)
  */
 function setupKeyboardShortcuts() {
   document.addEventListener("keydown", (e) => {
@@ -586,12 +686,6 @@ function setupKeyboardShortcuts() {
     if (e.ctrlKey && e.key === "t") {
       e.preventDefault();
       toggleTheme();
-    }
-
-    // Ctrl+U - Toggle raw view
-    if (e.ctrlKey && e.key === "u") {
-      e.preventDefault();
-      toggleRawView();
     }
 
     // Ctrl+P - Print (disabled on sandboxed pages)
@@ -793,6 +887,23 @@ function getFilenameFromURL(): string {
 /**
  * Escape HTML
  */
+/**
+ * Remove MD favicon links to restore original/default favicon
+ */
+function restoreOriginalFavicon() {
+  // Remove any existing favicon links
+  document.querySelectorAll('link[rel="icon"]').forEach(el => el.remove());
+  // Browser will fall back to default or site's original favicon
+}
+
+/**
+ * Check if element is editable (input, textarea, contenteditable)
+ */
+function isEditableElement(el: HTMLElement): boolean {
+  const tagName = el.tagName.toLowerCase();
+  return tagName === "input" || tagName === "textarea" || el.isContentEditable;
+}
+
 function escapeHtml(text: string): string {
   const div = document.createElement("div");
   div.textContent = text;
@@ -810,6 +921,19 @@ function formatFileSize(bytes: number): string {
 
 // Initialize on load
 main().catch(console.error);
+
+// Listen for messages from background script (icon click)
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.action === "toggle") {
+    if (isRendered) {
+      toggleRawView();
+    } else {
+      convertAndRender().catch(console.error);
+    }
+    sendResponse({ success: true });
+  }
+  return true;
+});
 
 // Listen for system theme changes (only if user hasn't set a preference)
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {

@@ -67,6 +67,10 @@ export interface Draft {
   id: string;
   /** Draft content */
   content: string;
+  /** Source URL (if loaded from URL) */
+  sourceUrl?: string;
+  /** Page title (if loaded from URL) */
+  sourceTitle?: string;
 }
 
 /** List of active drafts */
@@ -79,13 +83,27 @@ const [currentDraftId, setCurrentDraftId] = createSignal<string | null>(null);
 let draftCounter = 0;
 
 /**
+ * Source info for drafts loaded from URLs
+ */
+export interface DraftSourceInfo {
+  url: string;
+  title: string;
+}
+
+/**
  * Create a new empty draft
+ * @param source - Optional source info if loaded from URL
  * @returns The new draft's ID
  */
-function createDraft(): string {
+function createDraft(source?: DraftSourceInfo): string {
   draftCounter++;
   const id = `draft-${draftCounter}`;
-  setDrafts([...drafts(), { id, content: "" }]);
+  setDrafts([...drafts(), { 
+    id, 
+    content: "",
+    sourceUrl: source?.url,
+    sourceTitle: source?.title,
+  }]);
   return id;
 }
 
@@ -148,6 +166,9 @@ const [showSettings, setShowSettings] = createSignal(false);
 
 /** Whether help modal is visible */
 const [showHelp, setShowHelp] = createSignal(false);
+
+/** Whether URL input modal is visible */
+const [showUrlModal, setShowUrlModal] = createSignal(false);
 
 /** Whether page overview modal is visible */
 const [showPageOverview, setShowPageOverview] = createSignal(false);
@@ -363,6 +384,8 @@ export {
   setShowSettings,
   showHelp,
   setShowHelp,
+  showUrlModal,
+  setShowUrlModal,
   showPageOverview,
   setShowPageOverview,
   showRawMarkdown,

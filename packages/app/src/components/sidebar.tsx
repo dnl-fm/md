@@ -32,6 +32,8 @@ import { getFilename, clamp, calculateSidebarWidth } from "../utils";
 interface SidebarProps {
   /** Handler to open file picker dialog */
   onOpenFile: () => void;
+  /** Handler to open URL input modal */
+  onOpenUrl: () => void;
   /** Handler to load a file by path */
   onLoadFile: (path: string, addToHistory?: boolean) => Promise<void>;
   /** Handler to load a draft by ID */
@@ -106,6 +108,9 @@ export function Sidebar(props: SidebarProps) {
           <button class="btn btn-full" onClick={props.onOpenFile}>
             📂 Open File
           </button>
+          <button class="btn btn-full" onClick={props.onOpenUrl}>
+            🌐 Open URL
+          </button>
 
           <div class="history-section">
             <div class="history-title">Recent Files</div>
@@ -144,6 +149,13 @@ export function Sidebar(props: SidebarProps) {
             title="Open file (Ctrl+O)"
           >
             📂
+          </button>
+          <button
+            class="btn btn-icon"
+            onClick={props.onOpenUrl}
+            title="Open URL (Ctrl+U)"
+          >
+            🌐
           </button>
           <div class="recent-buttons">
             {(() => {
