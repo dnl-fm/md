@@ -690,8 +690,12 @@ function App() {
 
   // Switch to a draft
   async function loadDraft(id: string) {
+    logger.info(`loadDraft START: id=${id}, currentDraftId=${currentDraftId()}, showRawMarkdown=${showRawMarkdown()}`);
     // Don't reload the same draft
-    if (currentDraftId() === id) return;
+    if (currentDraftId() === id) {
+      logger.info(`loadDraft: early return - same draft`);
+      return;
+    }
     
     // Check for unsaved changes in current file
     const dirty = isDirty();
@@ -722,7 +726,7 @@ function App() {
     
     const draft = getDraft(id);
     if (draft) {
-      logger.info(`loadDraft: id=${id}, sourceUrl=${draft.sourceUrl}, showRawMarkdown=${!draft.sourceUrl}`);
+      logger.info(`loadDraft: id=${id}, sourceUrl=${draft.sourceUrl}, will set showRawMarkdown=${!draft.sourceUrl}`);
       setCurrentFile(null);
       setCurrentDraftId(id);
       setContent(draft.content);
@@ -731,6 +735,7 @@ function App() {
       setFileInfo(null);
       // URL-fetched drafts stay in preview mode, regular drafts open in edit mode
       setShowRawMarkdown(!draft.sourceUrl);
+      logger.info(`loadDraft END: showRawMarkdown is now ${showRawMarkdown()}`);
     }
   }
 
