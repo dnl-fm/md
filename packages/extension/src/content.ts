@@ -81,7 +81,10 @@ function saveSetting(key: string, value: string | number | boolean): void {
  * Main entry point
  */
 async function main() {
-  if (!shouldRenderPage()) {
+  // Check if this is a converted page (from HTML) or a raw .md file
+  const isConverted = document.documentElement.hasAttribute("data-md-converted");
+  
+  if (!isConverted && !shouldRenderPage()) {
     return;
   }
 

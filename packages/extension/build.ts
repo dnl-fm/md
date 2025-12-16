@@ -32,6 +32,53 @@ async function buildContentScript() {
   console.log("✓ content.js built");
 }
 
+// Build the background service worker
+async function buildBackground() {
+  console.log("Building background script...");
+
+  const result = await Bun.build({
+    entrypoints: ["./src/background.ts"],
+    outdir: DIST_DIR,
+    minify: true,
+    target: "browser",
+    format: "esm",
+  });
+
+  if (!result.success) {
+    console.error("Build failed:");
+    for (const log of result.logs) {
+      console.error(log);
+    }
+    process.exit(1);
+  }
+
+  console.log("✓ background.js built");
+}
+
+// Build the converter script (injected on icon click)
+async function buildConverter() {
+  console.log("Building converter script...");
+
+  const result = await Bun.build({
+    entrypoints: ["./src/convert-page.ts"],
+    outdir: DIST_DIR,
+    naming: "converter.js",
+    minify: true,
+    target: "browser",
+    format: "iife",
+  });
+
+  if (!result.success) {
+    console.error("Build failed:");
+    for (const log of result.logs) {
+      console.error(log);
+    }
+    process.exit(1);
+  }
+
+  console.log("✓ converter.js built");
+}
+
 // Build combined CSS
 function buildStyles() {
   console.log("Building styles...");
@@ -120,6 +167,8 @@ async function build() {
   console.log("Building MD extension...\n");
 
   await buildContentScript();
+  await buildBackground();
+  await buildConverter();
   buildStyles();
   copyManifest();
   copyIcons();
