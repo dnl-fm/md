@@ -220,8 +220,8 @@ function replacePageContent(html: string) {
             <span class="md-file-path">📄 ${escapeHtml(filename)}</span>
             <div class="md-file-header-right">
               ${isSandboxedPage() ? '<span class="md-sandbox-warning" title="Print and other features are disabled on sandboxed pages">⚠ Sandboxed mode. Some features unavailable.</span>' : ''}
-              <button class="md-btn md-header-btn ${isSandboxedPage() ? 'md-btn-disabled' : ''}" id="md-print-btn" title="Print / PDF (Ctrl+P)" ${isSandboxedPage() ? 'disabled' : ''}>Print</button>
-              <button class="md-btn md-header-btn" id="md-exit-btn" title="Exit MD view (M)">Exit</button>
+              <button class="btn btn-small ${isSandboxedPage() ? 'btn-disabled' : ''}" id="md-print-btn" title="Print / PDF (Ctrl+P)" ${isSandboxedPage() ? 'disabled' : ''}>Print</button>
+              <button class="btn btn-small" id="md-exit-btn" title="Exit MD view (M)">Exit</button>
               <span class="md-file-meta">${formatFileSize(rawMarkdown.length)}</span>
             </div>
           </div>

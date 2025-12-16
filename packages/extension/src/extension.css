@@ -118,22 +118,6 @@ body {
   gap: 12px;
 }
 
-.md-header-btn {
-  padding: 4px 10px;
-  font-size: 13px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.md-header-btn:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
 .md-file-meta {
   color: var(--text-secondary);
 }
@@ -719,7 +703,7 @@ pre code.language-ascii {
 }
 
 /* Disabled button */
-.md-btn-disabled {
+.btn-disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
