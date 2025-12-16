@@ -703,13 +703,19 @@ pre code.language-ascii {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.6rem;
   font-size: 0.75rem;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  font-weight: 500;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
   border-radius: 4px;
-  opacity: 0.8;
+}
+
+[data-theme="dark"] .md-sandbox-warning {
+  color: #fcd34d;
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 /* Disabled button */
@@ -717,4 +723,9 @@ pre code.language-ascii {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* Content image scaling with font size */
+.markdown-body img {
+  zoom: var(--md-image-scale, 1);
 }

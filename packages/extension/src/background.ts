@@ -1,36 +1,20 @@
 /**
  * Background service worker
- * Handles extension icon clicks to convert HTML pages to Markdown
+ * Handles extension icon clicks
  */
 
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id || !tab.url) return;
   
-  // Skip chrome:// and other restricted URLs
+  // Skip restricted URLs
   if (tab.url.startsWith("chrome://") || tab.url.startsWith("edge://") || tab.url.startsWith("about:")) {
-    console.log("MD: Cannot run on browser internal pages");
     return;
   }
   
+  // Send message to content script to toggle view
   try {
-    // 1. Inject styles first
-    await chrome.scripting.insertCSS({
-      target: { tabId: tab.id },
-      files: ["styles.css"],
-    });
-    
-    // 2. Convert HTML to markdown (replaces page with <pre>)
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["converter.js"],
-    });
-    
-    // 3. Render the markdown with full UI
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["content.js"],
-    });
+    await chrome.tabs.sendMessage(tab.id, { action: "toggle" });
   } catch (error) {
-    console.error("MD: Failed to inject converter", error);
+    console.error("MD: Failed to send message to content script", error);
   }
 });
