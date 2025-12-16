@@ -2,6 +2,7 @@ import MarkdownIt from "markdown-it";
 import { shouldRenderPage, getRawMarkdown } from "./detector";
 import { buildTOC, type TOCEntry } from "./toc";
 
+import { renderMermaid, renderASCII } from "./api";
 // Initialize markdown-it
 const md = new MarkdownIt({
   html: true,
@@ -178,7 +179,8 @@ function replacePageContent(html: string) {
           <div class="md-file-header">
             <span class="md-file-path">📄 ${escapeHtml(filename)}</span>
             <div class="md-file-header-right">
-              <button class="md-btn md-header-btn" id="md-print-btn" title="Print / PDF (Ctrl+P)">Print</button>
+              ${isSandboxedPage() ? '<span class="md-sandbox-warning" title="Print and other features are disabled on sandboxed pages">⚠ Sandboxed mode. Some features unavailable.</span>' : ''}
+              <button class="md-btn md-header-btn ${isSandboxedPage() ? 'md-btn-disabled' : ''}" id="md-print-btn" title="Print / PDF (Ctrl+P)" ${isSandboxedPage() ? 'disabled' : ''}>Print</button>
               <span class="md-file-meta">${formatFileSize(rawMarkdown.length)}</span>
             </div>
           </div>
@@ -209,7 +211,7 @@ function replacePageContent(html: string) {
                   <div class="md-shortcut"><kbd>Ctrl+G</kbd> Table of contents</div>
                   <div class="md-shortcut"><kbd>Ctrl+T</kbd> Toggle theme</div>
                   <div class="md-shortcut"><kbd>Ctrl+U</kbd> Toggle raw markdown</div>
-                  <div class="md-shortcut"><kbd>Ctrl+P</kbd> Print / PDF</div>
+                  ${isSandboxedPage() ? '' : '<div class="md-shortcut"><kbd>Ctrl+P</kbd> Print / PDF</div>'}
                   <div class="md-shortcut"><kbd>Ctrl+H</kbd> Help</div>
                   <div class="md-shortcut"><kbd>Esc</kbd> Close panel</div>
                 </div>
@@ -497,9 +499,20 @@ function setTOCVisible(visible: boolean) {
  * Toggle help modal
  */
 /**
+ * Check if page is sandboxed (print disabled)
+ */
+function isSandboxedPage(): boolean {
+  return window.location.hostname === 'raw.githubusercontent.com' ||
+         window.location.hostname === 'gist.githubusercontent.com';
+}
+
+/**
  * Print document
  */
 function printDocument() {
+  if (isSandboxedPage()) {
+    return; // Disabled on sandboxed pages
+  }
   window.print();
 }
 
@@ -581,8 +594,8 @@ function setupKeyboardShortcuts() {
       toggleRawView();
     }
 
-    // Ctrl+P - Print
-    if (e.ctrlKey && e.key === "p") {
+    // Ctrl+P - Print (disabled on sandboxed pages)
+    if (e.ctrlKey && e.key === "p" && !isSandboxedPage()) {
       e.preventDefault();
       printDocument();
     }
@@ -617,21 +630,30 @@ async function highlightCodeBlocks() {
     // Import Prism core and needed languages
     const Prism = await import("prismjs");
     
-    // Import language definitions (in dependency order)
+    // Import language definitions (ORDER MATTERS - dependencies first)
+    // Core languages
+    await import("prismjs/components/prism-markup"); // html/xml - must be first
+    await import("prismjs/components/prism-css");
+    await import("prismjs/components/prism-clike"); // base for C-like languages
     await import("prismjs/components/prism-javascript");
+    
+    // Languages that depend on javascript
     await import("prismjs/components/prism-typescript");
     await import("prismjs/components/prism-jsx");
     await import("prismjs/components/prism-tsx");
+    
+    // Markup templating (needed by PHP and others)
+    await import("prismjs/components/prism-markup-templating");
+    await import("prismjs/components/prism-php");
+    
+    // Other languages
     await import("prismjs/components/prism-python");
     await import("prismjs/components/prism-rust");
     await import("prismjs/components/prism-go");
-    await import("prismjs/components/prism-php");
     await import("prismjs/components/prism-bash");
     await import("prismjs/components/prism-json");
     await import("prismjs/components/prism-yaml");
     await import("prismjs/components/prism-toml");
-    await import("prismjs/components/prism-markup"); // html/xml
-    await import("prismjs/components/prism-css");
     await import("prismjs/components/prism-sql");
     await import("prismjs/components/prism-markdown");
     await import("prismjs/components/prism-diff");
@@ -678,7 +700,7 @@ async function renderMermaidDiagrams() {
   const mermaidBlocks = document.querySelectorAll("pre code.language-mermaid");
   if (mermaidBlocks.length === 0) return;
 
-  const { renderMermaid } = await import("./api");
+  // Using top-level import
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
   const theme = isDark ? "dark" : "light";
 
@@ -723,8 +745,6 @@ async function renderMermaidDiagrams() {
 async function renderAsciiDiagrams() {
   const asciiBlocks = document.querySelectorAll("pre code.language-ascii");
   if (asciiBlocks.length === 0) return;
-
-  const { renderASCII } = await import("./api");
 
   for (const block of asciiBlocks) {
     const code = block.textContent || "";
