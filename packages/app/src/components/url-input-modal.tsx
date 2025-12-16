@@ -34,8 +34,7 @@ export function UrlInputModal(props: UrlInputModalProps) {
   createEffect(() => {
     if (props.show) {
       setUrl("");
-      // Small delay to ensure modal is rendered
-      setTimeout(() => inputRef?.focus(), 10);
+      requestAnimationFrame(() => inputRef?.focus());
     }
   });
 
@@ -72,7 +71,7 @@ export function UrlInputModal(props: UrlInputModalProps) {
           <form class="modal-content" onSubmit={handleSubmit}>
             <input
               ref={inputRef}
-              type="text"
+              type="url"
               class="url-input"
               placeholder="Enter URL..."
               value={url()}

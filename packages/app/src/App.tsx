@@ -433,6 +433,8 @@ function App() {
             const draft = getDraft(draftId);
             // Only trigger Save As for URL-fetched drafts
             if (draft?.sourceUrl) {
+              // Sync current content to draft before saving
+              updateDraft(draftId, content());
               saveDraftToFile();
             }
           } else if (currentFile() && isDirty()) {
@@ -844,7 +846,7 @@ function App() {
    */
   function generateFilename(title: string): string {
     const now = new Date();
-    const timestamp = now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "").replace("T", "T");
+    const timestamp = now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "");
     const slug = title
       .toLowerCase()
       .replace(/[^\w\s-]/g, "")
