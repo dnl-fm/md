@@ -20,8 +20,12 @@ build-ascii:
 	cd $(ASCII_DIR) && wasm-pack build --target web --out-dir wasm-pkg --features wasm
 	cp $(ASCII_DIR)/wasm-pkg/ascii.js $(ASCII_DIR)/wasm-pkg/ascii.d.ts $(ASCII_DIR)/wasm-pkg/ascii_bg.wasm $(ASCII_DIR)/wasm-pkg/ascii_bg.wasm.d.ts $(APP_DIR)/src/ascii-pkg/
 
-build-ext:
+build-ext: build-ext-wasm
 	cd $(EXT_DIR) && bun run build
+
+build-ext-wasm: build-ascii
+	cp $(ASCII_DIR)/wasm-pkg/ascii.js $(ASCII_DIR)/wasm-pkg/ascii.d.ts $(ASCII_DIR)/wasm-pkg/ascii_bg.wasm $(ASCII_DIR)/wasm-pkg/ascii_bg.wasm.d.ts $(EXT_DIR)/src/ascii-pkg/
+	cd $(EXT_DIR) && bun run generate-wasm-inline.ts
 
 # Preview built app
 serve:
