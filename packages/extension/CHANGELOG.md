@@ -2,21 +2,24 @@
 
 All notable changes to the MD browser extension will be documented in this file.
 
-## [0.1.1] - 2025-12-16
-
-### Fixed
-- **ASCII diagrams with cycles** - Back-edges (e.g., `D --> A`) now render correctly with loopback arrows instead of crashing
-- **ASCII table emoji alignment** - Unicode emoji (✅, ❌, etc.) now sanitized to ASCII equivalents for proper border alignment
-- **Syntax highlighting** - Fixed Prism.js import order; `markup-templating` now loads before `php` and other dependent languages
+## [0.2.0] - 2025-12-16
 
 ### Added
-- **Sandboxed page detection** - Shows warning "⚠ Sandboxed mode. Some features unavailable." on `raw.githubusercontent.com`
-- Print button disabled on sandboxed pages (GitHub's CSP blocks `window.print()`)
+- **HTML to Markdown conversion**: Convert any webpage to markdown with one click
+  - Uses Turndown for clean HTML-to-markdown conversion
+  - Auto-removes scripts, nav, footer, and other non-content elements
+  - Preserves article/main content when available
+- **ASCII diagram support**: Render ASCII diagrams via API (flowchart, ERD, sequence, state, class, timeline, table)
 
-### Technical
-- Prism.js language imports reordered: `markup` → `clike` → `javascript` → `typescript/jsx/tsx` → `markup-templating` → `php`
-- ASCII renderer: added `draw_back_edge()` function for cycle handling
-- ASCII renderer: emoji sanitization converts to ASCII before width calculation
+### Fixed
+- **CSS injection** - Extension styles no longer leak into non-markdown pages
+- **ASCII diagrams with cycles** - Back-edges (e.g., `D --> A`) now render correctly with loopback arrows
+- **ASCII table emoji alignment** - Unicode emoji (✅, ❌, etc.) sanitized to ASCII equivalents
+- **Syntax highlighting** - Fixed Prism.js import order for PHP and dependent languages
+
+### Changed
+- Button styles now use shared theme from `@md/shared`
+- Sandboxed page detection shows warning on `raw.githubusercontent.com`
 
 ## [0.1.0] - 2025-12-15
 
