@@ -90,6 +90,7 @@ import { ConfirmDialog } from "./components/confirm-dialog";
 import { WelcomeModal } from "./components/welcome-modal";
 import { HelpModal } from "./components/help-modal";
 import { UrlInputModal } from "./components/url-input-modal";
+import { CloudDocumentsModal } from "./components/cloud-documents-modal";
 import { ReleaseNotification } from "./components/release-notification";
 import { PageOverviewModal, preRenderThumbnails } from "./components/page-overview-modal";
 
@@ -1276,6 +1277,7 @@ function App() {
         error={urlError()}
         loading={urlLoading()}
       />
+      <CloudDocumentsModal />
       <ConfirmDialog />
       {showReleaseNotification() && (
         <ReleaseNotification 

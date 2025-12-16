@@ -26,6 +26,7 @@ import {
   drafts,
   currentDraftId,
 } from "../stores/app-store";
+import { openCloudModal } from "../stores/cloud-sync-store";
 import { getFilename, clamp, calculateSidebarWidth } from "../utils";
 
 /** Props for Sidebar component */
@@ -196,6 +197,13 @@ export function Sidebar(props: SidebarProps) {
         <Show when={!sidebarCollapsed()}>
           <button
             class="btn"
+            onClick={openCloudModal}
+            title="Cloud Documents"
+          >
+            ☁️ Cloud
+          </button>
+          <button
+            class="btn"
             onClick={toggleTheme}
             title="Toggle theme (Ctrl+T)"
           >
@@ -218,6 +226,13 @@ export function Sidebar(props: SidebarProps) {
         </Show>
 
         <Show when={sidebarCollapsed()}>
+          <button
+            class="btn btn-icon"
+            onClick={openCloudModal}
+            title="Cloud Documents"
+          >
+            ☁️
+          </button>
           <button
             class="btn btn-icon"
             onClick={toggleTheme}

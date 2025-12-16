@@ -20,6 +20,7 @@ import {
   currentDraftId,
   getDraft,
 } from "../stores/app-store";
+import { saveToCloud } from "../stores/cloud-sync-store";
 import { formatFileSize } from "../utils";
 
 /** Props for FileHeader component */
@@ -92,6 +93,16 @@ export function FileHeader(props: FileHeaderProps) {
               title="Print / Export PDF (Ctrl+P)"
             >
               Print
+            </button>
+            <button
+              class="btn btn-small no-print"
+              onClick={async () => {
+                const title = currentFile()?.split('/').pop()?.replace(/\.md$/, '') || 'Untitled';
+                await saveToCloud(title, content());
+              }}
+              title="Save to Cloud"
+            >
+              ☁️ Save to Cloud
             </button>
             <Show when={fileInfo()}>
               <span class="file-meta">
