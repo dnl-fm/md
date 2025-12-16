@@ -722,6 +722,7 @@ function App() {
     
     const draft = getDraft(id);
     if (draft) {
+      logger.info(`loadDraft: id=${id}, sourceUrl=${draft.sourceUrl}, showRawMarkdown=${!draft.sourceUrl}`);
       setCurrentFile(null);
       setCurrentDraftId(id);
       setContent(draft.content);
