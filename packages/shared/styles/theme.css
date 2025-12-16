@@ -1316,6 +1316,73 @@ body {
     max-width: 90vw;
 }
 
+/* URL input modal */
+.url-input-modal {
+    width: 500px;
+    max-width: 90vw;
+}
+
+.url-input-modal .modal-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.url-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1em;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.url-input:focus {
+    border-color: var(--accent-color);
+}
+
+.url-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.url-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.url-error {
+    color: #ef4444;
+    font-size: 0.9em;
+    padding: 8px 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 6px;
+}
+
+.url-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .help-version-section {
     display: flex;
     flex-direction: column;

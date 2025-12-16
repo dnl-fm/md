@@ -49,6 +49,8 @@ import {
   setShowSettings,
   showHelp,
   setShowHelp,
+  showUrlModal,
+  setShowUrlModal,
   showPageOverview,
   setShowPageOverview,
   showRawMarkdown,
@@ -87,6 +89,7 @@ import { SettingsModal } from "./components/settings-modal";
 import { ConfirmDialog } from "./components/confirm-dialog";
 import { WelcomeModal } from "./components/welcome-modal";
 import { HelpModal } from "./components/help-modal";
+import { UrlInputModal } from "./components/url-input-modal";
 import { ReleaseNotification } from "./components/release-notification";
 import { PageOverviewModal, preRenderThumbnails } from "./components/page-overview-modal";
 
@@ -100,6 +103,8 @@ function App() {
   const [showReleaseNotification, setShowReleaseNotification] = createSignal(false);
   const [appVersion, setAppVersion] = createSignal("");
   const [articleElement, setArticleElement] = createSignal<HTMLElement | null>(null);
+  const [urlError, setUrlError] = createSignal("");
+  const [urlLoading, setUrlLoading] = createSignal(false);
   // Page preview pre-rendering is feature-flagged off
   const isPreRendering = () => false;
   
@@ -451,6 +456,11 @@ function App() {
           }
           setShowHelp(!showHelp());
           break;
+        case "u":
+          e.preventDefault();
+          setUrlError("");
+          setShowUrlModal(!showUrlModal());
+          break;
         case "g":
           e.preventDefault();
           // Only show page overview in preview mode with content
@@ -574,7 +584,10 @@ function App() {
     }
     if (e.key === "Escape") {
       // Close in reverse order: last opened first (LIFO)
-      if (showSettings()) {
+      if (showUrlModal()) {
+        setShowUrlModal(false);
+        setUrlError("");
+      } else if (showSettings()) {
         setShowSettings(false);
       } else if (showHelp()) {
         setShowHelp(false);
@@ -810,12 +823,35 @@ function App() {
     setShowRawMarkdown(false);
   }
 
+  /**
+   * Generate a filename from title: YYYYMMDDTHHMMSS_slug.md (UTC)
+   */
+  function generateFilename(title: string): string {
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "").replace("T", "T");
+    const slug = title
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/--+/g, "-")
+      .substring(0, 50)
+      .replace(/-$/, "");
+    return `${timestamp}_${slug}.md`;
+  }
+
   // Save draft to file (with dialog)
   async function saveDraftToFile() {
     const draftId = currentDraftId();
     if (!draftId) return;
     
+    // Get draft to check for source info
+    const draft = getDraft(draftId);
+    const suggestedName = draft?.sourceTitle 
+      ? generateFilename(draft.sourceTitle)
+      : undefined;
+    
     const path = await save({
+      defaultPath: suggestedName,
       filters: [{ name: "Markdown", extensions: ["md"] }],
     });
     if (path) {
@@ -937,6 +973,143 @@ function App() {
     }
   }
 
+  // Response type from fetch_url command
+  interface FetchUrlResponse {
+    content: string;
+    content_type: string;
+    url: string;
+  }
+
+  /**
+   * Convert relative URLs to absolute based on base URL
+   */
+  function makeAbsoluteUrl(relativeUrl: string, baseUrl: string): string {
+    try {
+      return new URL(relativeUrl, baseUrl).href;
+    } catch {
+      return relativeUrl;
+    }
+  }
+
+  /**
+   * Convert HTML to Markdown with proper content extraction
+   * Matches the browser extension's conversion logic
+   */
+  async function htmlToMarkdown(html: string, sourceUrl: string): Promise<{ markdown: string; title: string }> {
+    const TurndownService = (await import("turndown")).default;
+    
+    // Parse HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    
+    // Extract title
+    const title = doc.title || "Untitled";
+    
+    // Configure Turndown (same as extension)
+    const turndown = new TurndownService({
+      headingStyle: "atx",
+      codeBlockStyle: "fenced",
+      bulletListMarker: "-",
+    });
+    
+    // Remove unwanted elements (same as extension)
+    // Use filter function to handle all element types including SVG
+    const removeElements = new Set([
+      "script", "style", "nav", "header", "footer", "aside",
+      "iframe", "noscript", "svg", "form", "button", "input",
+    ]);
+    turndown.remove((node) => removeElements.has(node.nodeName.toLowerCase()));
+    
+    // Try to find main content (same selectors as extension)
+    const selectors = [
+      "article", "main", "[role='main']",
+      ".post-content", ".article-content", ".entry-content",
+      ".post-body", ".article-body", "#content", ".content",
+    ];
+    
+    let source: Element | null = null;
+    for (const sel of selectors) {
+      source = doc.querySelector(sel);
+      if (source) break;
+    }
+    source = source || doc.body;
+    
+    // Convert relative image URLs to absolute before conversion
+    const images = source.querySelectorAll("img");
+    images.forEach((img) => {
+      const src = img.getAttribute("src");
+      if (src && !src.startsWith("data:") && !src.startsWith("http")) {
+        img.setAttribute("src", makeAbsoluteUrl(src, sourceUrl));
+      }
+    });
+    
+    // Convert relative link URLs to absolute
+    const links = source.querySelectorAll("a");
+    links.forEach((a) => {
+      const href = a.getAttribute("href");
+      if (href && !href.startsWith("#") && !href.startsWith("http") && !href.startsWith("mailto:")) {
+        a.setAttribute("href", makeAbsoluteUrl(href, sourceUrl));
+      }
+    });
+    
+    // Convert to markdown
+    const bodyMarkdown = turndown.turndown(source.innerHTML);
+    
+    // Build final markdown with source header (same format as extension)
+    const markdown = `# ${title}\n\n> Source: ${sourceUrl}\n\n---\n\n${bodyMarkdown}`;
+    
+    return { markdown, title };
+  }
+
+  // Open URL and display content
+  async function openUrl(url: string) {
+    setUrlError("");
+    setUrlLoading(true);
+    
+    try {
+      const response = await invoke<FetchUrlResponse>("fetch_url", { url });
+      
+      let markdown: string;
+      let title: string;
+      
+      if (response.content_type === "text/html") {
+        // Convert HTML to markdown with proper extraction
+        const result = await htmlToMarkdown(response.content, response.url);
+        markdown = result.markdown;
+        title = result.title;
+      } else {
+        // Plain text or markdown - use as-is
+        markdown = response.content;
+        // Extract title from first heading or use URL
+        const match = markdown.match(/^#\s+(.+)$/m);
+        title = match ? match[1] : new URL(response.url).pathname.split("/").pop() || "Untitled";
+      }
+      
+      // Close modal and load content as new tab
+      setShowUrlModal(false);
+      
+      // Create a draft with source info for filename suggestion
+      const draftId = createDraft({ url: response.url, title });
+      setCurrentFile(null);
+      setCurrentDraftId(draftId);
+      setContent(markdown);
+      setOriginalContent(markdown);
+      setFileInfo(null);
+      setShowRawMarkdown(false);
+      
+      // Update draft with content
+      updateDraft(draftId, markdown);
+      
+      logger.info(`Loaded URL: ${url} (${response.content_type})`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setUrlError(message);
+      logger.error(`Failed to fetch URL: ${message}`);
+    } finally {
+      setUrlLoading(false);
+    }
+  }
+
   // Print document to PDF
   async function printDocument() {
     // Only print if we have content
@@ -1053,7 +1226,7 @@ function App() {
         "font-family": getFontFamilyCSS(uiFontFamily()),
       }}
     >
-      <Sidebar onOpenFile={openFileDialog} onLoadFile={loadFile} onLoadDraft={loadDraft} />
+      <Sidebar onOpenFile={openFileDialog} onOpenUrl={() => setShowUrlModal(true)} onLoadFile={loadFile} onLoadDraft={loadDraft} />
 
       <main class="main-content">
         <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} onPrint={printDocument} isPreRendering={isPreRendering()} />
@@ -1077,6 +1250,13 @@ function App() {
         version={appVersion()} 
         onClose={() => setShowHelp(false)}
         onViewChangelog={viewChangelogFromHelp}
+      />
+      <UrlInputModal
+        show={showUrlModal()}
+        onClose={() => { setShowUrlModal(false); setUrlError(""); }}
+        onSubmit={openUrl}
+        error={urlError()}
+        loading={urlLoading()}
       />
       <ConfirmDialog />
       {showReleaseNotification() && (

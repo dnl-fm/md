@@ -63,6 +63,9 @@ export function HelpModal(props: HelpModalProps) {
                     <kbd>Ctrl+O</kbd> Open file
                   </div>
                   <div class="shortcut">
+                    <kbd>Ctrl+U</kbd> Open URL
+                  </div>
+                  <div class="shortcut">
                     <kbd>Ctrl+W</kbd> Close file
                   </div>
                   <div class="shortcut">
