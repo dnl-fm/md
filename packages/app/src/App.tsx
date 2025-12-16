@@ -425,6 +425,22 @@ function App() {
           e.preventDefault();
           closeFile();
           break;
+        case "s": {
+          e.preventDefault();
+          // Save: URL-fetched drafts get "Save As" dialog, files save in place
+          const draftId = currentDraftId();
+          if (draftId) {
+            const draft = getDraft(draftId);
+            // Only trigger Save As for URL-fetched drafts
+            if (draft?.sourceUrl) {
+              saveDraftToFile();
+            }
+          } else if (currentFile() && isDirty()) {
+            await invoke("write_file", { path: currentFile(), content: content() });
+            setOriginalContent(content());
+          }
+          break;
+        }
         case "t": {
           e.preventDefault();
           const wasOpen = showPageOverview();
