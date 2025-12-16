@@ -241,6 +241,7 @@ function App() {
   createEffect(async () => {
     const mdContent = content();
     const hl = highlighter(); // Read signal to track dependency
+    logger.info(`Render effect: content.length=${mdContent?.length || 0}, highlighter=${!!hl}`);
 
     if (!mdContent) {
       setRenderedHtml("");
@@ -373,6 +374,7 @@ function App() {
       }
     }
     
+    logger.info(`Render effect: setting renderedHtml, length=${html.length}`);
     setRenderedHtml(html);
   });
 
