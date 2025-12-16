@@ -738,7 +738,7 @@ function App() {
       setContent(draft.content);
       setOriginalContent(draft.content);
       logger.info(`loadDraft: after setContent, content().length=${content().length}`);
-      setRenderedHtml("");
+      // Don't clear renderedHtml - the render effect will update it from content()
       setFileInfo(null);
       // URL-fetched drafts stay in preview mode, regular drafts open in edit mode
       setShowRawMarkdown(!draft.sourceUrl);
