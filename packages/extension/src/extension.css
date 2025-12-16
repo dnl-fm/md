@@ -142,7 +142,7 @@ body {
 
 /* Content area */
 .md-content {
-  padding: 0 1.5rem 4rem;
+  padding: 0 1.5rem;
   font-size: var(--md-font-size, 16px);
 }
 
