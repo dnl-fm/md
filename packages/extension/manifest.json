@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "description": "Beautiful markdown rendering for raw .md files",
   "permissions": ["activeTab", "storage"],
+  "host_permissions": ["https://api.getmd.dev/*"],
   "content_scripts": [
     {
       "matches": [
@@ -31,7 +32,7 @@
     "default_title": "MD - Markdown Viewer"
   },
   "web_accessible_resources": [{
-    "resources": ["icons/*"],
+    "resources": ["styles.css", "icons/*"],
     "matches": ["<all_urls>"]
   }]
 }

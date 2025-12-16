@@ -2,6 +2,7 @@ import MarkdownIt from "markdown-it";
 import { shouldRenderPage, getRawMarkdown } from "./detector";
 import { buildTOC, type TOCEntry } from "./toc";
 
+import { renderMermaid, renderASCII } from "./api";
 // Initialize markdown-it
 const md = new MarkdownIt({
   html: true,
@@ -110,6 +111,9 @@ async function main() {
 
   // Setup mermaid diagrams (lazy load)
   await renderMermaidDiagrams();
+
+  // Setup ASCII diagrams (WASM)
+  await renderAsciiDiagrams();
 }
 
 /**
@@ -175,7 +179,8 @@ function replacePageContent(html: string) {
           <div class="md-file-header">
             <span class="md-file-path">📄 ${escapeHtml(filename)}</span>
             <div class="md-file-header-right">
-              <button class="md-btn md-header-btn" id="md-print-btn" title="Print / PDF (Ctrl+P)">Print</button>
+              ${isSandboxedPage() ? '<span class="md-sandbox-warning" title="Print and other features are disabled on sandboxed pages">⚠ Sandboxed mode. Some features unavailable.</span>' : ''}
+              <button class="md-btn md-header-btn ${isSandboxedPage() ? 'md-btn-disabled' : ''}" id="md-print-btn" title="Print / PDF (Ctrl+P)" ${isSandboxedPage() ? 'disabled' : ''}>Print</button>
               <span class="md-file-meta">${formatFileSize(rawMarkdown.length)}</span>
             </div>
           </div>
@@ -206,7 +211,7 @@ function replacePageContent(html: string) {
                   <div class="md-shortcut"><kbd>Ctrl+G</kbd> Table of contents</div>
                   <div class="md-shortcut"><kbd>Ctrl+T</kbd> Toggle theme</div>
                   <div class="md-shortcut"><kbd>Ctrl+U</kbd> Toggle raw markdown</div>
-                  <div class="md-shortcut"><kbd>Ctrl+P</kbd> Print / PDF</div>
+                  ${isSandboxedPage() ? '' : '<div class="md-shortcut"><kbd>Ctrl+P</kbd> Print / PDF</div>'}
                   <div class="md-shortcut"><kbd>Ctrl+H</kbd> Help</div>
                   <div class="md-shortcut"><kbd>Esc</kbd> Close panel</div>
                 </div>
@@ -342,6 +347,7 @@ function toggleRawView() {
     addHeadingIds();
     highlightCodeBlocks();
     renderMermaidDiagrams();
+    renderAsciiDiagrams();
   }
 }
 
@@ -493,9 +499,20 @@ function setTOCVisible(visible: boolean) {
  * Toggle help modal
  */
 /**
+ * Check if page is sandboxed (print disabled)
+ */
+function isSandboxedPage(): boolean {
+  return window.location.hostname === 'raw.githubusercontent.com' ||
+         window.location.hostname === 'gist.githubusercontent.com';
+}
+
+/**
  * Print document
  */
 function printDocument() {
+  if (isSandboxedPage()) {
+    return; // Disabled on sandboxed pages
+  }
   window.print();
 }
 
@@ -577,8 +594,8 @@ function setupKeyboardShortcuts() {
       toggleRawView();
     }
 
-    // Ctrl+P - Print
-    if (e.ctrlKey && e.key === "p") {
+    // Ctrl+P - Print (disabled on sandboxed pages)
+    if (e.ctrlKey && e.key === "p" && !isSandboxedPage()) {
       e.preventDefault();
       printDocument();
     }
@@ -603,98 +620,164 @@ function setupKeyboardShortcuts() {
 }
 
 /**
- * Highlight code blocks using Shiki
+ * Highlight code blocks using Prism.js
  */
 async function highlightCodeBlocks() {
   const codeBlocks = document.querySelectorAll("pre code[class*='language-']");
   if (codeBlocks.length === 0) return;
 
   try {
-    const { createHighlighter } = await import("https://esm.sh/shiki@1.24.0");
-
-    const highlighter = await createHighlighter({
-      themes: ["github-dark", "github-light"],
-      langs: [
-        "javascript",
-        "typescript",
-        "python",
-        "rust",
-        "go",
-        "bash",
-        "json",
-        "yaml",
-        "html",
-        "css",
-        "sql",
-        "markdown",
-        "php",
-      ],
-    });
-
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    // Import Prism core and needed languages
+    const Prism = await import("prismjs");
+    
+    // Import language definitions (ORDER MATTERS - dependencies first)
+    // Core languages
+    await import("prismjs/components/prism-markup"); // html/xml - must be first
+    await import("prismjs/components/prism-css");
+    await import("prismjs/components/prism-clike"); // base for C-like languages
+    await import("prismjs/components/prism-javascript");
+    
+    // Languages that depend on javascript
+    await import("prismjs/components/prism-typescript");
+    await import("prismjs/components/prism-jsx");
+    await import("prismjs/components/prism-tsx");
+    
+    // Markup templating (needed by PHP and others)
+    await import("prismjs/components/prism-markup-templating");
+    await import("prismjs/components/prism-php");
+    
+    // Other languages
+    await import("prismjs/components/prism-python");
+    await import("prismjs/components/prism-rust");
+    await import("prismjs/components/prism-go");
+    await import("prismjs/components/prism-bash");
+    await import("prismjs/components/prism-json");
+    await import("prismjs/components/prism-yaml");
+    await import("prismjs/components/prism-toml");
+    await import("prismjs/components/prism-sql");
+    await import("prismjs/components/prism-markdown");
+    await import("prismjs/components/prism-diff");
 
     for (const block of codeBlocks) {
       const code = block.textContent || "";
       const langClass = block.className.match(/language-(\w+)/);
-      const lang = langClass ? langClass[1] : "text";
+      let lang = langClass ? langClass[1] : "text";
+
+      // Map common aliases
+      if (lang === "js") lang = "javascript";
+      if (lang === "ts") lang = "typescript";
+      if (lang === "html" || lang === "xml") lang = "markup";
+      if (lang === "sh" || lang === "shell") lang = "bash";
+      if (lang === "yml") lang = "yaml";
+
+      // Check if language is supported
+      if (!Prism.default.languages[lang]) {
+        continue; // Skip unsupported languages
+      }
 
       try {
-        const highlighted = highlighter.codeToHtml(code, {
-          lang: lang,
-          theme: isDark ? "github-dark" : "github-light",
-        });
+        const highlighted = Prism.default.highlight(
+          code,
+          Prism.default.languages[lang],
+          lang
+        );
 
-        const pre = block.parentElement;
-        if (pre) {
-          const wrapper = document.createElement("div");
-          wrapper.innerHTML = highlighted;
-          pre.replaceWith(wrapper.firstElementChild!);
-        }
-      } catch {
-        // Language not supported, skip
+        block.innerHTML = highlighted;
+        block.classList.add("language-" + lang);
+      } catch (error) {
+        console.warn(`MD: Failed to highlight ${lang} code block`, error);
       }
     }
   } catch (error) {
-    console.warn("MD: Failed to load syntax highlighter", error);
+    console.warn("MD: Failed to load Prism.js", error);
   }
 }
 
 /**
- * Render Mermaid diagrams
+ * Render Mermaid diagrams via API
  */
 async function renderMermaidDiagrams() {
   const mermaidBlocks = document.querySelectorAll("pre code.language-mermaid");
   if (mermaidBlocks.length === 0) return;
 
-  try {
-    const mermaid = await import("https://esm.sh/mermaid@11.4.0");
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  // Using top-level import
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const theme = isDark ? "dark" : "light";
 
-    mermaid.default.initialize({
-      startOnLoad: false,
-      theme: isDark ? "dark" : "default",
-    });
+  for (const block of mermaidBlocks) {
+    const code = block.textContent || "";
+    const pre = block.parentElement;
+    if (!pre) continue;
 
-    let index = 0;
-    for (const block of mermaidBlocks) {
-      const code = block.textContent || "";
-      const pre = block.parentElement;
-      if (!pre) continue;
+    // Add loading state
+    const loadingDiv = document.createElement("div");
+    loadingDiv.className = "mermaid-loading";
+    loadingDiv.textContent = "Loading diagram...";
+    pre.replaceWith(loadingDiv);
 
-      try {
-        const id = `mermaid-${index++}`;
-        const { svg } = await mermaid.default.render(id, code);
-
+    try {
+      const svg = await renderMermaid(code, theme);
+      
+      if (svg) {
         const wrapper = document.createElement("div");
         wrapper.className = "mermaid-diagram";
         wrapper.innerHTML = svg;
-        pre.replaceWith(wrapper);
-      } catch (error) {
-        console.warn("MD: Failed to render mermaid diagram", error);
+        loadingDiv.replaceWith(wrapper);
+      } else {
+        // Fallback to raw code on error
+        const fallback = document.createElement("pre");
+        fallback.innerHTML = `<code class="language-mermaid">${escapeHtml(code)}</code>`;
+        loadingDiv.replaceWith(fallback);
       }
+    } catch (error) {
+      console.warn("MD: Failed to render mermaid diagram", error);
+      // Fallback to raw code
+      const fallback = document.createElement("pre");
+      fallback.innerHTML = `<code class="language-mermaid">${escapeHtml(code)}</code>`;
+      loadingDiv.replaceWith(fallback);
     }
-  } catch (error) {
-    console.warn("MD: Failed to load mermaid", error);
+  }
+}
+
+/**
+ * Render ASCII diagrams via API
+ */
+async function renderAsciiDiagrams() {
+  const asciiBlocks = document.querySelectorAll("pre code.language-ascii");
+  if (asciiBlocks.length === 0) return;
+
+  for (const block of asciiBlocks) {
+    const code = block.textContent || "";
+    const pre = block.parentElement;
+    if (!pre) continue;
+
+    // Add loading state
+    const loadingPre = document.createElement("pre");
+    loadingPre.className = "ascii-loading";
+    loadingPre.textContent = "Loading diagram...";
+    pre.replaceWith(loadingPre);
+
+    try {
+      const result = await renderASCII(code);
+      
+      if (result) {
+        const wrapper = document.createElement("pre");
+        wrapper.className = "ascii-diagram";
+        wrapper.textContent = result;
+        loadingPre.replaceWith(wrapper);
+      } else {
+        // Fallback to raw code on error
+        const fallback = document.createElement("pre");
+        fallback.innerHTML = `<code class="language-ascii">${escapeHtml(code)}</code>`;
+        loadingPre.replaceWith(fallback);
+      }
+    } catch (error) {
+      console.warn("MD: Failed to render ASCII diagram", error);
+      // Fallback to raw code
+      const fallback = document.createElement("pre");
+      fallback.innerHTML = `<code class="language-ascii">${escapeHtml(code)}</code>`;
+      loadingPre.replaceWith(fallback);
+    }
   }
 }
 

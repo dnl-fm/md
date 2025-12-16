@@ -654,4 +654,67 @@ html.full-width .md-content > .raw-markdown {
     max-width: 100% !important;
     height: auto !important;
   }
+
+  /* ASCII diagrams */
+  .ascii-diagram {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+/* ============================================================================
+   Loading States
+   ============================================================================ */
+
+.mermaid-loading,
+.ascii-loading {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-style: italic;
+  text-align: center;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Error fallback styling */
+pre code.language-mermaid,
+pre code.language-ascii {
+  display: block;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+/* Sandbox warning */
+.md-sandbox-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  opacity: 0.8;
+}
+
+/* Disabled button */
+.md-btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }

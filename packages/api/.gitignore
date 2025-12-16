@@ -1,0 +1,19 @@
+# Binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*.test
+*.out
+
+# Build artifacts
+dist/
+build/
+
+# Temp files
+*.mmd
+*.svg
+tmp/
