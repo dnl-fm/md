@@ -9,7 +9,6 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-// MermaidRenderer handles mermaid diagram rendering using chromedp
 type MermaidRenderer struct {
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -17,28 +16,28 @@ type MermaidRenderer struct {
 	ready  bool
 }
 
-// NewMermaidRenderer creates a new renderer with a warm browser context
 func NewMermaidRenderer() (*MermaidRenderer, error) {
-	// Create allocator context with headless-shell
-	allocCtx, cancel := chromedp.NewExecAllocator(
+	allocCtx, allocCancel := chromedp.NewExecAllocator(
 		context.Background(),
 		chromedp.NoFirstRun,
 		chromedp.NoDefaultBrowserCheck,
 		chromedp.Headless,
 		chromedp.DisableGPU,
+		chromedp.NoSandbox,
 	)
 
-	// Create browser context
-	ctx, _ := chromedp.NewContext(allocCtx)
+	browserCtx, browserCancel := chromedp.NewContext(allocCtx)
 
 	r := &MermaidRenderer{
-		ctx:    ctx,
-		cancel: cancel,
+		ctx: browserCtx,
+		cancel: func() {
+			browserCancel()
+			allocCancel()
+		},
 	}
 
-	// Warm up the page with mermaid library
 	if err := r.warmup(); err != nil {
-		cancel()
+		r.cancel()
 		return nil, fmt.Errorf("failed to warm up browser: %w", err)
 	}
 
@@ -46,34 +45,39 @@ func NewMermaidRenderer() (*MermaidRenderer, error) {
 	return r, nil
 }
 
-// warmup initializes a page with mermaid library loaded
 func (r *MermaidRenderer) warmup() error {
 	html := `<!DOCTYPE html>
 <html>
 <head>
   <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({ 
-      startOnLoad: false,
-      theme: 'default',
-      securityLevel: 'strict'
-    });
+    mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict' });
     window.mermaid = mermaid;
     window.mermaidReady = true;
+    window.renderResult = null;
+    window.renderDone = false;
+    window.renderDiagram = async (code, theme) => {
+      window.renderDone = false;
+      window.renderResult = null;
+      try {
+        mermaid.initialize({ theme: theme, securityLevel: 'strict' });
+        const result = await mermaid.render('diagram', code);
+        window.renderResult = { svg: result.svg, error: null };
+      } catch(e) {
+        window.renderResult = { svg: null, error: e.message };
+      }
+      window.renderDone = true;
+    };
   </script>
 </head>
-<body>
-  <div id="diagram"></div>
-</body>
+<body><div id="diagram"></div></body>
 </html>`
 
-	ctx, cancel := context.WithTimeout(r.ctx, 10*time.Second)
-	defer cancel()
-
 	var ready bool
-	err := chromedp.Run(ctx,
+	err := chromedp.Run(r.ctx,
 		chromedp.Navigate("data:text/html,"+html),
 		chromedp.WaitReady("body"),
+		chromedp.Sleep(2*time.Second),
 		chromedp.EvaluateAsDevTools(`window.mermaidReady === true`, &ready),
 	)
 
@@ -88,7 +92,6 @@ func (r *MermaidRenderer) warmup() error {
 	return nil
 }
 
-// Render renders a mermaid diagram to SVG
 func (r *MermaidRenderer) Render(code string, theme string) (string, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -97,36 +100,60 @@ func (r *MermaidRenderer) Render(code string, theme string) (string, error) {
 		return "", fmt.Errorf("renderer not ready")
 	}
 
-	ctx, cancel := context.WithTimeout(r.ctx, 30*time.Second)
-	defer cancel()
-
-	// Set theme
-	var svg string
-	err := chromedp.Run(ctx,
-		chromedp.Evaluate(fmt.Sprintf(`
-			window.mermaid.initialize({ theme: '%s' });
-			const { svg } = await window.mermaid.render('diagram', %s);
-			svg;
-		`, theme, jsonEscape(code)), &svg),
+	// Start render
+	jsCode := fmt.Sprintf(`window.renderDiagram(%q, %q)`, code, theme)
+	err := chromedp.Run(r.ctx,
+		chromedp.Evaluate(jsCode, nil),
 	)
-
 	if err != nil {
-		return "", fmt.Errorf("render failed: %w", err)
+		return "", fmt.Errorf("render call failed: %w", err)
 	}
 
-	return svg, nil
+	// Poll for completion (max 30s)
+	var done bool
+	for i := 0; i < 300; i++ {
+		err = chromedp.Run(r.ctx,
+			chromedp.Evaluate(`window.renderDone`, &done),
+		)
+		if err != nil {
+			return "", fmt.Errorf("poll failed: %w", err)
+		}
+		if done {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	if !done {
+		return "", fmt.Errorf("render timeout")
+	}
+
+	// Get result
+	var result struct {
+		SVG   string `json:"svg"`
+		Error string `json:"error"`
+	}
+	err = chromedp.Run(r.ctx,
+		chromedp.Evaluate(`window.renderResult`, &result),
+	)
+	if err != nil {
+		return "", fmt.Errorf("get result failed: %w", err)
+	}
+
+	if result.Error != "" {
+		return "", fmt.Errorf("mermaid error: %s", result.Error)
+	}
+
+	if result.SVG == "" {
+		return "", fmt.Errorf("empty SVG returned")
+	}
+
+	return result.SVG, nil
 }
 
-// Close shuts down the browser context
 func (r *MermaidRenderer) Close() error {
 	if r.cancel != nil {
 		r.cancel()
 	}
 	return nil
-}
-
-// jsonEscape escapes a string for use in JavaScript
-func jsonEscape(s string) string {
-	// Simple JSON string escaping
-	return fmt.Sprintf("`%s`", s)
 }
