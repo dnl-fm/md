@@ -69,6 +69,11 @@ interface MatchPosition {
  * Main content area showing markdown preview or editor.
  */
 export function MarkdownViewer(props: MarkdownViewerProps) {
+  // Debug: track showRawMarkdown changes
+  createEffect(() => {
+    console.log(`[MarkdownViewer] showRawMarkdown=${showRawMarkdown()}, currentDraftId=${currentDraftId()}`);
+  });
+  
   let containerRef: HTMLDivElement | undefined;
   // Reactive ref so effects re-run when article mounts
   const [articleEl, setArticleEl] = createSignal<HTMLElement | null>(null);
