@@ -30,9 +30,10 @@ export function UrlInputModal(props: UrlInputModalProps) {
   const [url, setUrl] = createSignal("");
   let inputRef: HTMLInputElement | undefined;
 
-  // Auto-focus input when modal opens
+  // Clear and focus input when modal opens
   createEffect(() => {
-    if (props.show && inputRef) {
+    if (props.show) {
+      setUrl("");
       // Small delay to ensure modal is rendered
       setTimeout(() => inputRef?.focus(), 10);
     }
