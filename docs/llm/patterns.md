@@ -115,3 +115,76 @@ On app startup, if `config.last_seen_version` differs from the current app versi
 - Use DOM-based capture with better yielding
 - Accept approximate positions
 - Calculate positions from PDF metadata
+
+## Sandboxed Pages (Extension)
+
+GitHub's `raw.githubusercontent.com` serves files with restrictive CSP headers:
+
+```
+content-security-policy: default-src 'none'; style-src 'unsafe-inline'; sandbox
+```
+
+The `sandbox` directive disables:
+- `allow-scripts` - no JavaScript execution in page context
+- `allow-modals` - no `window.print()`, `alert()`, etc.
+- `allow-popups` - no `window.open()`
+
+**Extension behavior on sandboxed pages:**
+- Detects via `window.location.hostname === 'raw.githubusercontent.com'`
+- Shows warning: "⚠ Sandboxed mode. Some features unavailable."
+- Print button visible but disabled
+- Ctrl+P shortcut disabled
+
+**Why extension still works:**
+- Content scripts run in isolated world, not affected by page CSP
+- Can still manipulate DOM, fetch APIs, etc.
+- Only blocked: features that require page-level permissions (print, popups)
+
+## ASCII Diagram Cycles
+
+Flowcharts can have back-edges (cycles) like `D --> A` where target is above source.
+
+**Problem:** Original code assumed `to_top_y > from_bottom_y`, causing overflow.
+
+**Solution:** `draw_back_edge()` function routes connector:
+1. Right from source box
+2. Up along right side
+3. Left into target with `◄` arrow
+
+```
+┌─────────┐   
+│  Start  │◄─┐
+└─────────┘  │
+     │       │
+     ▼       │
+┌─────────┐  │
+│   End   │──┘
+└─────────┘
+```
+
+## Prism.js Language Dependencies
+
+Languages must be imported in dependency order:
+
+```typescript
+// Core (no deps)
+await import("prismjs/components/prism-markup");
+await import("prismjs/components/prism-css");
+await import("prismjs/components/prism-clike");
+
+// Depends on clike
+await import("prismjs/components/prism-javascript");
+
+// Depends on javascript
+await import("prismjs/components/prism-typescript");
+await import("prismjs/components/prism-jsx");
+await import("prismjs/components/prism-tsx");
+
+// Templating (depends on markup)
+await import("prismjs/components/prism-markup-templating");
+
+// Depends on markup-templating
+await import("prismjs/components/prism-php");
+```
+
+**Error if wrong order:** `Cannot read properties of undefined (reading 'tokenizePlaceholders')`
