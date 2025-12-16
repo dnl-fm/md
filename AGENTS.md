@@ -59,17 +59,25 @@ md/
 │   │   ├── src-wasm/             # WASM module (Rust)
 │   │   └── tests/                # Unit tests
 │   │
-│   └── extension/                # Chrome/Firefox extension
-│       ├── package.json
-│       ├── manifest.json         # Extension manifest v3
-│       ├── build.ts              # Bundle script
-│       ├── src/
-│       │   ├── content.ts        # Main content script
-│       │   ├── detector.ts       # URL pattern detection
-│       │   ├── toc.ts            # Table of contents
-│       │   └── extension.css     # Styles
-│       ├── icons/                # Extension icons
-│       └── dist/                 # Built extension
+│   ├── extension/                # Chrome/Firefox extension
+│   │   ├── package.json
+│   │   ├── manifest.json         # Extension manifest v3
+│   │   ├── build.ts              # Bundle script
+│   │   ├── src/
+│   │   │   ├── content.ts        # Main content script
+│   │   │   ├── detector.ts       # URL pattern detection
+│   │   │   ├── toc.ts            # Table of contents
+│   │   │   └── extension.css     # Styles
+│   │   ├── icons/                # Extension icons
+│   │   └── dist/                 # Built extension
+│   │
+│   └── api/                      # Rendering API server
+│       ├── cmd/server/           # Go server entry
+│       ├── internal/
+│       │   ├── handlers/         # HTTP handlers
+│       │   └── renderer/         # Mermaid renderer (chromedp)
+│       ├── Dockerfile            # Docker build
+│       └── bin/ascii             # ASCII CLI (not in git)
 │
 ├── package.json                  # Workspace root
 ├── Makefile                      # Dev commands
@@ -93,7 +101,41 @@ import "@md/shared/styles/markdown.css";
 |-----------|--------|---------|
 | **MD App** | ✅ Complete | Desktop app: local files, full editing, print/PDF |
 | **MD Extension** | ✅ Phase 1 | Browser extension: raw .md URL rendering |
+| **MD API** | ✅ Complete | Server-side rendering for Mermaid/ASCII diagrams |
 | **MD Cloud** | 📋 Planned | Document storage, sharing, revision history |
+
+---
+
+## Extension Architecture
+
+**Why server-side rendering?**
+- CDN-loaded libraries (Shiki, Mermaid) blocked on `file://` URLs by CORS
+- Bundling would add ~12MB to extension
+- WASM blocked on sandboxed pages (raw.githubusercontent.com)
+
+**Solution:** `api.getmd.dev` renders diagrams server-side
+
+| Feature | Approach | Why |
+|---------|----------|-----|
+| Syntax highlighting | Prism.js (bundled) | Small, no external deps |
+| Mermaid diagrams | API (`/render/mermaid/`) | chromedp + headless Chrome |
+| ASCII diagrams | API (`/render/ascii/`) | Rust CLI binary |
+
+**API Stack:** Go + Chi router + chromedp (headless Chrome) + Nginx
+
+**Server:** `94.130.18.211` (api.getmd.dev)
+
+**Deployment:**
+```bash
+# ASCII binary in Docker container
+ssh root@94.130.18.211 "docker cp /path/to/ascii md-api:/usr/local/bin/ascii"
+ssh root@94.130.18.211 "docker restart md-api"
+```
+
+**Sandboxed pages:** `raw.githubusercontent.com` sends `sandbox` CSP header, blocking:
+- `window.print()` - Print disabled, warning shown
+- `window.open()` - Popups blocked
+- WASM compilation - Inline WASM won't work
 
 ---
 
