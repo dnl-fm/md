@@ -728,7 +728,8 @@ function App() {
       setOriginalContent(draft.content);
       setRenderedHtml("");
       setFileInfo(null);
-      setShowRawMarkdown(true);
+      // URL-fetched drafts stay in preview mode, regular drafts open in edit mode
+      setShowRawMarkdown(!draft.sourceUrl);
     }
   }
 
