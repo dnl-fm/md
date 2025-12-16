@@ -241,7 +241,6 @@ function App() {
   createEffect(async () => {
     const mdContent = content();
     const hl = highlighter(); // Read signal to track dependency
-    logger.info(`Render effect: content.length=${mdContent?.length || 0}, highlighter=${!!hl}`);
 
     if (!mdContent) {
       setRenderedHtml("");
@@ -374,7 +373,6 @@ function App() {
       }
     }
     
-    logger.info(`Render effect: setting renderedHtml, length=${html.length}`);
     setRenderedHtml(html);
   });
 
@@ -692,16 +690,8 @@ function App() {
 
   // Switch to a draft
   async function loadDraft(id: string) {
-    logger.info(`loadDraft START: id=${id}, currentDraftId=${currentDraftId()}, showRawMarkdown=${showRawMarkdown()}`);
     // Don't reload the same draft
-    if (currentDraftId() === id) {
-      logger.info(`loadDraft: early return - same draft, showRawMarkdown=${showRawMarkdown()}`);
-      // Check state after a delay to see if something changes it
-      setTimeout(() => {
-        logger.info(`loadDraft: 100ms later, showRawMarkdown=${showRawMarkdown()}`);
-      }, 100);
-      return;
-    }
+    if (currentDraftId() === id) return;
     
     // Check for unsaved changes in current file
     const dirty = isDirty();
@@ -732,21 +722,13 @@ function App() {
     
     const draft = getDraft(id);
     if (draft) {
-      logger.info(`loadDraft: id=${id}, sourceUrl=${draft.sourceUrl}, contentLength=${draft.content.length}, will set showRawMarkdown=${!draft.sourceUrl}`);
       setCurrentFile(null);
       setCurrentDraftId(id);
       setContent(draft.content);
       setOriginalContent(draft.content);
-      logger.info(`loadDraft: after setContent, content().length=${content().length}`);
-      // Don't clear renderedHtml - the render effect will update it from content()
       setFileInfo(null);
       // URL-fetched drafts stay in preview mode, regular drafts open in edit mode
       setShowRawMarkdown(!draft.sourceUrl);
-      logger.info(`loadDraft END: showRawMarkdown is now ${showRawMarkdown()}`);
-      // Check if something changes it after
-      setTimeout(() => {
-        logger.info(`loadDraft: 100ms after END, showRawMarkdown=${showRawMarkdown()}`);
-      }, 100);
     }
   }
 

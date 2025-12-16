@@ -69,11 +69,6 @@ interface MatchPosition {
  * Main content area showing markdown preview or editor.
  */
 export function MarkdownViewer(props: MarkdownViewerProps) {
-  // Debug: track showRawMarkdown changes
-  createEffect(() => {
-    console.log(`[MarkdownViewer] showRawMarkdown=${showRawMarkdown()}, currentDraftId=${currentDraftId()}`);
-  });
-  
   let containerRef: HTMLDivElement | undefined;
   // Reactive ref so effects re-run when article mounts
   const [articleEl, setArticleEl] = createSignal<HTMLElement | null>(null);
@@ -235,13 +230,10 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
     const heights = mermaidHeights(); // Read early to track as dependency
     const ascii = asciiDiagrams(); // Track ASCII diagrams as dependency
     const query = searchQuery().trim();
-    
-    console.log(`[highlightedHtml] html.length=${html?.length || 0}, showRawMarkdown=${showRawMarkdown()}`);
 
     if (!html || showRawMarkdown()) {
       setSearchMatches(0);
       setCurrentMatch(0);
-      console.log(`[highlightedHtml] early return, html=${html?.length || 0}`);
       return html;
     }
     
