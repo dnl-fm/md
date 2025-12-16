@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] - 2025-12-16
+
+### Added
+- **Open URL** (Ctrl+U): Load and render markdown from any URL directly in the app
+
 ## [0.10.0] - 2025-12-15
 
 ### Added
