@@ -730,11 +730,12 @@ function App() {
     
     const draft = getDraft(id);
     if (draft) {
-      logger.info(`loadDraft: id=${id}, sourceUrl=${draft.sourceUrl}, will set showRawMarkdown=${!draft.sourceUrl}`);
+      logger.info(`loadDraft: id=${id}, sourceUrl=${draft.sourceUrl}, contentLength=${draft.content.length}, will set showRawMarkdown=${!draft.sourceUrl}`);
       setCurrentFile(null);
       setCurrentDraftId(id);
       setContent(draft.content);
       setOriginalContent(draft.content);
+      logger.info(`loadDraft: after setContent, content().length=${content().length}`);
       setRenderedHtml("");
       setFileInfo(null);
       // URL-fetched drafts stay in preview mode, regular drafts open in edit mode
