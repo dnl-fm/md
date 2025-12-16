@@ -12,7 +12,7 @@ const md = new MarkdownIt({
 });
 
 // Constants
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 const CHANGELOG_URL = "https://raw.githubusercontent.com/dnl-fm/md/main/packages/extension/CHANGELOG.md";
 const HEADER_HEIGHT = 48;
 const FONT_SIZE_MIN = 12;
