@@ -18,6 +18,9 @@ FROM chromedp/headless-shell:stable
 # Copy Go binary
 COPY --from=builder /build/server /usr/local/bin/server
 
+# Copy ASCII diagram renderer (pre-built static binary)
+COPY bin/ascii /usr/local/bin/ascii
+
 # Set environment for chromedp
 ENV CHROME_BIN=/headless-shell/headless-shell
 ENV CHROME_PATH=/headless-shell/headless-shell
