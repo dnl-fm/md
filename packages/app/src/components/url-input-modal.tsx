@@ -7,7 +7,7 @@
  *
  * Opens with Ctrl+U, closes with Escape or clicking outside.
  */
-import { Show, createSignal } from "solid-js";
+import { Show, createSignal, createEffect } from "solid-js";
 
 /** Props for UrlInputModal component */
 interface UrlInputModalProps {
@@ -28,6 +28,15 @@ interface UrlInputModalProps {
  */
 export function UrlInputModal(props: UrlInputModalProps) {
   const [url, setUrl] = createSignal("");
+  let inputRef: HTMLInputElement | undefined;
+
+  // Auto-focus input when modal opens
+  createEffect(() => {
+    if (props.show && inputRef) {
+      // Small delay to ensure modal is rendered
+      setTimeout(() => inputRef?.focus(), 10);
+    }
+  });
 
   function handleSubmit(e: Event) {
     e.preventDefault();
@@ -61,13 +70,13 @@ export function UrlInputModal(props: UrlInputModalProps) {
 
           <form class="modal-content" onSubmit={handleSubmit}>
             <input
+              ref={inputRef}
               type="text"
               class="url-input"
               placeholder="Enter URL..."
               value={url()}
               onInput={(e) => setUrl(e.currentTarget.value)}
               disabled={props.loading}
-              autofocus
             />
             
             <Show when={props.error}>
