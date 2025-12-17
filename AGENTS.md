@@ -108,18 +108,19 @@ import "@md/shared/styles/markdown.css";
 
 ## Extension Architecture
 
-**Why server-side rendering?**
-- CDN-loaded libraries (Shiki, Mermaid) blocked on `file://` URLs by CORS
-- Bundling would add ~12MB to extension
-- WASM blocked on sandboxed pages (raw.githubusercontent.com)
-
-**Solution:** `api.getmd.dev` renders diagrams server-side
+**No remote code loading.** Everything is bundled. Diagrams rendered via API (returns SVG/text, not code).
 
 | Feature | Approach | Why |
 |---------|----------|-----|
-| Syntax highlighting | Prism.js (bundled) | Small, no external deps |
-| Mermaid diagrams | API (`/render/mermaid/`) | chromedp + headless Chrome |
-| ASCII diagrams | API (`/render/ascii/`) | Rust CLI binary |
+| Markdown parsing | markdown-it (bundled) | Fast, extensible |
+| Syntax highlighting | Prism.js (bundled) | Small (~200KB total) |
+| Mermaid diagrams | API (`/render/mermaid/`) | Returns SVG |
+| ASCII diagrams | API (`/render/ascii/`) | Returns text |
+| HTML→Markdown | Turndown (bundled) | Reader mode |
+
+**Chrome Web Store:**
+- **ID:** `heagnonehdabjameokpjkbneplkkiifp`
+- **URL:** https://chromewebstore.google.com/detail/md/heagnonehdabjameokpjkbneplkkiifp
 
 **API Stack:** Go + Chi router + chromedp (headless Chrome) + Nginx
 
@@ -135,7 +136,6 @@ ssh root@94.130.18.211 "docker restart md-api"
 **Sandboxed pages:** `raw.githubusercontent.com` sends `sandbox` CSP header, blocking:
 - `window.print()` - Print disabled, warning shown
 - `window.open()` - Popups blocked
-- WASM compilation - Inline WASM won't work
 
 ---
 
@@ -212,16 +212,16 @@ bun run watch      # Watch mode
 
 | Shortcut | Action |
 |----------|--------|
+| `M` | Reader mode (convert page to markdown) |
 | `Ctrl+G` | Table of contents |
 | `Ctrl+T` | Toggle theme |
-| `Ctrl+U` | Toggle raw markdown |
 | `Ctrl+P` | Print / PDF |
 | `Ctrl++/-/0` | Font size |
 | `Ctrl+H` | Help |
 
 **Settings:** Stored in `chrome.storage.local` (persists across all URLs).
 
-> **No `file://` support:** Shiki/Mermaid load from CDN (esm.sh), blocked on local files. Bundling would add ~12MB. Use MD app for local files.
+> **No `file://` support:** Extension works on remote URLs only. Use MD app for local files.
 
 ---
 
@@ -257,6 +257,36 @@ When creating a new version:
 **Add shared styles**: Edit files in `packages/shared/styles/` → import via `@md/shared/styles/*`
 
 **Debug**: Check `~/.md/md.log` or run `make logs`
+
+---
+
+## Gotchas
+
+### Tauri Resource Paths
+
+Resources with `../` prefix in `tauri.conf.json` are bundled under `_up_/` directory:
+
+```json
+// tauri.conf.json
+"resources": ["../CHANGELOG.md"]
+```
+
+```rust
+// In Rust, access as:
+let resource_path = resource_dir.join("_up_/CHANGELOG.md");  // ✅ Correct
+let resource_path = resource_dir.join("CHANGELOG.md");       // ❌ Won't find it
+```
+
+### Extension Auto-Publish
+
+Chrome Web Store upload fails while extension is pending review. Workflow in `.github/workflows/extension-release.yml` has auto-publish commented out. Re-enable after approval.
+
+### Extension Versioning
+
+Update version in 3 places:
+1. `packages/extension/package.json`
+2. `packages/extension/manifest.json`
+3. `packages/extension/src/content.ts` (VERSION constant)
 
 ---
 

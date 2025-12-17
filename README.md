@@ -124,13 +124,13 @@ Configuration is stored in:
 ### Features
 
 - **Auto-Detection** - Renders raw `.md` URLs from GitHub, GitLab, Gitea, and any plain text markdown
-- **Syntax Highlighting** - Code blocks with Shiki
-- **Mermaid Diagrams** - Flowcharts, sequence diagrams, etc.
-- **ASCII Diagrams** - Box-drawing diagrams, same syntax as Mermaid
+- **Reader Mode** - Convert any webpage to clean markdown for distraction-free reading (press M)
+- **Syntax Highlighting** - Code blocks with Prism.js (bundled)
+- **Mermaid Diagrams** - Flowcharts, sequence diagrams, etc. (server-rendered)
+- **ASCII Diagrams** - Box-drawing diagrams, same syntax as Mermaid (server-rendered)
 - **Table of Contents** - Navigate long documents with Ctrl+G
 - **Theme Support** - Dark/light themes, follows system preference
 - **Print/PDF** - Export with Ctrl+P
-- **Raw View** - Toggle to see original markdown source
 - **Font Size** - Adjustable with Ctrl++/-
 - **Full Width** - Toggle between constrained and full-width layout (default: on)
 - **Persistent Settings** - Theme, font size, width saved across all sites
@@ -139,9 +139,9 @@ Configuration is stored in:
 
 | Shortcut | Action |
 |----------|--------|
+| `M` | Reader mode (convert page to markdown) |
 | `Ctrl+G` | Table of contents |
 | `Ctrl+T` | Toggle theme |
-| `Ctrl+U` | Toggle raw markdown |
 | `Ctrl+P` | Print / PDF |
 | `Ctrl++` | Increase font size |
 | `Ctrl+-` | Decrease font size |
@@ -149,6 +149,10 @@ Configuration is stored in:
 | `Ctrl+H` | Help |
 
 ### Installation
+
+#### Chrome Web Store
+
+[Install MD Extension](https://chromewebstore.google.com/detail/md/heagnonehdabjameokpjkbneplkkiifp)
 
 #### Load Unpacked (Development)
 
@@ -170,7 +174,7 @@ bun run build
 - GitLab/Gitea raw file URLs
 - Any URL ending in `.md` or `.markdown`
 
-> **Note:** Local `file://` URLs are not supported. Syntax highlighting and Mermaid diagrams are loaded from CDN, which is blocked on local files. Use the MD desktop app for local markdown files.
+> **Note:** Local `file://` URLs are not supported due to browser security restrictions. Use the MD desktop app for local markdown files.
 
 ---
 
@@ -178,7 +182,8 @@ bun run build
 
 - **[Tauri 2](https://tauri.app/)** - Native app framework
 - **[SolidJS](https://www.solidjs.com/)** - Reactive UI framework
-- **[Shiki](https://shiki.matsu.io/)** - Syntax highlighting
+- **[Shiki](https://shiki.matsu.io/)** - Syntax highlighting (app)
+- **[Prism.js](https://prismjs.com/)** - Syntax highlighting (extension)
 - **[markdown-it](https://github.com/markdown-it/markdown-it)** - Markdown parser
 - **[Mermaid](https://mermaid.js.org/)** - Diagram rendering
 - **[Vite](https://vitejs.dev/)** - Build tool

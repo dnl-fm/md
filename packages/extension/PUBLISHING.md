@@ -4,6 +4,10 @@
 
 **Developer Console:** https://chrome.google.com/webstore/devconsole
 
+**Extension ID:** `heagnonehdabjameokpjkbneplkkiifp`
+
+**Store URL:** https://chromewebstore.google.com/detail/md/heagnonehdabjameokpjkbneplkkiifp
+
 ### Steps to Publish
 
 1. **Build the extension**
@@ -40,7 +44,7 @@
 
 **Short description (132 chars max):**
 ```
-Beautiful markdown rendering for raw .md files. View GitHub, GitLab, and Gitea markdown with syntax highlighting and diagrams.
+Render raw .md files beautifully. Reader mode for any webpage. Syntax highlighting, Mermaid & ASCII diagrams, dark/light theme.
 ```
 
 **Detailed description:**
@@ -49,19 +53,21 @@ MD transforms raw markdown files into beautifully rendered documents directly in
 
 Features:
 • Automatic detection of raw .md files (GitHub, GitLab, Gitea, etc.)
+• Reader mode: convert any webpage to clean markdown (press M)
 • Light and dark theme (follows system preference)
 • Table of contents navigation (Ctrl+G)
 • Syntax highlighting for code blocks
 • Mermaid diagram support
+• ASCII diagram support (flowchart, ERD, sequence, etc.)
 • Print/PDF export (Ctrl+P)
 • Customizable font size
 • Full width toggle
 • Clean, distraction-free reading experience
 
 Keyboard shortcuts:
+• M - Reader mode (convert page to markdown)
 • Ctrl+G - Table of contents
 • Ctrl+T - Toggle theme
-• Ctrl+U - Toggle raw markdown
 • Ctrl+P - Print / PDF
 • Ctrl+H - Help
 • Ctrl++/- - Font size
@@ -79,9 +85,9 @@ Render markdown files in the browser
 
 ### Permissions Justification
 
-**Host permissions (`*://*/*.md`, `*://*/*.markdown`, etc.):**
+**Host permissions (`<all_urls>`):**
 ```
-The extension detects and renders raw markdown files (.md, .markdown) served as plain text. It requires broad URL matching to work on any website hosting markdown files (GitHub, GitLab, Gitea, Bitbucket, self-hosted repositories, etc.). The extension only activates on URLs ending in .md or .markdown that serve plain text content. No data is collected or transmitted - all rendering happens locally in the browser.
+The extension detects and renders raw markdown files (.md, .markdown) served as plain text. It requires broad URL matching to work on any website hosting markdown files (GitHub, GitLab, Gitea, Bitbucket, self-hosted repositories, etc.). The extension only activates on URLs ending in .md or .markdown that serve plain text content. Mermaid and ASCII diagrams are rendered via api.getmd.dev (returns SVG/text). No user data is collected.
 ```
 
 **Storage permission:**
@@ -89,18 +95,28 @@ The extension detects and renders raw markdown files (.md, .markdown) served as 
 To save user preferences (theme, font size, full width toggle) locally using chrome.storage.local. Data never leaves the device.
 ```
 
+**Scripting permission:**
+```
+Required for the reader mode feature. When the user presses 'M' on any webpage, the extension converts the page content to clean markdown for distraction-free reading. This requires programmatic access to read and transform the current page's DOM. No data is collected or transmitted.
+```
+
+**ActiveTab permission:**
+```
+Allows the extension to access the current tab when the user clicks the extension icon. Used to toggle reader mode on demand without requiring persistent access to all tabs.
+```
+
 ### Remote Code
 
-**Does the extension use remote code?** Yes
+**Does the extension use remote code?** No
 
 ```
-Syntax highlighting (Shiki) and diagram rendering (Mermaid) are loaded on-demand from esm.sh CDN. This keeps the extension lightweight (~73KB vs ~12MB if bundled). These libraries are loaded only when the page contains code blocks or mermaid diagrams. No user data is sent to these services.
+All code is bundled within the extension. Syntax highlighting uses Prism.js (bundled). Mermaid and ASCII diagrams are rendered via an API (api.getmd.dev) that returns pre-rendered SVG/text output, not executable code. No remote JavaScript is loaded or executed.
 ```
 
 ### Data Usage
 
 ```
-No user data is collected or transmitted. All processing happens locally.
+No user data is collected. Diagram code (Mermaid/ASCII) is sent to api.getmd.dev for server-side rendering. Only the diagram source code is transmitted, no personal or browsing data.
 ```
 
 ### Privacy Policy URL

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "MD",
   "version": "0.2.0",
-  "description": "Beautiful markdown rendering for raw .md files",
+  "description": "Render raw .md files beautifully. Reader mode for any webpage. Syntax highlighting, Mermaid & ASCII diagrams.",
   "permissions": ["activeTab", "storage", "scripting"],
   "host_permissions": ["<all_urls>"],
   "background": {
