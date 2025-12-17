@@ -22,7 +22,29 @@ export function shouldRenderPage(): boolean {
  * Check if URL points to a markdown file
  */
 function isMarkdownURL(url: string): boolean {
-  const pathname = new URL(url).pathname.toLowerCase();
+  const parsedUrl = new URL(url);
+  const pathname = parsedUrl.pathname.toLowerCase();
+
+  // Exclude known non-raw URLs (repository UI pages)
+  // GitHub: /blob/, /tree/, /edit/
+  // GitLab: /-/blob/, /-/tree/
+  // Gitea/Forgejo: /src/branch/, /src/tag/, /src/commit/
+  const nonRawPatterns = [
+    /\/blob\//,      // GitHub blob view
+    /\/tree\//,      // GitHub/GitLab tree view
+    /\/edit\//,      // GitHub edit view
+    /\/-\/blob\//,   // GitLab blob view
+    /\/-\/tree\//,   // GitLab tree view
+    /\/src\/branch\//, // Gitea/Forgejo branch view
+    /\/src\/tag\//,    // Gitea/Forgejo tag view
+    /\/src\/commit\//, // Gitea/Forgejo commit view
+  ];
+
+  for (const pattern of nonRawPatterns) {
+    if (pattern.test(pathname)) {
+      return false;
+    }
+  }
 
   // Direct .md or .markdown files
   if (pathname.endsWith(".md") || pathname.endsWith(".markdown")) {
