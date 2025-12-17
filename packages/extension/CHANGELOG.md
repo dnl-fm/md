@@ -2,6 +2,11 @@
 
 All notable changes to the MD browser extension will be documented in this file.
 
+## [0.2.1] - 2025-12-17
+
+### Fixed
+- **Auto-render on repository UI pages** - No longer triggers on GitHub `/blob/`, GitLab `/-/blob/`, or Gitea `/src/branch/` URLs that show rendered HTML instead of raw markdown
+
 ## [0.2.0] - 2025-12-16
 
 ### Added
