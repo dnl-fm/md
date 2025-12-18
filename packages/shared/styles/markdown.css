@@ -260,9 +260,8 @@
     text-align: left !important;
     padding: 10px 16px;
     border: 1px solid var(--border-color);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .markdown-body td {
@@ -270,13 +269,13 @@
     border: 1px solid var(--border-color);
     vertical-align: top;
     text-align: left !important;
-    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 /* First column often contains labels - give it consistent treatment */
 .markdown-body td:first-child {
     font-weight: 500;
-    white-space: nowrap;
 }
 
 .markdown-body tbody tr:nth-child(odd) {
