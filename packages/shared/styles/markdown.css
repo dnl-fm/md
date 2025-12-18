@@ -262,7 +262,6 @@
     border: 1px solid var(--border-color);
     word-break: break-word;
     overflow-wrap: anywhere;
-    hyphens: auto;
 }
 
 .markdown-body td {
@@ -270,10 +269,8 @@
     border: 1px solid var(--border-color);
     vertical-align: top;
     text-align: left !important;
-    word-wrap: break-word;
     word-break: break-word;
     overflow-wrap: anywhere;
-    hyphens: auto;
 }
 
 /* First column often contains labels - give it consistent treatment */
