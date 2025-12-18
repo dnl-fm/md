@@ -1,5 +1,13 @@
 node_modules
 dist
+.env
+
 packages/app/src/wasm-pkg
 packages/app/src-wasm/target
+
 packages/extension/dist
+packages/extension/*.zip
+
+packages/api/data/
+
+docs/plans/
