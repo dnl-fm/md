@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.1] - 2025-12-18
+
+### Fixed
+- **Table text wrapping**: Long text (especially German compound words) now wraps properly within table cells instead of overflowing
+
 ## [0.11.0] - 2025-12-16
 
 ### Added
