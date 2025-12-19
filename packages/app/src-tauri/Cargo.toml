@@ -31,4 +31,6 @@ parking_lot = "0.12"
 chrono = "0.4"
 base64 = "0.22"
 tauri-plugin-single-instance = "2.3.6"
-reqwest = { version = "0.12", features = ["blocking"] }
+reqwest = { version = "0.12", features = ["blocking", "stream", "json"] }
+futures = "0.3"
+tokio-stream = "0.1"
