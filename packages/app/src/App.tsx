@@ -92,6 +92,16 @@ import { HelpModal } from "./components/help-modal";
 import { UrlInputModal } from "./components/url-input-modal";
 import { ReleaseNotification } from "./components/release-notification";
 import { PageOverviewModal, preRenderThumbnails } from "./components/page-overview-modal";
+import { AiChatPanel } from "./components/ai-chat-panel";
+import { 
+  showAiChat, 
+  setShowAiChat, 
+  toggleAiChat,
+  aiChatWidth,
+  setAiChatWidth,
+  aiChatResizing,
+  DEFAULT_WIDTH_PERCENT,
+} from "./stores/ai-chat-store";
 
 // Marked is instantiated per-render to avoid stacking extensions
 
@@ -181,6 +191,7 @@ function App() {
       setMarkdownFontFamily(cfg.markdown_font_family || "JetBrains Mono");
       setDarkColors({ ...DEFAULT_DARK_COLORS, ...cfg.dark_colors });
       setLightColors({ ...DEFAULT_LIGHT_COLORS, ...cfg.light_colors });
+      setAiChatWidth(cfg.ai_chat_width || DEFAULT_WIDTH_PERCENT);
       document.documentElement.setAttribute("data-theme", cfg.theme);
       // Sync light class with theme for index.html styles
       if (cfg.theme === "light") {
@@ -460,6 +471,10 @@ function App() {
           e.preventDefault();
           toggleSidebar();
           break;
+        case "a":
+          e.preventDefault();
+          toggleAiChat();
+          break;
         case ",":
           e.preventDefault();
           if (!showSettings()) {
@@ -614,6 +629,8 @@ function App() {
         setSearchQuery("");
       } else if (showPageOverview()) {
         setShowPageOverview(false);
+      } else if (showAiChat()) {
+        setShowAiChat(false);
       } else if (showRawMarkdown()) {
         setContent(originalContent());
         setShowRawMarkdown(false);
@@ -1236,9 +1253,16 @@ function App() {
     setShowRawMarkdown(false);
   }
 
+  // Save AI chat width to config
+  async function saveAiChatWidth(width: number) {
+    const newConfig = { ...config(), ai_chat_width: width };
+    setConfig(newConfig);
+    await invoke("save_config", { config: newConfig });
+  }
+
   return (
     <div
-      class={`app-container ${isResizing() ? "resizing" : ""}`}
+      class={`app-container ${isResizing() || aiChatResizing() ? "resizing" : ""}`}
       style={{
         "font-size": `${uiFontSize()}px`,
         "font-family": getFontFamilyCSS(uiFontFamily()),
@@ -1246,15 +1270,19 @@ function App() {
     >
       <Sidebar onOpenFile={openFileDialog} onOpenUrl={() => setShowUrlModal(true)} onLoadFile={loadFile} onLoadDraft={loadDraft} />
 
-      <main class="main-content">
-        <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} onPrint={printDocument} isPreRendering={isPreRendering()} />
-        <MarkdownViewer 
-          onSaveAndPreview={saveAndPreview} 
-          onSaveDraft={saveDraftToFile}
-          onEditorApi={(api) => { editorApi = api; }}
-          onArticleRef={setArticleElement}
-        />
-      </main>
+      <div class="content-wrapper">
+        <main class="main-content" style={{ flex: showAiChat() ? `0 0 ${100 - aiChatWidth()}%` : "1" }}>
+          <FileHeader onSaveAndPreview={saveAndPreview} onSaveDraft={saveDraftToFile} onPrint={printDocument} isPreRendering={isPreRendering()} />
+          <MarkdownViewer 
+            onSaveAndPreview={saveAndPreview} 
+            onSaveDraft={saveDraftToFile}
+            onEditorApi={(api) => { editorApi = api; }}
+            onArticleRef={setArticleElement}
+          />
+        </main>
+
+        <AiChatPanel onSaveWidth={saveAiChatWidth} />
+      </div>
 
       <PageOverviewModal
         isOpen={showPageOverview()}

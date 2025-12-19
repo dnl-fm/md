@@ -259,6 +259,7 @@ function applyThemeColors(theme?: "dark" | "light") {
   root.style.setProperty("--draft-bg-active", getColor("draft_bg_active"));
   root.style.setProperty("--draft-border", getColor("draft_border"));
   root.style.setProperty("--sidebar-active-bg", getColor("sidebar_active_bg"));
+  root.style.setProperty("--btn-ai-chat", getColor("btn_ai_chat"));
 }
 
 /**

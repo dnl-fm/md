@@ -20,6 +20,7 @@ import {
   currentDraftId,
   getDraft,
 } from "../stores/app-store";
+import { toggleAiChat } from "../stores/ai-chat-store";
 import { formatFileSize } from "../utils";
 
 /** Props for FileHeader component */
@@ -65,6 +66,13 @@ export function FileHeader(props: FileHeaderProps) {
                 Cancel
               </button>
             </Show>
+            <button
+              class="btn btn-small btn-ai-chat"
+              onClick={toggleAiChat}
+              title="AI Chat (Ctrl+A)"
+            >
+              ✨ AI
+            </button>
             <Show when={!isReadOnly()}>
               <button
                 class={`btn btn-small ${showRawMarkdown() ? "active" : ""} ${isDirty() ? "btn-dirty" : ""}`}
@@ -121,6 +129,13 @@ export function FileHeader(props: FileHeaderProps) {
                     <span class="prerender-text">Generating previews...</span>
                   </span>
                 </Show>
+                <button
+                  class="btn btn-small btn-ai-chat"
+                  onClick={toggleAiChat}
+                  title="AI Chat (Ctrl+A)"
+                >
+                  ✨ AI
+                </button>
                 <button
                   class={`btn btn-small ${showRawMarkdown() ? "active" : ""}`}
                   onClick={() => setShowRawMarkdown(!showRawMarkdown())}
