@@ -302,8 +302,8 @@
 .ai-message-user-text {
   padding: 10px 14px;
   border-radius: 8px;
-  background: #f3ecff;
-  color: #000;
+  background: color-mix(in srgb, var(--btn-ai-chat) 15%, var(--bg-secondary));
+  color: var(--text-primary);
   font-size: 0.9em;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -315,7 +315,7 @@
   padding: 10px 6px;
   margin: 0;
   width: 100%;
-  background: #fff;
+  background: var(--bg-primary);
   font-size: 0.9em;
 }
 

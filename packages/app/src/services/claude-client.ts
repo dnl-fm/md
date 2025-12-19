@@ -92,7 +92,7 @@ export async function validateToken(token: string): Promise<{ valid: boolean; er
     if (message.includes("403") || message.includes("permission")) {
       return { valid: false, error: "Token lacks required permissions" };
     }
-    if (message.includes("Network") || message.includes("network")) {
+    if (message.includes("Network")) {
       return { valid: false, error: "Network error. Check your connection." };
     }
     

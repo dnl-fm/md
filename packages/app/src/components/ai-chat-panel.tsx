@@ -82,6 +82,11 @@ const md = new MarkdownIt({
 // Store mermaid code by message ID to avoid data attribute issues
 const mermaidCodeMap = new Map<string, string>();
 
+/** Clear mermaid cache (call when chat is cleared) */
+export function clearMermaidCache() {
+  mermaidCodeMap.clear();
+}
+
 // Custom fence renderer for mermaid diagrams
 md.renderer.rules.fence = (tokens, idx) => {
   const token = tokens[idx];
@@ -89,8 +94,11 @@ md.renderer.rules.fence = (tokens, idx) => {
   const lang = (token.info || "").trim().split(/\s+/)[0];
   
   if (lang === "mermaid") {
-    // Use content hash as stable ID
-    const hash = btoa(code).substring(0, 16).replace(/[+/=]/g, 'x');
+    // Use content hash as stable ID (handle unicode safely)
+    const hash = Array.from(new TextEncoder().encode(code))
+      .slice(0, 16)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
     const id = `ai-mermaid-${hash}`;
     mermaidCodeMap.set(id, code);
     return `<div class="mermaid-wrapper"><div class="mermaid-diagram mermaid-loading" id="${id}"><div class="mermaid-spinner"></div></div></div>`;
@@ -403,6 +411,7 @@ function ChatView() {
     switch (commandName) {
       case "clear":
         clearMessages();
+        mermaidCodeMap.clear();
         break;
       case "summarise":
         sendMessage(SUMMARISE_PROMPT);
