@@ -85,19 +85,14 @@ Render markdown files in the browser
 
 ### Permissions Justification
 
-**Host permissions (`<all_urls>`):**
+**Content scripts (`<all_urls>` match pattern):**
 ```
-The extension detects and renders raw markdown files (.md, .markdown) served as plain text. It requires broad URL matching to work on any website hosting markdown files (GitHub, GitLab, Gitea, Bitbucket, self-hosted repositories, etc.). The extension only activates on URLs ending in .md or .markdown that serve plain text content. Mermaid and ASCII diagrams are rendered via api.getmd.dev (returns SVG/text). No user data is collected.
+The extension runs on all URLs to: (1) detect and render raw markdown files (.md, .markdown) served as plain text from any source (GitHub, GitLab, Gitea, Bitbucket, self-hosted repositories), and (2) enable reader mode on any webpage (converts HTML to markdown). The extension only transforms content when it detects markdown or when the user triggers reader mode. Mermaid and ASCII diagrams are rendered via api.getmd.dev (returns SVG/text). No user data is collected.
 ```
 
 **Storage permission:**
 ```
 To save user preferences (theme, font size, full width toggle) locally using chrome.storage.local. Data never leaves the device.
-```
-
-**Scripting permission:**
-```
-Required for the reader mode feature. When the user presses 'M' on any webpage, the extension converts the page content to clean markdown for distraction-free reading. This requires programmatic access to read and transform the current page's DOM. No data is collected or transmitted.
 ```
 
 **ActiveTab permission:**
