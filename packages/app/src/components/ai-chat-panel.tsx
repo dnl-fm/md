@@ -378,12 +378,15 @@ function ChatView() {
   }
   
   async function sendMessage(text: string) {
+    const token = aiToken();
+    if (!token) {
+      addAssistantMessage("Error: No API token configured.");
+      return;
+    }
+    
     addUserMessage(text);
     setAiLoading(true);
     addAssistantMessage("", true);
-    
-    const token = aiToken();
-    if (!token) return;
     
     await streamChat(
       token,
