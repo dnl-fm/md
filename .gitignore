@@ -11,3 +11,4 @@ packages/extension/*.zip
 packages/api/data/
 
 docs/plans/
+*.zip

@@ -2,6 +2,11 @@
 
 All notable changes to the MD browser extension will be documented in this file.
 
+## [0.2.2] - 2025-12-19
+
+### Fixed
+- **Removed unused permissions** - Removed `scripting` permission and `host_permissions` that were declared but not used (flagged by Chrome Web Store review)
+
 ## [0.2.1] - 2025-12-17
 
 ### Fixed
