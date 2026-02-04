@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onMount } from "solid-js";
+import { createEffect, createSignal, onMount, Show } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
 import { logger } from "./logger";
 import { listen } from "@tauri-apps/api/event";
@@ -19,10 +19,15 @@ import type { AppConfig, FileInfo } from "./types";
 import {
   config,
   setConfig,
+  resolvedTheme,
+  resolveTheme,
+  themeReady,
+  setThemeReady,
   setDarkColors,
   setLightColors,
-  applyThemeColors,
+  applyResolvedTheme,
   toggleTheme,
+  initSystemTheme,
   currentFile,
   setCurrentFile,
   content,
@@ -122,7 +127,7 @@ function App() {
   createEffect(() => {
     const el = articleElement();
     const markdown = content();
-    const theme = config().theme;
+    const theme = resolvedTheme();
     
     if (el && markdown && !showRawMarkdown()) {
       // Wait for DOM to settle, then pre-render in background
@@ -192,15 +197,14 @@ function App() {
       setDarkColors({ ...DEFAULT_DARK_COLORS, ...cfg.dark_colors });
       setLightColors({ ...DEFAULT_LIGHT_COLORS, ...cfg.light_colors });
       setAiChatWidth(cfg.ai_chat_width || DEFAULT_WIDTH_PERCENT);
-      document.documentElement.setAttribute("data-theme", cfg.theme);
-      // Sync light class with theme for index.html styles
-      if (cfg.theme === "light") {
-        document.documentElement.classList.add("light");
-      } else {
-        document.documentElement.classList.remove("light");
-      }
+      
+      // Initialize system theme detection (sets up polling and gets initial Tauri theme)
+      await initSystemTheme();
+      // Resolve and apply theme (uses Tauri-populated cache for "system" setting)
+      const resolved = resolveTheme(cfg.theme);
+      applyResolvedTheme(resolved);
       localStorage.setItem("theme", cfg.theme);
-      applyThemeColors();
+      setThemeReady(true);
 
       // Show welcome modal if first run (or ?welcome=1 in dev)
       const urlParams = new URLSearchParams(window.location.search);
@@ -258,7 +262,7 @@ function App() {
       return;
     }
 
-    const theme = config().theme === "dark" ? "github-dark" : "github-light";
+    const theme = resolvedTheme() === "dark" ? "github-dark" : "github-light";
     const normalizedMd = normalizeMarkdown(mdContent);
     
     // Create markdown-it instance
@@ -1261,14 +1265,15 @@ function App() {
   }
 
   return (
-    <div
-      class={`app-container ${isResizing() || aiChatResizing() ? "resizing" : ""}`}
-      style={{
-        "font-size": `${uiFontSize()}px`,
-        "font-family": getFontFamilyCSS(uiFontFamily()),
-      }}
-    >
-      <Sidebar onOpenFile={openFileDialog} onOpenUrl={() => setShowUrlModal(true)} onLoadFile={loadFile} onLoadDraft={loadDraft} />
+    <Show when={themeReady()}>
+      <div
+        class={`app-container ${isResizing() || aiChatResizing() ? "resizing" : ""}`}
+        style={{
+          "font-size": `${uiFontSize()}px`,
+          "font-family": getFontFamilyCSS(uiFontFamily()),
+        }}
+      >
+        <Sidebar onOpenFile={openFileDialog} onOpenUrl={() => setShowUrlModal(true)} onLoadFile={loadFile} onLoadDraft={loadDraft} />
 
       <div class="content-wrapper">
         <main class="main-content" style={{ flex: showAiChat() ? `0 0 ${100 - aiChatWidth()}%` : "1" }}>
@@ -1305,14 +1310,15 @@ function App() {
         loading={urlLoading()}
       />
       <ConfirmDialog />
-      {showReleaseNotification() && (
-        <ReleaseNotification 
-          version={appVersion()} 
-          onDismiss={() => setShowReleaseNotification(false)}
-          onLoadFile={loadFile}
-        />
-      )}
-    </div>
+        {showReleaseNotification() && (
+          <ReleaseNotification 
+            version={appVersion()} 
+            onDismiss={() => setShowReleaseNotification(false)}
+            onLoadFile={loadFile}
+          />
+        )}
+      </div>
+    </Show>
   );
 }
 

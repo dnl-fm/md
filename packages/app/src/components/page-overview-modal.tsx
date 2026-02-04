@@ -3,7 +3,7 @@
  * Page thumbnails are feature-flagged off until scroll mapping is fixed.
  */
 import { Show, For, createSignal, createEffect } from "solid-js";
-import { content, config } from "../stores/app-store";
+import { content, resolvedTheme } from "../stores/app-store";
 
 // Feature flag: disable page previews until scroll position mapping is fixed
 const ENABLE_PAGE_PREVIEWS = false;
@@ -75,7 +75,7 @@ export function PageOverviewModal(props: PageOverviewModalProps) {
     const isOpen = props.isOpen;
     const el = props.contentElement;
     const currentContent = content();
-    void config().theme; // Track theme changes to re-extract TOC
+    void resolvedTheme(); // Track theme changes to re-extract TOC
     
     if (!isOpen || !el || !currentContent) return;
     

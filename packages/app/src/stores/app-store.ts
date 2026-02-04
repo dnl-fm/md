@@ -11,6 +11,7 @@
  */
 import { createSignal } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { confirm } from "../components/confirm-dialog";
 import type { AppConfig, FileInfo, ThemeColors } from "../types";
 import { DEFAULT_DARK_COLORS, DEFAULT_LIGHT_COLORS } from "../utils";
@@ -19,12 +20,35 @@ import { DEFAULT_DARK_COLORS, DEFAULT_LIGHT_COLORS } from "../utils";
 // Config and Theme State
 // ============================================================================
 
+/** Theme setting: "dark", "light", or "system" */
+type ThemeSetting = "dark" | "light" | "system";
+
+/** Resolved theme (actual dark/light being applied) */
+type ResolvedTheme = "dark" | "light";
+
+/** Cached system theme - updated by Tauri polling */
+let systemThemeCache: ResolvedTheme = "dark";
+
+/** Get the resolved theme based on setting */
+function resolveTheme(setting: string): ResolvedTheme {
+  if (setting === "system") {
+    return systemThemeCache;
+  }
+  return setting === "light" ? "light" : "dark";
+}
+
 /** Application configuration (persisted to disk) */
 const [config, setConfig] = createSignal<AppConfig>({
   theme: "dark",
   history: [],
   sidebar_collapsed: false,
 });
+
+/** Resolved theme signal (actual dark/light being used) */
+const [resolvedTheme, setResolvedTheme] = createSignal<ResolvedTheme>("dark");
+
+/** Whether theme has been initialized (prevents flash) */
+const [themeReady, setThemeReady] = createSignal(false);
 
 /** Custom dark theme colors */
 const [darkColors, setDarkColors] = createSignal<ThemeColors>({ ...DEFAULT_DARK_COLORS });
@@ -222,12 +246,30 @@ const isDirty = () => showRawMarkdown() && content() !== originalContent();
 // ============================================================================
 
 /**
+ * Apply resolved theme to DOM and CSS custom properties.
+ * @param resolved - The resolved theme to apply
+ */
+function applyResolvedTheme(resolved: ResolvedTheme) {
+  setResolvedTheme(resolved);
+  document.documentElement.setAttribute("data-theme", resolved);
+  
+  // Toggle light class for index.html splash screen styles
+  if (resolved === "light") {
+    document.documentElement.classList.add("light");
+  } else {
+    document.documentElement.classList.remove("light");
+  }
+  
+  applyThemeColors(resolved);
+}
+
+/**
  * Apply current theme colors to CSS custom properties.
  * Uses saved colors with fallback to defaults.
- * @param theme - Theme to apply (defaults to current config theme)
+ * @param theme - Theme to apply (defaults to resolved theme)
  */
 function applyThemeColors(theme?: "dark" | "light") {
-  const currentTheme = theme ?? config().theme;
+  const currentTheme = theme ?? resolvedTheme();
   const defaults = currentTheme === "dark" ? DEFAULT_DARK_COLORS : DEFAULT_LIGHT_COLORS;
   const colors = currentTheme === "dark" ? darkColors() : lightColors();
   const root = document.documentElement;
@@ -263,23 +305,69 @@ function applyThemeColors(theme?: "dark" | "light") {
 }
 
 /**
- * Toggle between dark and light themes.
+ * Cycle through themes: dark → light → system → dark
  * Persists to config and updates CSS.
  */
 async function toggleTheme() {
-  const newTheme = config().theme === "dark" ? "light" : "dark";
+  const current = config().theme as ThemeSetting;
+  const newTheme: ThemeSetting = current === "dark" ? "light" : current === "light" ? "system" : "dark";
   const newConfig = { ...config(), theme: newTheme };
   setConfig(newConfig);
-  document.documentElement.setAttribute("data-theme", newTheme);
-  // Toggle light class for index.html splash screen styles
-  if (newTheme === "light") {
-    document.documentElement.classList.add("light");
-  } else {
-    document.documentElement.classList.remove("light");
-  }
+  
+  const resolved = resolveTheme(newTheme);
+  applyResolvedTheme(resolved);
   localStorage.setItem("theme", newTheme);
-  applyThemeColors(newTheme);
   await invoke("save_config", { config: newConfig });
+}
+
+/**
+ * Handle system theme change - update if in system mode
+ */
+function handleSystemThemeChange(newTheme: ResolvedTheme) {
+  systemThemeCache = newTheme;
+  if (config().theme === "system") {
+    applyResolvedTheme(newTheme);
+  }
+}
+
+/**
+ * Initialize system theme detection and polling.
+ * Call this on app startup.
+ */
+async function initSystemTheme() {
+  // matchMedia listener (works in dev)
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+    handleSystemThemeChange(e.matches ? "dark" : "light");
+  });
+  
+  // Initial value from matchMedia
+  systemThemeCache = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  
+  try {
+    const appWindow = getCurrentWindow();
+    
+    // Get initial theme from Tauri (more accurate)
+    const tauriTheme = await appWindow.theme();
+    if (tauriTheme) {
+      systemThemeCache = tauriTheme;
+    }
+    
+    // Poll Tauri theme (production webview doesn't fire matchMedia changes)
+    const THEME_POLL_INTERVAL_MS = 500;
+    setInterval(async () => {
+      if (config().theme !== "system") return;
+      try {
+        const currentTheme = await appWindow.theme();
+        if (currentTheme && currentTheme !== systemThemeCache) {
+          handleSystemThemeChange(currentTheme);
+        }
+      } catch {
+        // Expected if Tauri API temporarily unavailable
+      }
+    }, THEME_POLL_INTERVAL_MS);
+  } catch {
+    // Expected in browser dev mode
+  }
 }
 
 /**
@@ -343,12 +431,18 @@ export {
   // Config and theme
   config,
   setConfig,
+  resolvedTheme,
+  resolveTheme,
+  themeReady,
+  setThemeReady,
   darkColors,
   setDarkColors,
   lightColors,
   setLightColors,
   applyThemeColors,
+  applyResolvedTheme,
   toggleTheme,
+  initSystemTheme,
   saveSettings,
   updateColor,
   resetColors,
