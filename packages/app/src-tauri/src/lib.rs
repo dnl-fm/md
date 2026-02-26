@@ -10,6 +10,7 @@ use std::{
 };
 use tauri::{AppHandle, Emitter, Manager};
 use chrono::Local;
+use futures::StreamExt;
 
 const MAX_HISTORY: usize = 20;
 const CONFIG_FILE: &str = "config.json";
@@ -450,6 +451,206 @@ fn get_changelog_path(app: AppHandle) -> Result<String, String> {
 }
 
 // ============================================================================
+// Claude API
+// ============================================================================
+
+#[derive(Debug, Deserialize)]
+struct ChatMessage {
+    role: String,
+    content: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ChatRequest {
+    token: String,
+    model: String,
+    messages: Vec<ChatMessage>,
+    system_prompt: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+struct ChatStreamEvent {
+    event_type: String,  // "start", "delta", "done", "error"
+    content: Option<String>,
+    error: Option<String>,
+}
+
+/// Validate a Claude API token
+#[tauri::command]
+async fn validate_claude_token(token: String) -> Result<bool, String> {
+    let is_oauth = token.contains("sk-ant-oat");
+    
+    let client = reqwest::Client::new();
+    let mut request = client
+        .post("https://api.anthropic.com/v1/messages")
+        .header("Content-Type", "application/json")
+        .header("anthropic-version", "2023-06-01");
+    
+    if is_oauth {
+        request = request
+            .header("Authorization", format!("Bearer {}", token))
+            .header("anthropic-beta", "oauth-2025-04-20");
+    } else {
+        request = request.header("x-api-key", &token);
+    }
+    
+    let body = serde_json::json!({
+        "model": "claude-haiku-4-5",
+        "max_tokens": 1,
+        "messages": [{"role": "user", "content": "hi"}]
+    });
+    
+    let response = request
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("Network error: {}", e))?;
+    
+    if response.status().is_success() {
+        Ok(true)
+    } else {
+        let status = response.status();
+        let body = response.text().await.unwrap_or_default();
+        Err(format!("API error {}: {}", status, body))
+    }
+}
+
+/// Stream a chat response from Claude
+#[tauri::command]
+async fn stream_claude_chat(
+    app: AppHandle,
+    request: ChatRequest,
+    request_id: String,
+) -> Result<(), String> {
+    let is_oauth = request.token.contains("sk-ant-oat");
+    
+    let client = reqwest::Client::new();
+    let mut http_request = client
+        .post("https://api.anthropic.com/v1/messages")
+        .header("Content-Type", "application/json")
+        .header("anthropic-version", "2023-06-01");
+    
+    if is_oauth {
+        http_request = http_request
+            .header("Authorization", format!("Bearer {}", request.token))
+            .header("anthropic-beta", "oauth-2025-04-20");
+    } else {
+        http_request = http_request.header("x-api-key", &request.token);
+    }
+    
+    // Build messages array for API
+    let messages: Vec<serde_json::Value> = request.messages
+        .iter()
+        .filter(|m| m.role == "user" || m.role == "assistant")
+        .map(|m| serde_json::json!({
+            "role": m.role,
+            "content": m.content
+        }))
+        .collect();
+    
+    let body = serde_json::json!({
+        "model": request.model,
+        "max_tokens": 4096,
+        "system": request.system_prompt,
+        "messages": messages,
+        "stream": true
+    });
+    
+    let event_name = format!("claude-stream-{}", request_id);
+    
+    // Emit start event
+    let _ = app.emit(&event_name, ChatStreamEvent {
+        event_type: "start".to_string(),
+        content: None,
+        error: None,
+    });
+    
+    let response = http_request
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| {
+            let _ = app.emit(&event_name, ChatStreamEvent {
+                event_type: "error".to_string(),
+                content: None,
+                error: Some(format!("Network error: {}", e)),
+            });
+            format!("Network error: {}", e)
+        })?;
+    
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response.text().await.unwrap_or_default();
+        let error_msg = format!("API error {}: {}", status, body);
+        let _ = app.emit(&event_name, ChatStreamEvent {
+            event_type: "error".to_string(),
+            content: None,
+            error: Some(error_msg.clone()),
+        });
+        return Err(error_msg);
+    }
+    
+    // Stream the response
+    let mut stream = response.bytes_stream();
+    let mut buffer = String::new();
+    
+    while let Some(chunk_result) = stream.next().await {
+        match chunk_result {
+            Ok(chunk) => {
+                let chunk_str = String::from_utf8_lossy(&chunk);
+                buffer.push_str(&chunk_str);
+                
+                // Process complete SSE events from buffer
+                while let Some(event_end) = buffer.find("\n\n") {
+                    let event_data = buffer[..event_end].to_string();
+                    buffer = buffer[event_end + 2..].to_string();
+                    
+                    // Parse SSE event
+                    for line in event_data.lines() {
+                        if let Some(data) = line.strip_prefix("data: ") {
+                            if data == "[DONE]" {
+                                continue;
+                            }
+                            
+                            // Parse JSON
+                            if let Ok(json) = serde_json::from_str::<serde_json::Value>(data) {
+                                // Extract text delta
+                                if json["type"] == "content_block_delta" {
+                                    if let Some(text) = json["delta"]["text"].as_str() {
+                                        let _ = app.emit(&event_name, ChatStreamEvent {
+                                            event_type: "delta".to_string(),
+                                            content: Some(text.to_string()),
+                                            error: None,
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                let _ = app.emit(&event_name, ChatStreamEvent {
+                    event_type: "error".to_string(),
+                    content: None,
+                    error: Some(format!("Stream error: {}", e)),
+                });
+                return Err(format!("Stream error: {}", e));
+            }
+        }
+    }
+    
+    // Emit done event
+    let _ = app.emit(&event_name, ChatStreamEvent {
+        event_type: "done".to_string(),
+        content: None,
+        error: None,
+    });
+    
+    Ok(())
+}
+
+// ============================================================================
 // Plugin Setup
 // ============================================================================
 
@@ -491,6 +692,8 @@ pub fn run() {
             read_image_base64,
             get_file_dir,
             fetch_url,
+            validate_claude_token,
+            stream_claude_chat,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

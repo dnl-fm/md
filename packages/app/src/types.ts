@@ -71,6 +71,8 @@ export interface ThemeColors {
   mermaid_row_odd: string;
   /** Mermaid ER table even row background */
   mermaid_row_even: string;
+  /** AI chat button background */
+  btn_ai_chat: string;
 }
 
 /**
@@ -101,6 +103,8 @@ export interface AppConfig {
   onboarding_complete?: boolean;
   /** Last version user saw release notes for */
   last_seen_version?: string;
+  /** AI chat panel width as percentage (0-100) */
+  ai_chat_width?: number;
 }
 
 /**

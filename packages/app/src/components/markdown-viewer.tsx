@@ -38,7 +38,7 @@ import {
   currentDraftId,
   previewScrollLine,
   setPreviewScrollLine,
-  config,
+  resolvedTheme,
 } from "../stores/app-store";
 import { getFontFamilyCSS } from "../utils";
 import { EmptyState } from "./empty-state";
@@ -85,7 +85,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   // Render mermaid diagrams progressively - each pops in when ready
   createEffect(() => {
     const html = renderedHtml();
-    const theme = config().theme;
+    const theme = resolvedTheme();
     if (!html) return;
     
     // Extract mermaid code from data attributes

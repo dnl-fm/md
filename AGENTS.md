@@ -225,6 +225,54 @@ bun run watch      # Watch mode
 
 ---
 
+## AI Chat (Desktop App)
+
+Built-in Claude integration for document analysis and Q&A.
+
+### Commands
+
+Type `/` in the input field to show command menu. Navigate with arrow keys, select with Enter.
+
+| Command | Description |
+|---------|-------------|
+| `/clear` | Reset conversation history |
+| `/summarise` | Generate comprehensive document summary |
+| `/model` | Select AI model (opens submenu) |
+| `/export` | Export chat as markdown in new tab |
+
+### Command Menu Pattern
+
+Commands are defined in `ai-chat-panel.tsx`:
+
+```typescript
+interface Command {
+  name: string;           // Command name (without /)
+  description: string;    // Shown in menu
+  hasSubmenu?: boolean;   // Opens nested selection
+  action?: () => void;    // Direct execution
+}
+```
+
+**Menu behavior:**
+- Shows when input starts with `/`
+- Filters as user types more characters
+- Arrow keys navigate, Tab autocompletes, Enter executes, Escape closes
+- Commands with `hasSubmenu: true` open a nested selection (e.g., model picker)
+
+### Models
+
+Available via `/model` command:
+
+| Short Name | Full Name | API ID |
+|------------|-----------|--------|
+| haiku-4.5 | Claude Haiku 4.5 | `claude-haiku-4-5` |
+| sonnet-4.5 | Claude Sonnet 4.5 | `claude-sonnet-4-5` |
+| opus-4.5 | Claude Opus 4.5 | `claude-opus-4-5` |
+
+**State:** Model selection persisted in localStorage (`md-ai-model`).
+
+---
+
 ## Versioning
 
 When creating a new version:

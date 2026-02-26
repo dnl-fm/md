@@ -65,6 +65,7 @@ const uiColorGroups: ColorGroup[] = [
     colors: [
       { key: "btn_edit_active", label: "Edit Active" },
       { key: "btn_save", label: "Save" },
+      { key: "btn_ai_chat", label: "AI Chat" },
     ],
   },
   {
@@ -195,6 +196,7 @@ function UIPreview(props: { theme: "dark" | "light" }) {
           <button class="preview-btn" style={{ background: c().accent_color, color: '#fff' }}>Primary</button>
           <button class="preview-btn" style={{ background: c().btn_edit_active, color: '#fff' }}>Edit Mode</button>
           <button class="preview-btn" style={{ background: c().btn_save, color: '#fff' }}>Save</button>
+          <button class="preview-btn" style={{ background: c().btn_ai_chat, color: '#fff' }}>✨ AI</button>
           <button class="preview-btn" style={{ background: c().bg_icon, color: c().text_primary, border: `1px solid ${c().border_color}` }}>Icon</button>
         </div>
       </div>

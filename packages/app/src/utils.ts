@@ -36,6 +36,7 @@ export const DEFAULT_DARK_COLORS: ThemeColors = {
   mermaid_note_border: "#5a5a7a",
   mermaid_row_odd: "#262c33",
   mermaid_row_even: "#2d333b",
+  btn_ai_chat: "#8b5cf6",      // Purple for AI chat
 };
 
 export const DEFAULT_LIGHT_COLORS: ThemeColors = {
@@ -74,6 +75,7 @@ export const DEFAULT_LIGHT_COLORS: ThemeColors = {
   mermaid_note_border: "#d4a72c",
   mermaid_row_odd: "#f6f8fa",
   mermaid_row_even: "#ffffff",
+  btn_ai_chat: "#7c3aed",      // Slightly darker purple for light theme
 };
 
 export const FONT_OPTIONS = [
